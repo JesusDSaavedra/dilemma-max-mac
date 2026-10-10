@@ -1,7 +1,7 @@
 From e041775dbc77257c1f02a2625b4c0e30ef7e385d Mon Sep 17 00:00:00 2001
 From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
 Date: Fri, 9 Oct 2026 21:38:52 -0500
-Subject: [PATCH 03/24] feat(digitizer): add pointer-only CPI and cursor speed
+Subject: [PATCH 03/25] feat(digitizer): add pointer-only CPI and cursor speed
  keys
 
 Scaling the digitizer coordinates also changes scroll speed and the

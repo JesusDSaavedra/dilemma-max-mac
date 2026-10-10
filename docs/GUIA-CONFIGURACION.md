@@ -216,14 +216,10 @@ La velocidad y el modo de zoom **se guardan** aunque desconectes el teclado.
 
 ### Tema alternativo: Alegra
 
-- **Colores:** la paleta de Alegra en degradé simétrico, con la misma onda.
-  - Bordes exteriores: neutrales **Slate 300 → Slate 400**.
-  - Zona media: el **Teal** primario `#30ABA9`.
-  - Centro: el **Índigo** secundario `#514EA6`.
-
-  Los Slate oscuros (600–900) no se usan porque en un LED se ven casi apagados.
+- **Colores:** el **Índigo** secundario `#514EA6` solo en los bordes exteriores, y el **Teal** primario `#30ABA9` en todo el resto de cada mitad, para que predomine. En los LEDs el índigo se ve como un azul fuerte. Tiene la misma onda que los demás temas.
 - **Cómo activarlo:** LOWER + RAISE + **I**.
-- **Consumo:** 56% de carga, atenuado al ~89% (`ALEGRA_POWER_SCALE` `228`).
+- **Consumo:** 49% de carga, ya igual que un color saturado, así que no se atenúa (`ALEGRA_POWER_SCALE` `255`).
+- **Para ajustar la proporción:** en `rgb_matrix_user.inc`, la lista `alegra_palette` tiene 1 Índigo y 4 Teal. Agregar más Teal achica todavía más la franja índigo.
 
 ### Tema alternativo: Kanagawa Dragon
 
@@ -428,6 +424,7 @@ Por eso el tema se atenúa (`CATPPUCCIN_POWER_SCALE`) y el brillo por defecto es
 | `e1e84081` | Capa 8 de temas y luces (LOWER + RAISE); brillo máximo limitado a 128 |
 | `67e21a56` | Tema Alegra (LOWER + RAISE + I); prender/apagar luces pasa a K |
 | `5fdf859c` | Temas Kanagawa Dragon (O) y Horizon (P) en la capa 8; el tono pasa a 9/0 |
+| `7131d727` | Tema Alegra: Índigo solo en los bordes y Teal predominante |
 | `126f13ad` | Catppuccin atenuado para consumir menos, brillo por defecto 64, se quita el gesto de notificaciones, atrás/adelante más rápido (100 ms), scroll horizontal más rápido |
 
 Los cambios están solo en tu computadora: no se subieron a ningún repositorio remoto.

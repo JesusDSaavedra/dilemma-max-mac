@@ -24,7 +24,7 @@ The full user guide (Spanish) is in [`docs/GUIA-CONFIGURACION.md`](docs/GUIA-CON
 - **Five palette RGB themes**, all with a dimming key-press ripple:
   - Catppuccin Mocha (default)
   - Gruvbox Dark
-  - Alegra (Slate / Teal / Indigo)
+  - Alegra (Teal, with Indigo edges)
   - Kanagawa Dragon
   - Horizon
 

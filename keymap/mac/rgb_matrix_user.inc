@@ -50,10 +50,10 @@ RGB_MATRIX_EFFECT(horizon)
 #        define GRUVBOX_POWER_SCALE 221
 #    endif
 
-// The Alegra palette loads each LED at about 56% on average, so 228 (about 50/56) matches a
-// saturated effect.
+// The Alegra palette loads each LED at about 49% on average, already about the load of a
+// saturated effect, so it needs no dimming.
 #    ifndef ALEGRA_POWER_SCALE
-#        define ALEGRA_POWER_SCALE 228
+#        define ALEGRA_POWER_SCALE 255
 #    endif
 
 // Kanagawa Dragon loads each LED at about 60% on average and Horizon at about 69%, so 214 and
@@ -101,15 +101,14 @@ static rgb_t catppuccin_blend(rgb_t a, rgb_t b, uint8_t amount_of_b) {
     return (rgb_t){blend8(a.r, b.r, amount_of_b), blend8(a.g, b.g, amount_of_b), blend8(a.b, b.b, amount_of_b)};
 }
 
-// Alegra: Tailwind Slate neutrals on the outer edge, the primary Teal, then the secondary
-// Indigo at the center. Darker Slates are left out: on an LED they look almost off.
+// Alegra: the secondary Indigo only on the outer edge, then the primary Teal over most of
+// each half, so Teal dominates (Indigo reads as a strong blue on the LEDs).
 static const rgb_t alegra_palette[] = {
-    CATPPUCCIN_HEX(0xCBD5E1), // Slate 300
-    CATPPUCCIN_HEX(0x94A3B8), // Slate 400
+    CATPPUCCIN_HEX(0x514EA6), // Indigo (secondary)
     CATPPUCCIN_HEX(0x30ABA9), // Teal (primary)
     CATPPUCCIN_HEX(0x30ABA9), // Teal (primary)
-    CATPPUCCIN_HEX(0x514EA6), // Indigo (secondary)
-    CATPPUCCIN_HEX(0x514EA6), // Indigo (secondary)
+    CATPPUCCIN_HEX(0x30ABA9), // Teal (primary)
+    CATPPUCCIN_HEX(0x30ABA9), // Teal (primary)
 };
 
 // Kanagawa Dragon (rebelot/kanagawa.nvim, colors.lua): the muted, earthy accents, warm on the

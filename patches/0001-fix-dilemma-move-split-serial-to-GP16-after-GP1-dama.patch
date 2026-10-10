@@ -1,7 +1,7 @@
 From bf1b539db08397888011fe8dea640d35c298dbbc Mon Sep 17 00:00:00 2001
 From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
 Date: Fri, 9 Oct 2026 21:29:57 -0500
-Subject: [PATCH 01/24] fix(dilemma): move split serial to GP16 after GP1
+Subject: [PATCH 01/25] fix(dilemma): move split serial to GP16 after GP1
  damage
 
 ---

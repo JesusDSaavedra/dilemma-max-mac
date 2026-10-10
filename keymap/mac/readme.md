@@ -104,7 +104,7 @@ Layer 8 (`LAYER_THEME`) holds the lighting controls on the right half and turns 
 | --- | --- | --- |
 | `Y` | `RGB_THEME_RESTORE` | Catppuccin + default brightness |
 | `U` | `RGB_THEME_GRUVBOX` | Gruvbox Dark |
-| `I` | `RGB_THEME_ALEGRA` | Alegra (Slate, Teal, Indigo) |
+| `I` | `RGB_THEME_ALEGRA` | Alegra (Indigo edges, Teal) |
 | `K` | `RM_TOGG` | RGB on/off |
 | `O` | `RGB_THEME_KANAGAWA` | Kanagawa Dragon |
 | `P` | `RGB_THEME_HORIZON` | Horizon |
@@ -135,10 +135,10 @@ Catppuccin switches to it, and `RGB_THEME_RESTORE` (`LOWER` + `T`) goes back. It
 gradient layout and ripple, with `GRUVBOX_POWER_SCALE` `221` (its accents load each LED at about
 58%).
 
-A third theme, **Alegra**, follows Gruvbox. It uses Tailwind Slate 300/400 on the outer edge, the
-primary Teal `#30ABA9` in the middle and the secondary Indigo `#514EA6` at the center. Darker
-Slates are left out because they look almost off on an LED. Its power scale is
-`ALEGRA_POWER_SCALE` `228` (about 56% load).
+A third theme, **Alegra**, follows Gruvbox. The secondary Indigo `#514EA6` is only on the outer
+edge, and the primary Teal `#30ABA9` covers the rest of each half. Teal dominates because Indigo
+reads as a strong blue on the LEDs. The palette loads each LED at about 49%, so it needs no
+dimming: `ALEGRA_POWER_SCALE` is `255`.
 
 **Kanagawa Dragon** comes from [rebelot/kanagawa.nvim](https://github.com/rebelot/kanagawa.nvim)
 (`colors.lua`). It is the earthy variant, with muted accents: dragonRed, Orange and Yellow on

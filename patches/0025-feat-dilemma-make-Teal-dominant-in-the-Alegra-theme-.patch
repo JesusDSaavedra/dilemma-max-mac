@@ -1,0 +1,81 @@
+From 7131d727650455c8b9a724c93ca418ecf8014ceb Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Sat, 10 Oct 2026 03:05:52 -0500
+Subject: [PATCH 25/25] feat(dilemma): make Teal dominant in the Alegra theme
+ with Indigo edges
+
+---
+ .../dilemma/4x6_4_procyon/keymaps/mac/readme.md | 10 +++++-----
+ .../keymaps/mac/rgb_matrix_user.inc             | 17 ++++++++---------
+ 2 files changed, 13 insertions(+), 14 deletions(-)
+
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+index b037a814..76350d22 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+@@ -104,7 +104,7 @@ Layer 8 (`LAYER_THEME`) holds the lighting controls on the right half and turns
+ | --- | --- | --- |
+ | `Y` | `RGB_THEME_RESTORE` | Catppuccin + default brightness |
+ | `U` | `RGB_THEME_GRUVBOX` | Gruvbox Dark |
+-| `I` | `RGB_THEME_ALEGRA` | Alegra (Slate, Teal, Indigo) |
++| `I` | `RGB_THEME_ALEGRA` | Alegra (Indigo edges, Teal) |
+ | `K` | `RM_TOGG` | RGB on/off |
+ | `O` | `RGB_THEME_KANAGAWA` | Kanagawa Dragon |
+ | `P` | `RGB_THEME_HORIZON` | Horizon |
+@@ -135,10 +135,10 @@ Catppuccin switches to it, and `RGB_THEME_RESTORE` (`LOWER` + `T`) goes back. It
+ gradient layout and ripple, with `GRUVBOX_POWER_SCALE` `221` (its accents load each LED at about
+ 58%).
+ 
+-A third theme, **Alegra**, follows Gruvbox. It uses Tailwind Slate 300/400 on the outer edge, the
+-primary Teal `#30ABA9` in the middle and the secondary Indigo `#514EA6` at the center. Darker
+-Slates are left out because they look almost off on an LED. Its power scale is
+-`ALEGRA_POWER_SCALE` `228` (about 56% load).
++A third theme, **Alegra**, follows Gruvbox. The secondary Indigo `#514EA6` is only on the outer
++edge, and the primary Teal `#30ABA9` covers the rest of each half. Teal dominates because Indigo
++reads as a strong blue on the LEDs. The palette loads each LED at about 49%, so it needs no
++dimming: `ALEGRA_POWER_SCALE` is `255`.
+ 
+ **Kanagawa Dragon** comes from [rebelot/kanagawa.nvim](https://github.com/rebelot/kanagawa.nvim)
+ (`colors.lua`). It is the earthy variant, with muted accents: dragonRed, Orange and Yellow on
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
+index c57bfe0a..63dbd536 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
+@@ -50,10 +50,10 @@ RGB_MATRIX_EFFECT(horizon)
+ #        define GRUVBOX_POWER_SCALE 221
+ #    endif
+ 
+-// The Alegra palette loads each LED at about 56% on average, so 228 (about 50/56) matches a
+-// saturated effect.
++// The Alegra palette loads each LED at about 49% on average, already about the load of a
++// saturated effect, so it needs no dimming.
+ #    ifndef ALEGRA_POWER_SCALE
+-#        define ALEGRA_POWER_SCALE 228
++#        define ALEGRA_POWER_SCALE 255
+ #    endif
+ 
+ // Kanagawa Dragon loads each LED at about 60% on average and Horizon at about 69%, so 214 and
+@@ -101,15 +101,14 @@ static rgb_t catppuccin_blend(rgb_t a, rgb_t b, uint8_t amount_of_b) {
+     return (rgb_t){blend8(a.r, b.r, amount_of_b), blend8(a.g, b.g, amount_of_b), blend8(a.b, b.b, amount_of_b)};
+ }
+ 
+-// Alegra: Tailwind Slate neutrals on the outer edge, the primary Teal, then the secondary
+-// Indigo at the center. Darker Slates are left out: on an LED they look almost off.
++// Alegra: the secondary Indigo only on the outer edge, then the primary Teal over most of
++// each half, so Teal dominates (Indigo reads as a strong blue on the LEDs).
+ static const rgb_t alegra_palette[] = {
+-    CATPPUCCIN_HEX(0xCBD5E1), // Slate 300
+-    CATPPUCCIN_HEX(0x94A3B8), // Slate 400
++    CATPPUCCIN_HEX(0x514EA6), // Indigo (secondary)
++    CATPPUCCIN_HEX(0x30ABA9), // Teal (primary)
++    CATPPUCCIN_HEX(0x30ABA9), // Teal (primary)
+     CATPPUCCIN_HEX(0x30ABA9), // Teal (primary)
+     CATPPUCCIN_HEX(0x30ABA9), // Teal (primary)
+-    CATPPUCCIN_HEX(0x514EA6), // Indigo (secondary)
+-    CATPPUCCIN_HEX(0x514EA6), // Indigo (secondary)
+ };
+ 
+ // Kanagawa Dragon (rebelot/kanagawa.nvim, colors.lua): the muted, earthy accents, warm on the
+-- 
+2.56.0
+
