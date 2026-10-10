@@ -1,0 +1,64 @@
+From 2a6ac9a583bcddf1429bf946eb18a8a3f9ebcb28 Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Sat, 10 Oct 2026 01:51:20 -0500
+Subject: [PATCH 17/20] feat(dilemma): restore Catppuccin key press ripple
+
+---
+ .../bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h   | 7 ++++++-
+ .../bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c   | 2 +-
+ .../bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md  | 7 +++++--
+ 3 files changed, 12 insertions(+), 4 deletions(-)
+
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+index ac029443..905f7ca8 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+@@ -98,8 +98,13 @@
+  * load each LED at about 79% on average, against about 50% for a saturated
+  * effect, so the effect scales its colors by CATPPUCCIN_POWER_SCALE to match
+  * a saturated effect at the same brightness, and the default brightness is low.
+- * The key press ripple (RGB_MATRIX_KEYPRESSES) stays off.
++ *
++ * RGB_MATRIX_KEYPRESSES enables the faint Lavender ripple on key presses
++ * (SPLIT_TRANSPORT_MIRROR from keyboard.json sends presses to both halves).
++ * It also adds the built-in reactive effects, which shifts the custom effect's
++ * index, so USER_CONFIG_MAGIC must change whenever this define is toggled.
+  */
++#define RGB_MATRIX_KEYPRESSES
+ #define RGB_MATRIX_DEFAULT_MODE RGB_MATRIX_CUSTOM_catppuccin_mocha
+ #undef RGB_MATRIX_DEFAULT_VAL
+ #define RGB_MATRIX_DEFAULT_VAL 64 // Of 255, capped at the keyboard's 176.
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+index e9ecca59..a74d0bd9 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+@@ -110,7 +110,7 @@ _Static_assert(sizeof(user_config_t) == sizeof(uint32_t), "user_config_t must fi
+ 
+ // Bump this whenever the defaults or the keymap change, so devices that were
+ // flashed before reset to the new defaults on the next boot.
+-#define USER_CONFIG_MAGIC 0xD6
++#define USER_CONFIG_MAGIC 0xD7
+ 
+ static user_config_t user_config;
+ 
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+index f795178b..59ed2a66 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+@@ -104,8 +104,11 @@ The default effect is a [Catppuccin](https://catppuccin.com) Mocha theme (`rgb_m
+ - Every key shows a color from the Mocha accent palette (Rosewater, Flamingo, Pink, Mauve, Red,
+   Maroon, Peach, Yellow, Green, Teal, Sky, Sapphire, Blue, Lavender) as a smooth gradient from
+   the outer edge to the center. Both halves mirror each other.
+-- There is no key press ripple: `RGB_MATRIX_KEYPRESSES` stays off, so the ripple code in
+-  `rgb_matrix_user.inc` is inactive.
++- Each key press sends a faint Lavender ripple outwards for about half a second, blending at most
++  22% towards Lavender (`CATPPUCCIN_RIPPLE_*` in `rgb_matrix_user.inc`). It needs
++  `RGB_MATRIX_KEYPRESSES`, which also shifts the custom effect's index, so the settings version
++  changes whenever that define is toggled. An earlier report blamed the ripple for a dead split
++  trackpad; the real cause was the power brownout described below.
+ - Power: with both halves connected, bright pastels can sag the supply until the LEDs drift to
+   red and the trackpad chip resets. Pastels light all three channels of each LED (about 79% on
+   average) while saturated effects light one or two (about 50%), so the effect scales every
+-- 
+2.56.0
+

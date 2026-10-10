@@ -1,0 +1,203 @@
+From 59599229adb77a5c3e9a015ec77fbccf3d91f9ac Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Fri, 9 Oct 2026 21:37:22 -0500
+Subject: [PATCH 02/20] feat(digitizer): send 16-bit swipe keycodes and add mac
+ keymap
+
+Swipe gestures used tap_code(), which truncates modded keycodes such as
+C(KC_RIGHT). Use tap_code16() so swipes can send macOS shortcuts.
+Defaults are unchanged.
+
+Add a VIA-enabled mac keymap for the Dilemma Max (Procyon) that maps
+3-finger swipes to Ctrl+arrows like the native macOS trackpad.
+---
+ docs/features/digitizer.md                    | 23 ++++--
+ .../4x6_4_procyon/keymaps/mac/config.h        | 15 ++++
+ .../4x6_4_procyon/keymaps/mac/keymap.c        | 73 +++++++++++++++++++
+ .../4x6_4_procyon/keymaps/mac/rules.mk        |  1 +
+ quantum/digitizer_mouse_fallback.c            |  9 ++-
+ 5 files changed, 110 insertions(+), 11 deletions(-)
+ create mode 100644 keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+ create mode 100644 keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+ create mode 100644 keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rules.mk
+
+diff --git a/docs/features/digitizer.md b/docs/features/digitizer.md
+index 8f4fcea2..60efffbf 100644
+--- a/docs/features/digitizer.md
++++ b/docs/features/digitizer.md
+@@ -70,13 +70,22 @@ The mouse fallback gesture detection code can be tweaked with the following para
+ | `DIGITIZER_MOUSE_TAP_DURATION`                 | (Optional) The length of time each simulated button press is held for.                                                           | `1`                 |
+ | `DIGITIZER_MOUSE_TAP_DISTANCE`                 | (Optional) The maximum distance a contact can move in an axis and still be detected as a tap.                                    | `25`                |
+ | `DIGITIZER_SCROLL_DIVISOR`                     | (Optional) A scaling factor that is applied to reduce the speed of scroll reporting.                                             | `10`                |
+-| `DIGITIZER_MOUSE_SWIPE_TIMEOUT`                | (Optional) The timeout in ms before a swipe gesture is detected.                                                                 | `500`               |
+-| `DIGITIZER_MOUSE_SWIPE_DISTANCE`               | (Optional) Minimum move distance required for a swipe to be detected.                                                            | `300`               |
+-| `DIGITIZER_MOUSE_SWIPE_THRESHOLD`              | (Optional) Movements in the alternate axis must be less than this threshold for a swipe to be detected.                          | `100`               |
+-| `DIGITIZER_SWIPE_LEFT_KC`                      | (Optional) The keycode to generate when a swipe left gesture is detected                                                         | `QK_MOUSE_BUTTON_3` |
+-| `DIGITIZER_SWIPE_RIGHT_KC`                     | (Optional) The keycode to generate when a swipe right gesture is detected                                                        | `QK_MOUSE_BUTTON_4` |
+-| `DIGITIZER_SWIPE_UP_KC`                        | (Optional) The keycode to generate when a swipe up gesture is detected                                                           | `KC_LEFT_GUI`       |
+-| `DIGITIZER_SWIPE_DOWN_KC`                      | (Optional) The keycode to generate when a swipe down gesture is detected                                                         | `KC_ESC`            |
++| `DIGITIZER_MOUSE_SWIPE_TIMEOUT`                | (Optional) The timeout in ms before a swipe gesture is detected.                                                                 | `1000`              |
++| `DIGITIZER_MOUSE_SWIPE_DISTANCE`               | (Optional) Minimum move distance required for a swipe to be detected.                                                            | `500`               |
++| `DIGITIZER_MOUSE_SWIPE_THRESHOLD`              | (Optional) Movements in the alternate axis must be less than this threshold for a swipe to be detected.                          | `300`               |
++| `DIGITIZER_SWIPE_LEFT_KC`                      | (Optional) The keycode to generate when the fingers swipe left. 16-bit keycodes such as `C(KC_RIGHT)` are supported.             | `QK_MOUSE_BUTTON_3` |
++| `DIGITIZER_SWIPE_RIGHT_KC`                     | (Optional) The keycode to generate when the fingers swipe right. 16-bit keycodes such as `C(KC_LEFT)` are supported.             | `QK_MOUSE_BUTTON_4` |
++| `DIGITIZER_SWIPE_UP_KC`                        | (Optional) The keycode to generate when the fingers swipe up. 16-bit keycodes such as `C(KC_UP)` are supported.                  | `KC_LEFT_GUI`       |
++| `DIGITIZER_SWIPE_DOWN_KC`                      | (Optional) The keycode to generate when the fingers swipe down. 16-bit keycodes such as `C(KC_DOWN)` are supported.              | `KC_ESC`            |
++
++Swipe keycodes are sent with `tap_code16()`, so modified keycodes work. For example, to switch macOS desktops the way a native trackpad does:
++
++```c
++#define DIGITIZER_SWIPE_LEFT_KC C(KC_RIGHT)  // Fingers left: next desktop on the right
++#define DIGITIZER_SWIPE_RIGHT_KC C(KC_LEFT)  // Fingers right: previous desktop on the left
++#define DIGITIZER_SWIPE_UP_KC C(KC_UP)       // Mission Control
++#define DIGITIZER_SWIPE_DOWN_KC C(KC_DOWN)   // App Exposé
++```
+ 
+ ## Split Keyboard Configuration
+ 
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+new file mode 100644
+index 00000000..a5b82edb
+--- /dev/null
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+@@ -0,0 +1,15 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
++
++#pragma once
++
++/*
++ * macOS has no USB trackpad (PTP) support, so the trackpad runs in mouse
++ * fallback mode and gestures are detected on the keyboard. Distances below are
++ * in trackpad units: the Procyon reports 100 units per millimetre.
++ */
++
++/* 3-finger swipes, mapped to the native macOS trackpad shortcuts. */
++#define DIGITIZER_SWIPE_LEFT_KC C(KC_RIGHT) // Fingers left: next desktop on the right.
++#define DIGITIZER_SWIPE_RIGHT_KC C(KC_LEFT) // Fingers right: previous desktop on the left.
++#define DIGITIZER_SWIPE_UP_KC C(KC_UP)      // Mission Control.
++#define DIGITIZER_SWIPE_DOWN_KC C(KC_DOWN)  // App Exposé.
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+new file mode 100644
+index 00000000..4ac52309
+--- /dev/null
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+@@ -0,0 +1,73 @@
++/**
++ * Copyright 2021 Charly Delay <charly@codesink.dev> (@0xcharly)
++ * Copyright 2023 casuanoob <casuanoob@hotmail.com> (@casuanoob)
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++#include QMK_KEYBOARD_H
++
++enum dilemma_keymap_layers {
++    LAYER_BASE = 0,
++    LAYER_LOWER,
++    LAYER_RAISE,
++};
++
++#define LOWER MO(LAYER_LOWER)
++#define RAISE MO(LAYER_RAISE)
++
++// clang-format off
++const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
++  [LAYER_BASE] = LAYOUT(
++  // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
++        KC_ESC,    KC_1,    KC_2,    KC_3,    KC_4,    KC_5,       KC_6,    KC_7,    KC_8,    KC_9,    KC_0, KC_MINS,
++  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
++        KC_TAB,    KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,       KC_Y,    KC_U,    KC_I,    KC_O,    KC_P, KC_BSLS,
++  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
++       KC_LSFT,    KC_A,    KC_S,    KC_D,    KC_F,    KC_G,       KC_H,    KC_J,    KC_K,    KC_L, KC_SCLN, KC_QUOT,
++  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
++       KC_LCTL,    KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,       KC_N,    KC_M, KC_COMM,  KC_DOT, KC_SLSH, KC_LALT,
++  // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
++                         KC_LALT, KC_BSPC,  KC_SPC,   LOWER,      RAISE,  KC_ENT,  KC_DEL, KC_LGUI
++  //                    ╰───────────────────────────────────╯ ╰───────────────────────────────────╯
++  ),
++
++  [LAYER_LOWER] = LAYOUT(
++  // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
++       KC_TILD, KC_EXLM,   KC_AT, KC_HASH,  KC_DLR, KC_PERC,    KC_CIRC, KC_AMPR, KC_ASTR, KC_LPRN, KC_RPRN, KC_UNDS,
++  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
++       RM_NEXT, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    KC_LBRC,   KC_P7,   KC_P8,   KC_P9, KC_RBRC, XXXXXXX,
++  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
++       RM_TOGG, KC_LGUI, KC_LALT, KC_LCTL, KC_LSFT, XXXXXXX,    KC_PPLS,   KC_P4,   KC_P5,   KC_P6, KC_PMNS, KC_PEQL,
++  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
++       RM_PREV, XXXXXXX, XXXXXXX, XXXXXXX,  EE_CLR, QK_BOOT,    KC_PAST,   KC_P1,   KC_P2,   KC_P3, KC_PSLS, KC_PDOT,
++  // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
++                         XXXXXXX, XXXXXXX, XXXXXXX, _______,    _______, _______, _______, _______
++  //                    ╰───────────────────────────────────╯ ╰───────────────────────────────────╯
++  ),
++
++  [LAYER_RAISE] = LAYOUT(
++  // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
++        KC_F12,   KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,      KC_F6,   KC_F7,   KC_F8,   KC_F9,  KC_F10,  KC_F11,
++  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
++       KC_MNXT, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_VOLU,
++  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
++       KC_MPLY, KC_LEFT,   KC_UP, KC_DOWN, KC_RGHT, XXXXXXX,    XXXXXXX, KC_RSFT, KC_RCTL, KC_RALT, KC_RGUI, KC_MUTE,
++  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
++       KC_MPRV, KC_HOME, KC_PGUP, KC_PGDN,  KC_END, XXXXXXX,    QK_BOOT,  EE_CLR, XXXXXXX, XXXXXXX, XXXXXXX, KC_VOLD,
++  // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
++                         _______, _______, _______, _______,    _______, XXXXXXX, XXXXXXX, XXXXXXX
++  //                    ╰───────────────────────────────────╯ ╰───────────────────────────────────╯
++  ),
++};
++// clang-format on
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rules.mk b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rules.mk
+new file mode 100644
+index 00000000..1e5b9980
+--- /dev/null
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rules.mk
+@@ -0,0 +1 @@
++VIA_ENABLE = yes
+diff --git a/quantum/digitizer_mouse_fallback.c b/quantum/digitizer_mouse_fallback.c
+index dd7518a3..c31f7e1f 100644
+--- a/quantum/digitizer_mouse_fallback.c
++++ b/quantum/digitizer_mouse_fallback.c
+@@ -11,6 +11,7 @@
+ #    include "debug.h"
+ #    include "timer.h"
+ #    include "action.h"
++#    include "quantum.h"
+ 
+ #    ifndef DIGITIZER_MOUSE_TAP_DETECTION_TIMEOUT
+ #        define DIGITIZER_MOUSE_TAP_DETECTION_TIMEOUT 200
+@@ -252,19 +253,19 @@ void digitizer_update_mouse_report(report_digitizer_t *report) {
+             } else if (digitizer_send_mouse_reports) {
+                 if (distance_x > DIGITIZER_MOUSE_SWIPE_DISTANCE && abs(distance_y) < DIGITIZER_MOUSE_SWIPE_THRESHOLD) {
+                     // Swipe right
+-                    tap_code(DIGITIZER_SWIPE_RIGHT_KC);
++                    tap_code16(DIGITIZER_SWIPE_RIGHT_KC);
+                     state = Finished;
+                 } else if (distance_x < -DIGITIZER_MOUSE_SWIPE_DISTANCE && abs(distance_y) < DIGITIZER_MOUSE_SWIPE_THRESHOLD) {
+                     // Swipe left
+-                    tap_code(DIGITIZER_SWIPE_LEFT_KC);
++                    tap_code16(DIGITIZER_SWIPE_LEFT_KC);
+                     state = Finished;
+                 } else if (distance_y > DIGITIZER_MOUSE_SWIPE_DISTANCE && abs(distance_x) < DIGITIZER_MOUSE_SWIPE_THRESHOLD) {
+                     // Swipe down
+-                    tap_code(DIGITIZER_SWIPE_DOWN_KC);
++                    tap_code16(DIGITIZER_SWIPE_DOWN_KC);
+                     state = Finished;
+                 } else if (distance_y < -DIGITIZER_MOUSE_SWIPE_DISTANCE && abs(distance_x) < DIGITIZER_MOUSE_SWIPE_THRESHOLD) {
+                     // Swipe up
+-                    tap_code(DIGITIZER_SWIPE_UP_KC);
++                    tap_code16(DIGITIZER_SWIPE_UP_KC);
+                     state = Finished;
+                 }
+             }
+-- 
+2.56.0
+

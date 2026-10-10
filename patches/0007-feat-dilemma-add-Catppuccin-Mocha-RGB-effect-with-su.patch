@@ -1,0 +1,221 @@
+From 59bd70991f9c70ca8ece03e07fe84537af76477d Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Fri, 9 Oct 2026 22:18:45 -0500
+Subject: [PATCH 07/20] feat(dilemma): add Catppuccin Mocha RGB effect with
+ subtle ripple to mac keymap
+
+Add a custom RGB Matrix effect that paints the Catppuccin Mocha accent
+palette as a gradient mirrored on both halves, scaled by the brightness
+setting, plus a faint Lavender ripple (at most 22%, ~500 ms) on each key
+press. Enable RGB_MATRIX_KEYPRESSES so the hit tracker runs; key presses
+already reach both halves through SPLIT_TRANSPORT_MIRROR.
+
+Make it the default mode at brightness 96 and bump the settings version so
+an existing EEPROM switches to it once on the next boot.
+---
+ .../4x6_4_procyon/keymaps/mac/config.h        |  10 ++
+ .../4x6_4_procyon/keymaps/mac/keymap.c        |   9 +-
+ .../4x6_4_procyon/keymaps/mac/readme.md       |  17 +++
+ .../keymaps/mac/rgb_matrix_user.inc           | 109 ++++++++++++++++++
+ .../4x6_4_procyon/keymaps/mac/rules.mk        |   1 +
+ 5 files changed, 145 insertions(+), 1 deletion(-)
+ create mode 100644 keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
+
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+index 88c4e0fa..f7c4c4d1 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+@@ -49,3 +49,13 @@
+ #define DIGITIZER_PINCH_MIN_DISTANCE_CHANGE_PERCENT 50 // ...and their distance changed by half their travel.
+ #define DIGITIZER_TWO_FINGER_STATIONARY_PERCENT 25     // A finger moving under 25% of the other one rests: scroll.
+ #define DIGITIZER_PINCH_DIVISOR 10                     // Higher zooms slower (trackpad units per scroll step).
++
++/*
++ * RGB: the Catppuccin Mocha effect from rgb_matrix_user.inc, with a faint
++ * ripple on key presses. SPLIT_TRANSPORT_MIRROR (from keyboard.json) sends the
++ * key presses to the other half, so ripples cross both halves.
++ */
++#define RGB_MATRIX_KEYPRESSES
++#define RGB_MATRIX_DEFAULT_MODE RGB_MATRIX_CUSTOM_catppuccin_mocha
++#undef RGB_MATRIX_DEFAULT_VAL
++#define RGB_MATRIX_DEFAULT_VAL 96 // Of 255, capped at the keyboard's 176.
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+index 7085fe9d..94ea9bb5 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+@@ -110,7 +110,7 @@ _Static_assert(sizeof(user_config_t) == sizeof(uint32_t), "user_config_t must fi
+ 
+ // Bump this whenever the defaults or the keymap change, so devices that were
+ // flashed before reset to the new defaults on the next boot.
+-#define USER_CONFIG_MAGIC 0xD2
++#define USER_CONFIG_MAGIC 0xD3
+ 
+ static user_config_t user_config;
+ 
+@@ -148,6 +148,13 @@ void keyboard_post_init_user(void) {
+         // firmware flashed on the same day as an older one would keep the old
+         // layout and the custom keys would be missing. Reload it from flash.
+         dynamic_keymap_reset();
++#endif
++#ifdef RGB_MATRIX_ENABLE
++        // Switch to the default effect and brightness. This is saved, so VIA
++        // shows it and later changes made from VIA or keys are kept.
++        rgb_matrix_enable();
++        rgb_matrix_mode(RGB_MATRIX_DEFAULT_MODE);
++        rgb_matrix_sethsv(rgb_matrix_get_hue(), rgb_matrix_get_sat(), RGB_MATRIX_DEFAULT_VAL);
+ #endif
+     }
+     user_config_apply();
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+index d5116b38..c5ce719e 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+@@ -54,6 +54,23 @@ changes. To make sure the keys above show up, this keymap stores a settings vers
+ new firmware changes it, the first boot resets the cursor speed, the pinch modifier and the
+ VIA layout to the defaults (your VIA key changes are lost once). `EE_CLR` does the same.
+ 
++## Lighting
++
++The default effect is a [Catppuccin](https://catppuccin.com) Mocha theme (`rgb_matrix_user.inc`):
++
++- Every key shows a color from the Mocha accent palette (Rosewater, Flamingo, Pink, Mauve, Red,
++  Maroon, Peach, Yellow, Green, Teal, Sky, Sapphire, Blue, Lavender) as a smooth gradient from
++  the outer edge to the center. Both halves mirror each other.
++- Each key press sends a faint Lavender ripple outwards for about half a second. It blends at
++  most 22% towards Lavender, so the overall lighting barely changes. Ripples cross both halves.
++- The colors use the exact palette values, scaled by the brightness setting (default 96 of the
++  keyboard's maximum 176). `RM_NEXT` / `RM_PREV` / `RM_TOGG` on `LOWER` and VIA still change the
++  effect and brightness.
++
++The ripple timing and strength are the `CATPPUCCIN_RIPPLE_*` defines in `rgb_matrix_user.inc`.
++After flashing a firmware with a new settings version (see above), the first boot selects this
++effect and the default brightness again.
++
+ ## Build
+ 
+     qmk compile -kb bastardkb/dilemma/4x6_4_procyon -km mac
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
+new file mode 100644
+index 00000000..0d370fd6
+--- /dev/null
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
+@@ -0,0 +1,109 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
++
++// Catppuccin Mocha: the accent palette as a gradient, mirrored on both halves,
++// with a faint ripple that spreads from each key press.
++RGB_MATRIX_EFFECT(catppuccin_mocha)
++
++#ifdef RGB_MATRIX_CUSTOM_EFFECT_IMPLS
++
++// How long a ripple lasts, in ms.
++#    ifndef CATPPUCCIN_RIPPLE_DURATION
++#        define CATPPUCCIN_RIPPLE_DURATION 500
++#    endif
++
++// How far a ripple travels, in LED position units (a key is about 18 units wide).
++#    ifndef CATPPUCCIN_RIPPLE_RADIUS
++#        define CATPPUCCIN_RIPPLE_RADIUS 72
++#    endif
++
++// The width of the ripple ring, in LED position units.
++#    ifndef CATPPUCCIN_RIPPLE_WIDTH
++#        define CATPPUCCIN_RIPPLE_WIDTH 20
++#    endif
++
++// The strongest blend towards the ripple color, out of 255 (56 is about 22%).
++#    ifndef CATPPUCCIN_RIPPLE_BLEND
++#        define CATPPUCCIN_RIPPLE_BLEND 56
++#    endif
++
++#    define CATPPUCCIN_HEX(hex) \
++        { .r = ((hex) >> 16) & 0xFF, .g = ((hex) >> 8) & 0xFF, .b = (hex) & 0xFF }
++
++// Catppuccin Mocha accents, from the outer edge of each half to the center.
++static const rgb_t catppuccin_mocha_palette[] = {
++    CATPPUCCIN_HEX(0xF5E0DC), // Rosewater
++    CATPPUCCIN_HEX(0xF2CDCD), // Flamingo
++    CATPPUCCIN_HEX(0xF5C2E7), // Pink
++    CATPPUCCIN_HEX(0xCBA6F7), // Mauve
++    CATPPUCCIN_HEX(0xF38BA8), // Red
++    CATPPUCCIN_HEX(0xEBA0AC), // Maroon
++    CATPPUCCIN_HEX(0xFAB387), // Peach
++    CATPPUCCIN_HEX(0xF9E2AF), // Yellow
++    CATPPUCCIN_HEX(0xA6E3A1), // Green
++    CATPPUCCIN_HEX(0x94E2D5), // Teal
++    CATPPUCCIN_HEX(0x89DCEB), // Sky
++    CATPPUCCIN_HEX(0x74C7EC), // Sapphire
++    CATPPUCCIN_HEX(0x89B4FA), // Blue
++    CATPPUCCIN_HEX(0xB4BEFE), // Lavender
++};
++
++// The ripple blends towards Lavender.
++static const rgb_t catppuccin_mocha_ripple = CATPPUCCIN_HEX(0xB4BEFE);
++
++#    define CATPPUCCIN_PALETTE_STEPS (ARRAY_SIZE(catppuccin_mocha_palette) - 1)
++
++static rgb_t catppuccin_blend(rgb_t a, rgb_t b, uint8_t amount_of_b) {
++    return (rgb_t){blend8(a.r, b.r, amount_of_b), blend8(a.g, b.g, amount_of_b), blend8(a.b, b.b, amount_of_b)};
++}
++
++// The gradient color for an LED, from its horizontal distance to the center.
++static rgb_t catppuccin_gradient(uint8_t x) {
++    const uint8_t  center = k_rgb_matrix_center.x;
++    const uint8_t  dist   = x > center ? x - center : center - x;
++    const uint8_t  span   = center > 0 ? center : 1;
++    const uint16_t pos    = MIN((uint16_t)(span - MIN(dist, span)) * CATPPUCCIN_PALETTE_STEPS * 256 / span, CATPPUCCIN_PALETTE_STEPS * 256 - 1);
++    const uint8_t  index  = pos >> 8;
++    return catppuccin_blend(catppuccin_mocha_palette[index], catppuccin_mocha_palette[index + 1], pos & 0xFF);
++}
++
++// The ripple strength at an LED (0 to CATPPUCCIN_RIPPLE_BLEND): the strongest ring that reaches it.
++static uint8_t catppuccin_ripple(uint8_t led) {
++    uint8_t strength = 0;
++#    ifdef RGB_MATRIX_KEYREACTIVE_ENABLED
++    for (uint8_t j = 0; j < g_last_hit_tracker.count; j++) {
++        const uint16_t tick = g_last_hit_tracker.tick[j];
++        if (tick >= CATPPUCCIN_RIPPLE_DURATION) {
++            continue;
++        }
++        const int16_t  dx     = g_led_config.point[led].x - g_last_hit_tracker.x[j];
++        const int16_t  dy     = g_led_config.point[led].y - g_last_hit_tracker.y[j];
++        const uint8_t  dist   = sqrt16(dx * dx + dy * dy);
++        const uint16_t radius = (uint32_t)tick * CATPPUCCIN_RIPPLE_RADIUS / CATPPUCCIN_RIPPLE_DURATION;
++        const uint16_t offset = dist > radius ? dist - radius : radius - dist;
++        if (offset >= CATPPUCCIN_RIPPLE_WIDTH) {
++            continue;
++        }
++        const uint8_t ring = (CATPPUCCIN_RIPPLE_WIDTH - offset) * 255 / CATPPUCCIN_RIPPLE_WIDTH;
++        const uint8_t fade = (uint32_t)(CATPPUCCIN_RIPPLE_DURATION - tick) * 255 / CATPPUCCIN_RIPPLE_DURATION;
++        strength           = MAX(strength, scale8(scale8(ring, fade), CATPPUCCIN_RIPPLE_BLEND));
++    }
++#    else
++    (void)led;
++#    endif
++    return strength;
++}
++
++static bool catppuccin_mocha(effect_params_t *params) {
++    RGB_MATRIX_USE_LIMITS(led_min, led_max);
++
++    const uint8_t val = rgb_matrix_get_val();
++    for (uint8_t i = led_min; i < led_max; i++) {
++        RGB_MATRIX_TEST_LED_FLAGS();
++        rgb_t rgb = catppuccin_gradient(g_led_config.point[i].x);
++        rgb       = catppuccin_blend(rgb, catppuccin_mocha_ripple, catppuccin_ripple(i));
++        rgb_matrix_set_color(i, scale8(rgb.r, val), scale8(rgb.g, val), scale8(rgb.b, val));
++    }
++    return rgb_matrix_check_finished_leds(led_max);
++}
++
++#endif // RGB_MATRIX_CUSTOM_EFFECT_IMPLS
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rules.mk b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rules.mk
+index 1e5b9980..73055968 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rules.mk
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rules.mk
+@@ -1 +1,2 @@
+ VIA_ENABLE = yes
++RGB_MATRIX_CUSTOM_USER = yes
+-- 
+2.56.0
+

@@ -1,0 +1,54 @@
+From c91ecf3bd80f293a02da68d7c2ee3066a84f5005 Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Sat, 10 Oct 2026 02:10:45 -0500
+Subject: [PATCH 19/20] feat(dilemma): darker and slower Catppuccin ripple
+
+---
+ .../bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md   | 4 ++--
+ .../dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc   | 6 +++---
+ 2 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+index bfbf7798..b0f07068 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+@@ -104,8 +104,8 @@ The default effect is a [Catppuccin](https://catppuccin.com) Mocha theme (`rgb_m
+ - Every key shows a color from the Mocha accent palette (Rosewater, Flamingo, Pink, Mauve, Red,
+   Maroon, Peach, Yellow, Green, Teal, Sky, Sapphire, Blue, Lavender) as a smooth gradient from
+   the outer edge to the center. Both halves mirror each other.
+-- Each key press sends a ripple that dims the keys it passes (up to about 55% darker at the crest)
+-  as it travels from the pressed key across both halves in about 0.9 s, fading as it goes
++- Each key press sends a ripple that dims the keys it passes (up to about 82% darker at the crest)
++  as it travels from the pressed key across both halves in about 1.3 s, fading as it goes
+   (`CATPPUCCIN_RIPPLE_*` in `rgb_matrix_user.inc`). It needs
+   `RGB_MATRIX_KEYPRESSES`, which also shifts the custom effect's index, so the settings version
+   changes whenever that define is toggled. An earlier report blamed the ripple for a dead split
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
+index 1bf6bca0..7e7a6544 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
+@@ -8,7 +8,7 @@ RGB_MATRIX_EFFECT(catppuccin_mocha)
+ 
+ // How long a ripple lasts, in ms. It travels CATPPUCCIN_RIPPLE_RADIUS in this time.
+ #    ifndef CATPPUCCIN_RIPPLE_DURATION
+-#        define CATPPUCCIN_RIPPLE_DURATION 900
++#        define CATPPUCCIN_RIPPLE_DURATION 1300
+ #    endif
+ 
+ // How far a ripple travels, in LED position units (a key is about 18 units wide and the
+@@ -22,10 +22,10 @@ RGB_MATRIX_EFFECT(catppuccin_mocha)
+ #        define CATPPUCCIN_RIPPLE_WIDTH 28
+ #    endif
+ 
+-// How much the ring darkens the keys it passes, out of 255 (140 is about 55% darker at the
++// How much the ring darkens the keys it passes, out of 255 (210 is about 82% darker at the
+ // crest). The ring also fades out as it travels.
+ #    ifndef CATPPUCCIN_RIPPLE_DIM
+-#        define CATPPUCCIN_RIPPLE_DIM 140
++#        define CATPPUCCIN_RIPPLE_DIM 210
+ #    endif
+ 
+ // Scales every color, out of 255, so the effect draws about as much power as a saturated one at
+-- 
+2.56.0
+

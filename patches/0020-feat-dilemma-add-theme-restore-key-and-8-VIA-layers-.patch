@@ -1,0 +1,138 @@
+From 3f78f78e683c846daac57a67b95eac4aa58ee8f8 Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Sat, 10 Oct 2026 02:25:17 -0500
+Subject: [PATCH 20/20] feat(dilemma): add theme restore key and 8 VIA layers
+ to mac keymap
+
+---
+ .../4x6_4_procyon/keymaps/mac/config.h        |  7 +++++
+ .../4x6_4_procyon/keymaps/mac/keymap.c        | 29 +++++++++++++------
+ .../4x6_4_procyon/keymaps/mac/readme.md       | 10 +++++--
+ 3 files changed, 35 insertions(+), 11 deletions(-)
+
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+index 3860af66..784fce9f 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+@@ -109,3 +109,10 @@
+ #undef RGB_MATRIX_DEFAULT_VAL
+ #define RGB_MATRIX_DEFAULT_VAL 64 // Of 255, capped at the keyboard's 176.
+ #define CATPPUCCIN_POWER_SCALE 160 // Of 255: about 50/79, the load of a saturated effect.
++
++/*
++ * VIA: 8 layers instead of the default 4, so there is room to add layers from
++ * VIA. Layers past the ones in keymap.c start as transparent keys. Changing this
++ * moves the VIA data in EEPROM, so USER_CONFIG_MAGIC must change with it.
++ */
++#define DYNAMIC_KEYMAP_LAYER_COUNT 8
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+index a74d0bd9..ed36fe02 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+@@ -36,11 +36,13 @@ enum mac_keycodes {
+     CURSOR_SPEED_DOWN = SAFE_RANGE, // 0x7E40
+     CURSOR_SPEED_UP,                // 0x7E41
+     PINCH_MOD_CYCLE,                // 0x7E42
++    RGB_THEME_RESTORE,              // 0x7E43
+ };
+ 
+ #define CSPD_DN CURSOR_SPEED_DOWN
+ #define CSPD_UP CURSOR_SPEED_UP
+ #define PINCH_M PINCH_MOD_CYCLE
++#define RGB_RST RGB_THEME_RESTORE
+ 
+ // clang-format off
+ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+@@ -62,7 +64,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+   // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
+        KC_TILD, KC_EXLM,   KC_AT, KC_HASH,  KC_DLR, KC_PERC,    KC_CIRC, KC_AMPR, KC_ASTR, KC_LPRN, KC_RPRN, KC_UNDS,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+-       RM_NEXT, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    KC_LBRC,   KC_P7,   KC_P8,   KC_P9, KC_RBRC, XXXXXXX,
++       RM_NEXT, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, RGB_RST,    KC_LBRC,   KC_P7,   KC_P8,   KC_P9, KC_RBRC, XXXXXXX,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+        RM_TOGG, KC_LGUI, KC_LALT, KC_LCTL, KC_LSFT, XXXXXXX,    KC_PPLS,   KC_P4,   KC_P5,   KC_P6, KC_PMNS, KC_PEQL,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+@@ -110,7 +112,7 @@ _Static_assert(sizeof(user_config_t) == sizeof(uint32_t), "user_config_t must fi
+ 
+ // Bump this whenever the defaults or the keymap change, so devices that were
+ // flashed before reset to the new defaults on the next boot.
+-#define USER_CONFIG_MAGIC 0xD7
++#define USER_CONFIG_MAGIC 0xD8
+ 
+ static user_config_t user_config;
+ 
+@@ -139,6 +141,16 @@ void eeconfig_init_user(void) {
+     user_config_apply();
+ }
+ 
++// Switches to the default effect and brightness. This is saved, so VIA shows
++// it and later changes made from VIA or keys are kept.
++static void rgb_theme_restore(void) {
++#ifdef RGB_MATRIX_ENABLE
++    rgb_matrix_enable();
++    rgb_matrix_mode(RGB_MATRIX_DEFAULT_MODE);
++    rgb_matrix_sethsv(rgb_matrix_get_hue(), rgb_matrix_get_sat(), RGB_MATRIX_DEFAULT_VAL);
++#endif
++}
++
+ void keyboard_post_init_user(void) {
+     user_config.raw = eeconfig_read_user();
+     if (!user_config_is_valid()) {
+@@ -148,14 +160,10 @@ void keyboard_post_init_user(void) {
+         // firmware flashed on the same day as an older one would keep the old
+         // layout and the custom keys would be missing. Reload it from flash.
+         dynamic_keymap_reset();
++        // The macro area moves when the layer count changes, so clear it too.
++        dynamic_keymap_macro_reset();
+ #endif
+-#ifdef RGB_MATRIX_ENABLE
+-        // Switch to the default effect and brightness. This is saved, so VIA
+-        // shows it and later changes made from VIA or keys are kept.
+-        rgb_matrix_enable();
+-        rgb_matrix_mode(RGB_MATRIX_DEFAULT_MODE);
+-        rgb_matrix_sethsv(rgb_matrix_get_hue(), rgb_matrix_get_sat(), RGB_MATRIX_DEFAULT_VAL);
+-#endif
++        rgb_theme_restore();
+     }
+     user_config_apply();
+ }
+@@ -213,6 +221,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+             user_config.pinch_mode = (user_config.pinch_mode + 1) % PINCH_MODE_COUNT;
+             eeconfig_update_user(user_config.raw);
+             return false;
++        case RGB_THEME_RESTORE:
++            rgb_theme_restore();
++            return false;
+     }
+     return true;
+ }
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+index b0f07068..86fcf288 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+@@ -78,14 +78,20 @@ The tap, scroll, swipe and pinch thresholds are in `config.h`:
+ 
+ ## Keys
+ 
+-The keys are on the `RAISE` layer, top letter row of the right half (the `Y`, `U` and `I`
+-positions). Both settings are saved and survive a power cycle.
++The speed and pinch keys are on the `RAISE` layer, top letter row of the right half (the `Y`,
++`U` and `I` positions); both settings are saved and survive a power cycle. The theme key is on
++the `LOWER` layer at the `T` position.
+ 
+ | Key                 | Hex      | Action                                                                   |
+ | ------------------- | -------- | ------------------------------------------------------------------------ |
+ | `CURSOR_SPEED_DOWN` | `0x7E40` | Slower cursor, one step per press (down to 12.5%)                        |
+ | `CURSOR_SPEED_UP`   | `0x7E41` | Faster cursor, one step per press (up to 200%)                           |
+ | `PINCH_MOD_CYCLE`   | `0x7E42` | Pinch modifier: `Cmd` (Figma, default) → `Ctrl` → none (AutoCAD) → `Cmd` |
++| `RGB_THEME_RESTORE` | `0x7E43` | Turns the RGB on and restores the Catppuccin effect and default brightness, without touching the layout or other settings |
++
++VIA has 8 layers (`DYNAMIC_KEYMAP_LAYER_COUNT`); the ones past `RAISE` start transparent. Use
++`MO(3)`…`MO(7)` (or `TG`, `TO`, …) in VIA to reach them, and VIA's **Save + Load** tab to back up
++your layout as a `.json` file.
+ 
+ The cursor starts at 25% of the trackpad's 1:1 speed. The steps are 12.5%, 19%, 25%, 37.5%,
+ 50%, 75%, 100%, 150% and 200%, so each press is easy to feel. Cursor speed only changes the
+-- 
+2.56.0
+

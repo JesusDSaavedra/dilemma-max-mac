@@ -1,0 +1,246 @@
+From 126f13addf52bd6c0af67cedcdc24e69e654ec60 Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Sat, 10 Oct 2026 01:39:17 -0500
+Subject: [PATCH 16/20] fix(dilemma): normalize Catppuccin power, drop
+ Notification Center edge, tune flick and horizontal scroll
+
+Scale the Catppuccin colors by CATPPUCCIN_POWER_SCALE (160/255) so the effect draws about as much as a saturated one, lower the default brightness to 64 and bump the user config magic so it applies once. Remove the right edge zone, shorten the flick timeout to 100 ms and scroll horizontally one step per 1 mm.
+---
+ .../4x6_4_procyon/keymaps/mac/config.h        | 28 +++++----
+ .../4x6_4_procyon/keymaps/mac/keymap.c        |  2 +-
+ .../4x6_4_procyon/keymaps/mac/readme.md       | 61 ++++++++++---------
+ .../keymaps/mac/rgb_matrix_user.inc           | 11 +++-
+ 4 files changed, 61 insertions(+), 41 deletions(-)
+
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+index e76eb7c2..ac029443 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+@@ -15,7 +15,8 @@
+ #define DIGITIZER_SWIPE_DOWN_KC C(KC_DOWN)  // App Exposé.
+ 
+ /* Gesture tuning. */
+-#define DIGITIZER_SCROLL_DIVISOR 150               // Higher scrolls slower: one wheel step per 1.5 mm, both axes.
++#define DIGITIZER_SCROLL_DIVISOR 150               // Higher scrolls slower: one vertical wheel step per 1.5 mm.
++#define DIGITIZER_SCROLL_DIVISOR_H 100             // Horizontal scroll is faster: one step per 1 mm.
+ #define DIGITIZER_MOUSE_TAP_DETECTION_TIMEOUT 200  // ms a touch may last and still count as a tap.
+ #define DIGITIZER_MOUSE_TAP_DISTANCE 50            // Max movement (0.5 mm) for a touch to count as a tap.
+ #define DIGITIZER_MOUSE_SWIPE_DISTANCE 500         // Min travel (5 mm) for a 3-finger swipe.
+@@ -60,21 +61,22 @@
+ 
+ /*
+  * Edge swipe: put two fingers along the left edge and swipe right to go back
+- * (mouse button 4), or along the right edge and swipe left to open
+- * Notification Center. It fires once, then the gesture is ignored until the
++ * (mouse button 4). It fires once, then the gesture is ignored until the
+  * fingers lift. Other motion from the edge (up, down, outwards, pinch) scrolls
+- * or pinches as usual. Nothing is sent while the swipe is undecided.
++ * or pinches as usual. Nothing is sent while the swipe is undecided. The right
++ * edge has no zone (FORWARD_KC is KC_NO), so flicks, scroll and pinch work
++ * there as anywhere else.
+  */
+ #define DIGITIZER_MOUSE_EDGE_SWIPE_ENABLE
+ #define DIGITIZER_EDGE_SWIPE_ZONE (DIGITIZER_RESOLUTION_X * 25 / 100) // Midpoint of the fingers within 25% (10.5 mm) of an edge.
+ #define DIGITIZER_EDGE_SWIPE_DISTANCE 900                              // Inward travel (9 mm) of the midpoint to fire.
+ #define DIGITIZER_EDGE_SWIPE_THRESHOLD 400                             // Vertical travel (4 mm) that cancels the swipe.
+ #define DIGITIZER_EDGE_SWIPE_BACK_KC QK_MOUSE_BUTTON_4                 // Mouse button 4: back.
+-#define DIGITIZER_EDGE_SWIPE_FORWARD_KC C(A(G(KC_N)))                  // Ctrl+Opt+Cmd+N: Notification Center (assign in macOS settings).
++#define DIGITIZER_EDGE_SWIPE_FORWARD_KC KC_NO                          // No right edge zone.
+ 
+ /*
+  * Two finger flick, like swiping between pages on a Mac trackpad: anywhere
+- * outside the edge zones, flick two fingers right to go back (mouse button 4)
++ * outside the left edge zone, flick two fingers right to go back (mouse button 4)
+  * or left to go forward (mouse button 5). It fires once, then the gesture is ignored until the
+  * fingers lift. Horizontal scroll is held back until the flick timeout passes,
+  * then sent without loss; vertical scroll and pinch are not delayed. If flicks
+@@ -82,7 +84,7 @@
+  */
+ #define DIGITIZER_MOUSE_FLICK_ENABLE
+ #define DIGITIZER_FLICK_DISTANCE 600        // Horizontal travel (6 mm) of the midpoint to fire.
+-#define DIGITIZER_FLICK_TIMEOUT 150         // ms from the start of the motion to cover that distance.
++#define DIGITIZER_FLICK_TIMEOUT 100         // ms from the start of the motion to cover that distance.
+ #define DIGITIZER_FLICK_THRESHOLD 250       // Vertical travel (2.5 mm) that makes it a scroll.
+ #define DIGITIZER_FLICK_REST_DISTANCE 50    // Fingers moved under 0.5 mm are resting: the timeout waits.
+ #define DIGITIZER_FLICK_RIGHT_KC QK_MOUSE_BUTTON_4 // Fingers right: mouse button 4, back.
+@@ -91,10 +93,14 @@
+ /*
+  * RGB: the Catppuccin Mocha effect from rgb_matrix_user.inc.
+  *
+- * RGB_MATRIX_KEYPRESSES (the key press ripple) is deliberately left off: with
+- * it enabled the trackpad stops working whenever both halves are connected,
+- * even with the RGB turned off (bisected on the device, cause not yet known).
++ * Power: with both halves connected, bright pastels sag the supply until the
++ * LEDs drift to red and the trackpad chip resets (a brownout). The pastels
++ * load each LED at about 79% on average, against about 50% for a saturated
++ * effect, so the effect scales its colors by CATPPUCCIN_POWER_SCALE to match
++ * a saturated effect at the same brightness, and the default brightness is low.
++ * The key press ripple (RGB_MATRIX_KEYPRESSES) stays off.
+  */
+ #define RGB_MATRIX_DEFAULT_MODE RGB_MATRIX_CUSTOM_catppuccin_mocha
+ #undef RGB_MATRIX_DEFAULT_VAL
+-#define RGB_MATRIX_DEFAULT_VAL 96 // Of 255, capped at the keyboard's 176.
++#define RGB_MATRIX_DEFAULT_VAL 64 // Of 255, capped at the keyboard's 176.
++#define CATPPUCCIN_POWER_SCALE 160 // Of 255: about 50/79, the load of a saturated effect.
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+index b89d4199..e9ecca59 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+@@ -110,7 +110,7 @@ _Static_assert(sizeof(user_config_t) == sizeof(uint32_t), "user_config_t must fi
+ 
+ // Bump this whenever the defaults or the keymap change, so devices that were
+ // flashed before reset to the new defaults on the next boot.
+-#define USER_CONFIG_MAGIC 0xD5
++#define USER_CONFIG_MAGIC 0xD6
+ 
+ static user_config_t user_config;
+ 
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+index 059fb8f0..f795178b 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+@@ -3,8 +3,8 @@
+ The `default` keymap with VIA enabled and trackpad gestures tuned for macOS.
+ 
+ macOS does not support USB trackpads, so the trackpad runs in mouse fallback mode and the
+-keyboard detects gestures itself. Gestures that send keys (3 finger swipes, pinch, Notification
+-Center) only work when the trackpad half is the one plugged into the computer. Back and forward
++keyboard detects gestures itself. Gestures that send keys (3 finger swipes, pinch) only work
++when the trackpad half is the one plugged into the computer. Back and forward
+ are mouse buttons 4 and 5, sent in the trackpad's own mouse report.
+ 
+ ## Gestures
+@@ -19,7 +19,6 @@ are mouse buttons 4 and 5, sent in the trackpad's own mouse report.
+ | 2 finger flick right, anywhere   | Mouse button 4: back                                       |
+ | 2 finger flick left, anywhere    | Mouse button 5: forward                                    |
+ | 2 finger swipe from left edge    | Mouse button 4: back                                       |
+-| 2 finger swipe from right edge   | `Ctrl+Opt+Cmd+N`: Notification Center                      |
+ | 3 finger swipe left / right      | `Ctrl+→` / `Ctrl+←`: next / previous desktop               |
+ | 3 finger swipe up / down         | `Ctrl+↑` / `Ctrl+↓`: Mission Control / App Exposé          |
+ 
+@@ -27,33 +26,32 @@ Two fingers decide between scroll and pinch after one of them moves about 1.2 mm
+ moving in opposite directions (apart or together) pinch, fingers moving the same way scroll.
+ Resting one finger and moving the other scrolls, so pinch with both fingers. The choice holds
+ until you lift your fingers, and nothing is lost while it is being made. Scroll sends one wheel
+-step per 1.5 mm of travel (both directions) and zoom one step per 2.5 mm of change in the
+-distance between the fingers.
++step per 1.5 mm of vertical travel and per 1 mm of horizontal travel, and zoom one step per
++2.5 mm of change in the distance between the fingers.
+ 
+ Back and forward use mouse buttons 4 and 5 instead of `Cmd+[` / `Cmd+]`, because those
+ shortcuts depend on the keyboard layout (a Latin American layout turns them into `Cmd+´` and
+ `Cmd++`). Chromium browsers (Brave, Chrome) treat mouse buttons 4 and 5 as back and forward on
+ any layout. Each one is a single click: pressed in one mouse report and released in the next.
+ 
+-For an edge swipe, put two fingers along the left or right edge (one above the other works best,
+-their midpoint must start within about 10.5 mm, a quarter of the width, of the edge) and swipe
+-about 9 mm inwards. It fires
+-once, then the gesture is ignored until you lift your fingers. Nothing scrolls while the swipe is
+-undecided; moving up, down or outwards, or pinching, from the edge scrolls or pinches as usual.
++For an edge swipe, put two fingers along the left edge (one above the other works best, their
++midpoint must start within about 10.5 mm, a quarter of the width, of the edge) and swipe about
++9 mm inwards to go back. It fires once, then the gesture is ignored until you lift your fingers.
++Nothing scrolls while the swipe is undecided; moving up, down or outwards, or pinching, from the
++edge scrolls or pinches as usual. The right edge has no edge swipe
++(`DIGITIZER_EDGE_SWIPE_FORWARD_KC` is `KC_NO`), so flicks, scroll and pinch work there like
++anywhere else.
+ 
+-A flick is a quick two finger swipe sideways anywhere outside the edge zones: about 6 mm in
+-150 ms, mostly horizontal (less than 2.5 mm up or down, and at most half as much up or down as
++A flick is a quick two finger swipe sideways anywhere outside the left edge zone: about 6 mm in
++100 ms, mostly horizontal (less than 2.5 mm up or down, and at most half as much up or down as
+ sideways). Fingers right go back, fingers left go forward, like swiping between pages on a Mac
+ trackpad. It fires once, then the gesture is ignored until you lift your fingers. To tell a flick
+-from a scroll, horizontal scroll waits up to 150 ms after the fingers start moving and then
++from a scroll, horizontal scroll waits up to 100 ms after the fingers start moving and then
+ catches up, so nothing is lost; vertical scroll and pinch are not delayed. If flicks fire while
+ scrolling, raise `DIGITIZER_FLICK_DISTANCE` or lower `DIGITIZER_FLICK_TIMEOUT`. If scroll or zoom
+-is too slow or too fast, lower or raise `DIGITIZER_SCROLL_DIVISOR` or `DIGITIZER_PINCH_DIVISOR`.
+-If edge swipes fire while scrolling sideways from near an edge, shrink `DIGITIZER_EDGE_SWIPE_ZONE`.
+-
+-macOS has no default shortcut for Notification Center. Assign one once in System Settings →
+-Keyboard → Keyboard Shortcuts → Mission Control → "Show Notification Center" and press
+-`Ctrl+Opt+Cmd+N` (the right-edge swipe sends it).
++is too slow or too fast, lower or raise `DIGITIZER_SCROLL_DIVISOR` (vertical),
++`DIGITIZER_SCROLL_DIVISOR_H` (horizontal) or `DIGITIZER_PINCH_DIVISOR`. If edge swipes fire while
++scrolling sideways from near the left edge, shrink `DIGITIZER_EDGE_SWIPE_ZONE`.
+ 
+ The tap, scroll, swipe and pinch thresholds are in `config.h`:
+ 
+@@ -63,15 +61,16 @@ The tap, scroll, swipe and pinch thresholds are in `config.h`:
+ | `DIGITIZER_PINCH_OPPOSITE_COS_PERCENT`        | `50`    | Pinch only if the fingers move more than 120 degrees apart        |
+ | `DIGITIZER_PINCH_MIN_DISTANCE_CHANGE_PERCENT` | `50`    | ...and their distance changes by at least half of their travel    |
+ | `DIGITIZER_TWO_FINGER_STATIONARY_PERCENT`     | `25`    | A finger moving less than 25% of the other one is resting: scroll |
+-| `DIGITIZER_SCROLL_DIVISOR`                    | `150`   | Higher scrolls slower: one wheel step per 1.5 mm, both axes       |
++| `DIGITIZER_SCROLL_DIVISOR`                    | `150`   | Higher scrolls slower: one vertical wheel step per 1.5 mm         |
++| `DIGITIZER_SCROLL_DIVISOR_H`                  | `100`   | Higher scrolls slower: one horizontal wheel step per 1 mm         |
+ | `DIGITIZER_PINCH_DIVISOR`                     | `250`   | Higher zooms slower: one zoom step per 2.5 mm of spread           |
+ | `DIGITIZER_EDGE_SWIPE_ZONE`                   | `1050`  | Edge zone (10.5 mm, 25% of the width) for the fingers' midpoint   |
+ | `DIGITIZER_EDGE_SWIPE_DISTANCE`               | `900`   | Inward travel (9 mm) of the midpoint for an edge swipe            |
+ | `DIGITIZER_EDGE_SWIPE_THRESHOLD`              | `400`   | Vertical travel (4 mm) that cancels an edge swipe                 |
+ | `DIGITIZER_EDGE_SWIPE_BACK_KC`                | `QK_MOUSE_BUTTON_4` | Mouse button 4: back, from the left edge              |
+-| `DIGITIZER_EDGE_SWIPE_FORWARD_KC`             | `C(A(G(KC_N)))` | `Ctrl+Opt+Cmd+N`: Notification Center, from the right edge |
++| `DIGITIZER_EDGE_SWIPE_FORWARD_KC`             | `KC_NO` | No right edge zone: gestures there flick, scroll or pinch         |
+ | `DIGITIZER_FLICK_DISTANCE`                    | `600`   | Horizontal travel (6 mm) of the midpoint for a flick              |
+-| `DIGITIZER_FLICK_TIMEOUT`                     | `150`   | ms from the start of the motion to cover that distance            |
++| `DIGITIZER_FLICK_TIMEOUT`                     | `100`   | ms from the start of the motion to cover that distance            |
+ | `DIGITIZER_FLICK_THRESHOLD`                   | `250`   | Vertical travel (2.5 mm) that makes a flick a scroll              |
+ | `DIGITIZER_FLICK_REST_DISTANCE`               | `50`    | Fingers moved under 0.5 mm are resting: the timeout waits         |
+ | `DIGITIZER_FLICK_RIGHT_KC`                    | `QK_MOUSE_BUTTON_4` | Mouse button 4: back, fingers moving right            |
+@@ -105,12 +104,18 @@ The default effect is a [Catppuccin](https://catppuccin.com) Mocha theme (`rgb_m
+ - Every key shows a color from the Mocha accent palette (Rosewater, Flamingo, Pink, Mauve, Red,
+   Maroon, Peach, Yellow, Green, Teal, Sky, Sapphire, Blue, Lavender) as a smooth gradient from
+   the outer edge to the center. Both halves mirror each other.
+-- There is no key press ripple. `RGB_MATRIX_KEYPRESSES` stays off because, with it enabled, the
+-  trackpad stops working whenever both halves are connected (bisected on the device). The
+-  ripple code in `rgb_matrix_user.inc` is inactive without it.
+-- The colors use the exact palette values, scaled by the brightness setting (default 96 of the
+-  keyboard's maximum 176). `RM_NEXT` / `RM_PREV` / `RM_TOGG` on `LOWER` and VIA still change the
+-  effect and brightness.
++- There is no key press ripple: `RGB_MATRIX_KEYPRESSES` stays off, so the ripple code in
++  `rgb_matrix_user.inc` is inactive.
++- Power: with both halves connected, bright pastels can sag the supply until the LEDs drift to
++  red and the trackpad chip resets. Pastels light all three channels of each LED (about 79% on
++  average) while saturated effects light one or two (about 50%), so the effect scales every
++  color by `CATPPUCCIN_POWER_SCALE` (`160` of 255, about 50/79). It then draws about as much as a
++  saturated effect at the same brightness. All channels are scaled equally, so the hues stay the
++  same; set it to `255` for the exact palette values.
++- The default brightness is 64 (of the keyboard's maximum 176). `RM_NEXT` / `RM_PREV` /
++  `RM_TOGG` on `LOWER` and VIA still change the effect and brightness. Keep the brightness low
++  if the colors drift to red or the trackpad stops; the firmware now reconfigures the trackpad
++  when its chip resets, but a sagging supply is still best avoided.
+ 
+ After flashing a firmware with a new settings version (see above), the first boot selects this
+ effect and the default brightness again.
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
+index 0d370fd6..bac8f415 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
+@@ -26,6 +26,14 @@ RGB_MATRIX_EFFECT(catppuccin_mocha)
+ #        define CATPPUCCIN_RIPPLE_BLEND 56
+ #    endif
+ 
++// Scales every color, out of 255, so the effect draws about as much power as a saturated one at
++// the same brightness. The pastels load each LED at about 79% on average and a saturated effect
++// at about 50%, so 160 (about 50/79) matches them. All channels are scaled equally, so the hues
++// stay the same. 255 shows the exact palette values.
++#    ifndef CATPPUCCIN_POWER_SCALE
++#        define CATPPUCCIN_POWER_SCALE 160
++#    endif
++
+ #    define CATPPUCCIN_HEX(hex) \
+         { .r = ((hex) >> 16) & 0xFF, .g = ((hex) >> 8) & 0xFF, .b = (hex) & 0xFF }
+ 
+@@ -96,7 +104,8 @@ static uint8_t catppuccin_ripple(uint8_t led) {
+ static bool catppuccin_mocha(effect_params_t *params) {
+     RGB_MATRIX_USE_LIMITS(led_min, led_max);
+ 
+-    const uint8_t val = rgb_matrix_get_val();
++    // The power scale folds into the brightness, so each channel is scaled once.
++    const uint8_t val = scale8(rgb_matrix_get_val(), CATPPUCCIN_POWER_SCALE);
+     for (uint8_t i = led_min; i < led_max; i++) {
+         RGB_MATRIX_TEST_LED_FLAGS();
+         rgb_t rgb = catppuccin_gradient(g_led_config.point[i].x);
+-- 
+2.56.0
+

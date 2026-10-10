@@ -1,0 +1,322 @@
+From 7b8c8116ac24b270a4100fac29e711e08e41da38 Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Fri, 9 Oct 2026 22:16:20 -0500
+Subject: [PATCH 06/20] feat(digitizer): classify two finger pinch vs scroll by
+ direction
+
+Replace the distance-vs-midpoint pinch check with a decision window:
+nothing is sent until one finger moves DIGITIZER_TWO_FINGER_DECISION_DISTANCE,
+then opposed fingers whose distance changed pinch and fingers moving the
+same way (or with one resting) scroll. The mode locks until the fingers
+lift or change, and motion made during the window is carried over.
+
+Thresholds are #ifndef defines documented in digitizer.md and the mac
+keymap readme. Default builds still scroll with two fingers.
+---
+ docs/features/digitizer.md                    |   7 +-
+ .../4x6_4_procyon/keymaps/mac/config.h        |  11 +-
+ .../4x6_4_procyon/keymaps/mac/readme.md       |  15 +-
+ quantum/digitizer_mouse_fallback.c            | 164 ++++++++++++------
+ 4 files changed, 141 insertions(+), 56 deletions(-)
+
+diff --git a/docs/features/digitizer.md b/docs/features/digitizer.md
+index faec3176..0dddbd73 100644
+--- a/docs/features/digitizer.md
++++ b/docs/features/digitizer.md
+@@ -82,7 +82,10 @@ The mouse fallback gesture detection code can be tweaked with the following para
+ | `DIGITIZER_MIN_CPI`                            | (Optional) The lowest CPI accepted by `pointing_device_set_cpi()`.                                                               | `50`                |
+ | `DIGITIZER_MAX_CPI`                            | (Optional) The highest CPI accepted by `pointing_device_set_cpi()`.                                                              | `1200`              |
+ | `DIGITIZER_MOUSE_PINCH_ENABLE`                 | (Optional) If defined, a two finger pinch holds the modifiers from `digitizer_pinch_mods_user()` and sends vertical scroll.       | _not defined_       |
+-| `DIGITIZER_PINCH_THRESHOLD`                    | (Optional) The change in distance between two fingers needed to start a pinch. It must also exceed the movement of their midpoint. | `150`               |
++| `DIGITIZER_TWO_FINGER_DECISION_DISTANCE`       | (Optional) How far the faster of two fingers must move before the gesture is classified as a pinch or a scroll. | `120` |
++| `DIGITIZER_PINCH_OPPOSITE_COS_PERCENT`         | (Optional) Fingers pinch only if the cosine of the angle between their directions, in percent, is below minus this value. | `50` |
++| `DIGITIZER_PINCH_MIN_DISTANCE_CHANGE_PERCENT`  | (Optional) Fingers pinch only if their distance changed by at least this percentage of their combined travel. | `50` |
++| `DIGITIZER_TWO_FINGER_STATIONARY_PERCENT`      | (Optional) A finger that moved less than this percentage of the other finger's travel is resting, which scrolls. | `25` |
+ | `DIGITIZER_PINCH_DIVISOR`                      | (Optional) A scaling factor that is applied to reduce the speed of pinch scrolling.                                               | `10`                |
+ 
+ Swipe keycodes are sent with `tap_code16()`, so modified keycodes work. For example, to switch macOS desktops the way a native trackpad does:
+@@ -94,7 +97,7 @@ Swipe keycodes are sent with `tap_code16()`, so modified keycodes work. For exam
+ #define DIGITIZER_SWIPE_DOWN_KC C(KC_DOWN)   // App Exposé
+ ```
+ 
+-With `DIGITIZER_MOUSE_PINCH_ENABLE`, two fingers scroll using their midpoint. When the distance between them changes by more than `DIGITIZER_PINCH_THRESHOLD`, and by more than the midpoint has moved, the gesture becomes a pinch until the fingers lift: the modifiers are held (as weak mods) and spreading the fingers scrolls up, which zooms in with `Cmd`+scroll in apps such as Figma.
++With `DIGITIZER_MOUSE_PINCH_ENABLE`, nothing is sent while two fingers start moving. Once one of them has moved `DIGITIZER_TWO_FINGER_DECISION_DISTANCE`, the gesture is classified by the direction each finger moved: fingers moving in opposite directions (see `DIGITIZER_PINCH_OPPOSITE_COS_PERCENT`) whose distance also changed (see `DIGITIZER_PINCH_MIN_DISTANCE_CHANGE_PERCENT`) pinch; fingers moving the same way, or with one of them resting, scroll using their midpoint. The choice holds until the fingers lift or change, and the motion made before it is not lost. While pinching the modifiers are held (as weak mods) and spreading the fingers scrolls up, which zooms in with `Cmd`+scroll in apps such as Figma. Without `DIGITIZER_MOUSE_PINCH_ENABLE`, two fingers always scroll.
+ 
+ ## Split Keyboard Configuration
+ 
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+index 6e5dca0f..88c4e0fa 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+@@ -38,7 +38,14 @@
+  * Pinch to zoom. Two fingers moving apart or together send scroll while a
+  * modifier is held (Cmd by default, for Figma). PINCH_MOD_CYCLE switches the
+  * modifier between Cmd, Ctrl and none (plain scroll, for AutoCAD).
++ *
++ * Nothing is sent until one finger moved the decision distance. Then fingers
++ * moving in opposite directions pinch and fingers moving the same way (or one
++ * finger resting) scroll, until the fingers lift.
+  */
+ #define DIGITIZER_MOUSE_PINCH_ENABLE
+-#define DIGITIZER_PINCH_THRESHOLD 150 // Finger distance change (1.5 mm) that starts a pinch.
+-#define DIGITIZER_PINCH_DIVISOR 10    // Higher zooms slower (trackpad units per scroll step).
++#define DIGITIZER_TWO_FINGER_DECISION_DISTANCE 120     // Travel (1.2 mm) before pinch or scroll is chosen.
++#define DIGITIZER_PINCH_OPPOSITE_COS_PERCENT 50        // Pinch if the fingers move more than 120 degrees apart.
++#define DIGITIZER_PINCH_MIN_DISTANCE_CHANGE_PERCENT 50 // ...and their distance changed by half their travel.
++#define DIGITIZER_TWO_FINGER_STATIONARY_PERCENT 25     // A finger moving under 25% of the other one rests: scroll.
++#define DIGITIZER_PINCH_DIVISOR 10                     // Higher zooms slower (trackpad units per scroll step).
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+index d0b6e6aa..d5116b38 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+@@ -18,7 +18,20 @@ trackpad half is the one plugged into the computer.
+ | 3 finger swipe left / right  | `Ctrl+→` / `Ctrl+←`: next / previous desktop               |
+ | 3 finger swipe up / down     | `Ctrl+↑` / `Ctrl+↓`: Mission Control / App Exposé          |
+ 
+-The tap, scroll, swipe and pinch thresholds are in `config.h`.
++Two fingers decide between scroll and pinch after one of them moves about 1.2 mm: fingers
++moving in opposite directions (apart or together) pinch, fingers moving the same way scroll.
++Resting one finger and moving the other scrolls, so pinch with both fingers. The choice holds
++until you lift your fingers, and nothing is lost while it is being made.
++
++The tap, scroll, swipe and pinch thresholds are in `config.h`:
++
++| Define                                        | Default | Meaning                                                           |
++| --------------------------------------------- | ------- | ----------------------------------------------------------------- |
++| `DIGITIZER_TWO_FINGER_DECISION_DISTANCE`      | `120`   | Travel (1.2 mm) before scroll or pinch is chosen                  |
++| `DIGITIZER_PINCH_OPPOSITE_COS_PERCENT`        | `50`    | Pinch only if the fingers move more than 120 degrees apart        |
++| `DIGITIZER_PINCH_MIN_DISTANCE_CHANGE_PERCENT` | `50`    | ...and their distance changes by at least half of their travel    |
++| `DIGITIZER_TWO_FINGER_STATIONARY_PERCENT`     | `25`    | A finger moving less than 25% of the other one is resting: scroll |
++| `DIGITIZER_PINCH_DIVISOR`                     | `10`    | Higher zooms slower                                               |
+ 
+ ## Keys
+ 
+diff --git a/quantum/digitizer_mouse_fallback.c b/quantum/digitizer_mouse_fallback.c
+index 9e3a56c8..dd5b8115 100644
+--- a/quantum/digitizer_mouse_fallback.c
++++ b/quantum/digitizer_mouse_fallback.c
+@@ -71,9 +71,28 @@
+ #        define DIGITIZER_MOUSE_DEFAULT_CPI 400
+ #    endif
+ 
+-// The change in distance between two fingers needed to start a pinch.
+-#    ifndef DIGITIZER_PINCH_THRESHOLD
+-#        define DIGITIZER_PINCH_THRESHOLD 150
++// How far (in digitizer units) the faster of two fingers must move before the gesture is
++// classified as a pinch or a scroll. Nothing is sent until then.
++#    ifndef DIGITIZER_TWO_FINGER_DECISION_DISTANCE
++#        define DIGITIZER_TWO_FINGER_DECISION_DISTANCE 120
++#    endif
++
++// Two fingers pinch only if their directions are at least this opposed: the cosine of the
++// angle between them, in percent, must be below minus this value (50 means more than 120 degrees).
++#    ifndef DIGITIZER_PINCH_OPPOSITE_COS_PERCENT
++#        define DIGITIZER_PINCH_OPPOSITE_COS_PERCENT 50
++#    endif
++
++// Two fingers pinch only if the distance between them changed by at least this percentage of
++// their combined travel, so opposed fingers that rotate around each other do not zoom.
++#    ifndef DIGITIZER_PINCH_MIN_DISTANCE_CHANGE_PERCENT
++#        define DIGITIZER_PINCH_MIN_DISTANCE_CHANGE_PERCENT 50
++#    endif
++
++// A finger that moved less than this percentage of the other finger's travel counts as
++// stationary. One stationary finger is ambiguous, so it is treated as a scroll.
++#    ifndef DIGITIZER_TWO_FINGER_STATIONARY_PERCENT
++#        define DIGITIZER_TWO_FINGER_STATIONARY_PERCENT 25
+ #    endif
+ 
+ // A scaling factor that converts the change in finger distance into scroll steps while pinching.
+@@ -193,20 +212,21 @@ __attribute__((weak)) uint8_t digitizer_pinch_mods_user(void) {
+     return MOD_BIT(KC_LEFT_GUI);
+ }
+ 
++typedef enum { TwoFingerUndecided, TwoFingerScroll, TwoFingerPinch } two_finger_mode_t;
++
+ // Tracks a two finger gesture to tell a pinch apart from a two finger scroll.
+ typedef struct {
+-    bool    tracking;
+-    bool    active;
+-    uint8_t ids[2];
+-    uint8_t mods;
+-    int32_t start_distance;
+-    int32_t last_distance;
+-    int32_t start_x;
+-    int32_t start_y;
+-    int32_t last_x;
+-    int32_t last_y;
+-    int32_t carry_h;
+-    int32_t carry_v;
++    bool              tracking;
++    two_finger_mode_t mode;
++    uint8_t           ids[2];
++    uint8_t           mods;
++    int32_t           start_x[2];
++    int32_t           start_y[2];
++    int32_t           last_distance;
++    int32_t           last_x;
++    int32_t           last_y;
++    int32_t           carry_h;
++    int32_t           carry_v;
+ } pinch_state_t;
+ 
+ static pinch_state_t pinch = {};
+@@ -233,11 +253,41 @@ static int32_t vector_length(int32_t dx, int32_t dy) {
+     return isqrt32(dx * dx + dy * dy);
+ }
+ 
++/**
++ * @brief Classifies a two finger gesture from the motion of each finger since it started.
++ *
++ * Fingers moving in opposite directions that also change their distance pinch. Fingers moving
++ * the same way, or with one of them (nearly) still, scroll.
++ *
++ * @param[in] ax, ay the motion of the first finger
++ * @param[in] bx, by the motion of the second finger
++ * @param[in] distance_change the change in distance between the fingers
++ * @return TwoFingerUndecided until a finger moved DIGITIZER_TWO_FINGER_DECISION_DISTANCE
++ */
++static two_finger_mode_t digitizer_classify_two_finger(int32_t ax, int32_t ay, int32_t bx, int32_t by, int32_t distance_change) {
++    const int32_t length_a = vector_length(ax, ay);
++    const int32_t length_b = vector_length(bx, by);
++    const int32_t longest  = MAX(length_a, length_b);
++    const int32_t shortest = MIN(length_a, length_b);
++
++    if (longest < DIGITIZER_TWO_FINGER_DECISION_DISTANCE) {
++        return TwoFingerUndecided;
++    }
++    if (shortest * 100 < longest * DIGITIZER_TWO_FINGER_STATIONARY_PERCENT) {
++        return TwoFingerScroll;
++    }
++    // cos(angle) = dot / (|a| * |b|), compared in percent without division.
++    const int64_t dot      = (int64_t)ax * bx + (int64_t)ay * by;
++    const bool    opposite = -dot * 100 > (int64_t)DIGITIZER_PINCH_OPPOSITE_COS_PERCENT * length_a * length_b;
++    const bool    spread   = abs(distance_change) * 100 >= DIGITIZER_PINCH_MIN_DISTANCE_CHANGE_PERCENT * (length_a + length_b);
++    return opposite && spread ? TwoFingerPinch : TwoFingerScroll;
++}
++
+ /**
+  * @brief Ends a pinch, releasing any modifiers it holds.
+  */
+ static void digitizer_pinch_end(void) {
+-    if (pinch.active && pinch.mods) {
++    if (pinch.mode == TwoFingerPinch && pinch.mods) {
+         del_weak_mods(pinch.mods);
+         send_keyboard_report();
+     }
+@@ -245,11 +295,14 @@ static void digitizer_pinch_end(void) {
+ }
+ 
+ /**
+- * @brief Handles a report with exactly two fingers down while moving or scrolling. The
+- * fingers scroll until the change in their distance passes DIGITIZER_PINCH_THRESHOLD
+- * and is larger than the movement of their midpoint. From then on, until the fingers
+- * lift, the selected modifiers are held and the distance change is sent as vertical
+- * scroll (spreading the fingers scrolls up, which zooms in).
++ * @brief Handles a report with exactly two fingers down while moving or scrolling.
++ *
++ * Nothing is sent until one finger moved DIGITIZER_TWO_FINGER_DECISION_DISTANCE. The gesture
++ * is then classified by the direction each finger moved and stays a scroll or a pinch until
++ * the fingers lift or change. The motion made before the decision is sent with the first
++ * report after it, so no scroll is lost. While pinching, the selected modifiers are held and
++ * the distance change is sent as vertical scroll (spreading the fingers scrolls up, which
++ * zooms in).
+  *
+  * @param[in] report the digitizer report
+  * @return true if the report was handled
+@@ -271,53 +324,62 @@ static bool digitizer_pinch_update(const report_digitizer_t *report) {
+         return false;
+     }
+ 
+-    const int32_t distance = vector_length(report->fingers[a].x - report->fingers[b].x, report->fingers[a].y - report->fingers[b].y);
+-    const int32_t mid_x    = (report->fingers[a].x + report->fingers[b].x) / 2;
+-    const int32_t mid_y    = (report->fingers[a].y + report->fingers[b].y) / 2;
++    const int32_t ax       = report->fingers[a].x;
++    const int32_t ay       = report->fingers[a].y;
++    const int32_t bx       = report->fingers[b].x;
++    const int32_t by       = report->fingers[b].y;
++    const int32_t distance = vector_length(ax - bx, ay - by);
++    const int32_t mid_x    = (ax + bx) / 2;
++    const int32_t mid_y    = (ay + by) / 2;
+ 
+     // Start again whenever the pair of fingers changes, so positions never jump.
+     if (!pinch.tracking || pinch.ids[0] != report->fingers[a].contact_id || pinch.ids[1] != report->fingers[b].contact_id) {
+         digitizer_pinch_end();
+-        pinch.tracking       = true;
+-        pinch.ids[0]         = report->fingers[a].contact_id;
+-        pinch.ids[1]         = report->fingers[b].contact_id;
+-        pinch.start_distance = distance;
+-        pinch.last_distance  = distance;
+-        pinch.start_x        = mid_x;
+-        pinch.start_y        = mid_y;
+-        pinch.last_x         = mid_x;
+-        pinch.last_y         = mid_y;
++        pinch.tracking      = true;
++        pinch.ids[0]        = report->fingers[a].contact_id;
++        pinch.ids[1]        = report->fingers[b].contact_id;
++        pinch.start_x[0]    = ax;
++        pinch.start_y[0]    = ay;
++        pinch.start_x[1]    = bx;
++        pinch.start_y[1]    = by;
++        pinch.last_distance = distance;
++        pinch.last_x        = mid_x;
++        pinch.last_y        = mid_y;
+         return true;
+     }
+ 
+-    if (!pinch.active) {
+-        const int32_t change = abs(distance - pinch.start_distance);
+-        if (digitizer_send_mouse_reports && change > DIGITIZER_PINCH_THRESHOLD && change > vector_length(mid_x - pinch.start_x, mid_y - pinch.start_y)) {
+-            pinch.active        = true;
+-            pinch.last_distance = distance;
+-            pinch.carry_v       = 0;
+-            pinch.mods          = digitizer_pinch_mods_user();
++    if (pinch.mode == TwoFingerUndecided) {
++        // last_distance and last_x/y still hold the start of the gesture, so the motion made
++        // while undecided is sent below as soon as the mode is known.
++        pinch.mode = digitizer_classify_two_finger(ax - pinch.start_x[0], ay - pinch.start_y[0], bx - pinch.start_x[1], by - pinch.start_y[1], distance - pinch.last_distance);
++        if (pinch.mode == TwoFingerUndecided) {
++            return true;
++        }
++        if (pinch.mode == TwoFingerPinch && digitizer_send_mouse_reports) {
++            pinch.mods = digitizer_pinch_mods_user();
+             if (pinch.mods) {
+                 add_weak_mods(pinch.mods);
+                 send_keyboard_report();
+             }
+-        } else {
+-            // Scroll with the midpoint, so a pinch that has not been detected yet does not scroll.
+-            const int32_t h = mid_x - pinch.last_x + pinch.carry_h;
+-            const int32_t v = mid_y - pinch.last_y + pinch.carry_v;
+-            pinch.carry_h   = h % DIGITIZER_SCROLL_DIVISOR;
+-            pinch.carry_v   = v % DIGITIZER_SCROLL_DIVISOR;
+-            mouse_report.h  = CLIP(h / DIGITIZER_SCROLL_DIVISOR, MOUSE_REPORT_HV_MIN, MOUSE_REPORT_HV_MAX);
+-            mouse_report.v  = CLIP(v / DIGITIZER_SCROLL_DIVISOR, MOUSE_REPORT_HV_MIN, MOUSE_REPORT_HV_MAX);
+         }
+-    } else {
++    }
++
++    if (pinch.mode == TwoFingerPinch) {
+         const int32_t v     = distance - pinch.last_distance + pinch.carry_v;
+         pinch.carry_v       = v % DIGITIZER_PINCH_DIVISOR;
+         pinch.last_distance = distance;
+         mouse_report.v      = CLIP(v / DIGITIZER_PINCH_DIVISOR, MOUSE_REPORT_HV_MIN, MOUSE_REPORT_HV_MAX);
++    } else {
++        // Scroll with the midpoint of the fingers.
++        const int32_t h = mid_x - pinch.last_x + pinch.carry_h;
++        const int32_t v = mid_y - pinch.last_y + pinch.carry_v;
++        pinch.carry_h   = h % DIGITIZER_SCROLL_DIVISOR;
++        pinch.carry_v   = v % DIGITIZER_SCROLL_DIVISOR;
++        pinch.last_x    = mid_x;
++        pinch.last_y    = mid_y;
++        mouse_report.h  = CLIP(h / DIGITIZER_SCROLL_DIVISOR, MOUSE_REPORT_HV_MIN, MOUSE_REPORT_HV_MAX);
++        mouse_report.v  = CLIP(v / DIGITIZER_SCROLL_DIVISOR, MOUSE_REPORT_HV_MIN, MOUSE_REPORT_HV_MAX);
+     }
+-    pinch.last_x = mid_x;
+-    pinch.last_y = mid_y;
+     return true;
+ }
+ #    endif
+-- 
+2.56.0
+

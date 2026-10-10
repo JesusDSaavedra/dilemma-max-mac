@@ -1,0 +1,241 @@
+From e041775dbc77257c1f02a2625b4c0e30ef7e385d Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Fri, 9 Oct 2026 21:38:52 -0500
+Subject: [PATCH 03/20] feat(digitizer): add pointer-only CPI and cursor speed
+ keys
+
+Scaling the digitizer coordinates also changes scroll speed and the
+distances needed for taps and swipes, and cannot exceed 100%. Add the
+opt-in DIGITIZER_MOUSE_CPI_POINTER_ONLY so pointing_device_set_cpi()
+scales only pointer motion, with a carry so slow moves are not lost.
+
+The mac keymap exposes the gesture tuning defines and adds
+CURSOR_SPEED_UP/DOWN keys whose CPI is clamped and stored in the user
+EEPROM block, with defaults on a fresh or invalid EEPROM.
+---
+ docs/features/digitizer.md                    |  4 +
+ .../4x6_4_procyon/keymaps/mac/config.h        | 19 +++++
+ .../4x6_4_procyon/keymaps/mac/keymap.c        | 78 ++++++++++++++++++-
+ quantum/digitizer_mouse_fallback.c            | 38 ++++++++-
+ 4 files changed, 135 insertions(+), 4 deletions(-)
+
+diff --git a/docs/features/digitizer.md b/docs/features/digitizer.md
+index 60efffbf..9ea3473c 100644
+--- a/docs/features/digitizer.md
++++ b/docs/features/digitizer.md
+@@ -77,6 +77,10 @@ The mouse fallback gesture detection code can be tweaked with the following para
+ | `DIGITIZER_SWIPE_RIGHT_KC`                     | (Optional) The keycode to generate when the fingers swipe right. 16-bit keycodes such as `C(KC_LEFT)` are supported.             | `QK_MOUSE_BUTTON_4` |
+ | `DIGITIZER_SWIPE_UP_KC`                        | (Optional) The keycode to generate when the fingers swipe up. 16-bit keycodes such as `C(KC_UP)` are supported.                  | `KC_LEFT_GUI`       |
+ | `DIGITIZER_SWIPE_DOWN_KC`                      | (Optional) The keycode to generate when the fingers swipe down. 16-bit keycodes such as `C(KC_DOWN)` are supported.              | `KC_ESC`            |
++| `DIGITIZER_MOUSE_CPI_POINTER_ONLY`             | (Optional) If defined, `pointing_device_set_cpi()` scales only pointer motion, so scroll, tap and swipe distances are unchanged. | _not defined_       |
++| `DIGITIZER_MOUSE_DEFAULT_CPI`                  | (Optional) The initial CPI. With `DIGITIZER_MOUSE_CPI_POINTER_ONLY` this CPI moves the pointer 1:1 with the digitizer.          | `400`               |
++| `DIGITIZER_MIN_CPI`                            | (Optional) The lowest CPI accepted by `pointing_device_set_cpi()`.                                                               | `50`                |
++| `DIGITIZER_MAX_CPI`                            | (Optional) The highest CPI accepted by `pointing_device_set_cpi()`.                                                              | `1200`              |
+ 
+ Swipe keycodes are sent with `tap_code16()`, so modified keycodes work. For example, to switch macOS desktops the way a native trackpad does:
+ 
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+index a5b82edb..5984a796 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+@@ -13,3 +13,22 @@
+ #define DIGITIZER_SWIPE_RIGHT_KC C(KC_LEFT) // Fingers right: previous desktop on the left.
+ #define DIGITIZER_SWIPE_UP_KC C(KC_UP)      // Mission Control.
+ #define DIGITIZER_SWIPE_DOWN_KC C(KC_DOWN)  // App Exposé.
++
++/* Gesture tuning. */
++#define DIGITIZER_SCROLL_DIVISOR 10                // Higher scrolls slower (trackpad units per scroll step).
++#define DIGITIZER_MOUSE_TAP_DETECTION_TIMEOUT 200  // ms a touch may last and still count as a tap.
++#define DIGITIZER_MOUSE_TAP_DISTANCE 50            // Max movement (0.5 mm) for a touch to count as a tap.
++#define DIGITIZER_MOUSE_SWIPE_DISTANCE 500         // Min travel (5 mm) for a 3-finger swipe.
++#define DIGITIZER_MOUSE_SWIPE_THRESHOLD 300        // Max travel (3 mm) on the other axis during a swipe.
++#define DIGITIZER_MOUSE_SWIPE_TIMEOUT 1000         // ms to finish a swipe before it becomes a scroll.
++
++/*
++ * Cursor speed. CURSOR_SPEED_UP/DOWN change the CPI in steps; it is stored in
++ * EEPROM. Only pointer motion is scaled, so scroll and swipes feel the same at
++ * every speed. 400 CPI moves the cursor 1:1 with the trackpad.
++ */
++#define DIGITIZER_MOUSE_CPI_POINTER_ONLY
++#define DIGITIZER_MOUSE_DEFAULT_CPI 400
++#define MAC_CURSOR_CPI_STEP 50 // 12.5% per key press.
++#define MAC_CURSOR_CPI_MIN 100 // 25% of the 1:1 speed.
++#define MAC_CURSOR_CPI_MAX 1000 // 250% of the 1:1 speed.
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+index 4ac52309..b9dbbca0 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+@@ -26,6 +26,16 @@ enum dilemma_keymap_layers {
+ #define LOWER MO(LAYER_LOWER)
+ #define RAISE MO(LAYER_RAISE)
+ 
++// Custom keycodes live in the QK_USER range (SAFE_RANGE), which VIA shows as
++// "Custom" keys. Their values are listed in readme.md for VIA's "Any" key.
++enum mac_keycodes {
++    CURSOR_SPEED_DOWN = SAFE_RANGE, // 0x7E40
++    CURSOR_SPEED_UP,                // 0x7E41
++};
++
++#define CSPD_DN CURSOR_SPEED_DOWN
++#define CSPD_UP CURSOR_SPEED_UP
++
+ // clang-format off
+ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+   [LAYER_BASE] = LAYOUT(
+@@ -60,7 +70,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+   // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
+         KC_F12,   KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,      KC_F6,   KC_F7,   KC_F8,   KC_F9,  KC_F10,  KC_F11,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+-       KC_MNXT, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, KC_VOLU,
++       KC_MNXT, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    CSPD_DN, CSPD_UP, XXXXXXX, XXXXXXX, XXXXXXX, KC_VOLU,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+        KC_MPLY, KC_LEFT,   KC_UP, KC_DOWN, KC_RGHT, XXXXXXX,    XXXXXXX, KC_RSFT, KC_RCTL, KC_RALT, KC_RGUI, KC_MUTE,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+@@ -71,3 +81,69 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+   ),
+ };
+ // clang-format on
++
++// User settings persisted in the 32-bit user EEPROM block.
++typedef union {
++    uint32_t raw;
++    struct {
++        uint8_t  magic;
++        uint8_t  reserved;
++        uint16_t cursor_cpi;
++    };
++} user_config_t;
++
++_Static_assert(sizeof(user_config_t) == sizeof(uint32_t), "user_config_t must fit in 32 bits");
++
++#define USER_CONFIG_MAGIC 0xD1
++
++static user_config_t user_config;
++
++static void user_config_apply(void) {
++    pointing_device_set_cpi(user_config.cursor_cpi);
++}
++
++static void user_config_set_defaults(void) {
++    user_config.raw        = 0;
++    user_config.magic      = USER_CONFIG_MAGIC;
++    user_config.cursor_cpi = DIGITIZER_MOUSE_DEFAULT_CPI;
++    eeconfig_update_user(user_config.raw);
++}
++
++static bool user_config_is_valid(void) {
++    return user_config.magic == USER_CONFIG_MAGIC && user_config.cursor_cpi >= MAC_CURSOR_CPI_MIN && user_config.cursor_cpi <= MAC_CURSOR_CPI_MAX;
++}
++
++void eeconfig_init_user(void) {
++    user_config_set_defaults();
++    user_config_apply();
++}
++
++void keyboard_post_init_user(void) {
++    user_config.raw = eeconfig_read_user();
++    if (!user_config_is_valid()) {
++        user_config_set_defaults();
++    }
++    user_config_apply();
++}
++
++static void cursor_speed_step(int16_t step) {
++    const int16_t cpi      = user_config.cursor_cpi + step;
++    user_config.cursor_cpi = cpi < MAC_CURSOR_CPI_MIN ? MAC_CURSOR_CPI_MIN : cpi > MAC_CURSOR_CPI_MAX ? MAC_CURSOR_CPI_MAX : cpi;
++    eeconfig_update_user(user_config.raw);
++    user_config_apply();
++}
++
++bool process_record_user(uint16_t keycode, keyrecord_t *record) {
++    if (!record->event.pressed) {
++        return true;
++    }
++    switch (keycode) {
++        case CURSOR_SPEED_DOWN:
++            cursor_speed_step(-MAC_CURSOR_CPI_STEP);
++            return false;
++        case CURSOR_SPEED_UP:
++            cursor_speed_step(MAC_CURSOR_CPI_STEP);
++            return false;
++    }
++    return true;
++}
+diff --git a/quantum/digitizer_mouse_fallback.c b/quantum/digitizer_mouse_fallback.c
+index c31f7e1f..85452f8f 100644
+--- a/quantum/digitizer_mouse_fallback.c
++++ b/quantum/digitizer_mouse_fallback.c
+@@ -65,6 +65,12 @@
+ #        define DIGITIZER_MAX_CPI 1200
+ #    endif
+ 
++// The CPI that moves the pointer 1:1 with the digitizer coordinates when
++// DIGITIZER_MOUSE_CPI_POINTER_ONLY is defined.
++#    ifndef DIGITIZER_MOUSE_DEFAULT_CPI
++#        define DIGITIZER_MOUSE_DEFAULT_CPI 400
++#    endif
++
+ #    ifdef DIGITIZER_REPORT_TAPS_AS_CLICKS
+ bool digitizer_taps_as_clicks = true;
+ #    else
+@@ -116,7 +122,7 @@ static report_mouse_t digitizer_get_mouse_report(report_mouse_t _mouse_report) {
+     return _mouse_report;
+ }
+ 
+-static uint16_t mouse_cpi = 400;
++static uint16_t mouse_cpi = DIGITIZER_MOUSE_DEFAULT_CPI;
+ 
+ /**
+  * @brief Gets the CPI used by the digitizer mouse fallback feature.
+@@ -130,11 +136,35 @@ static uint16_t digitizer_get_cpi(void) {
+ /**
+  * @brief Sets the CPI used by the digitizer mouse fallback feature.
+  *
++ * By default this scales the digitizer coordinates, which also changes scroll speed and
++ * the distances needed for taps and swipes. If DIGITIZER_MOUSE_CPI_POINTER_ONLY is defined
++ * only pointer motion is scaled, relative to DIGITIZER_MOUSE_DEFAULT_CPI.
++ *
+  *  @param[in] the new CPI value
+  */
+ static void digitizer_set_cpi(uint16_t cpi) {
+     mouse_cpi = CLIP(cpi, DIGITIZER_MIN_CPI, DIGITIZER_MAX_CPI);
++#    ifndef DIGITIZER_MOUSE_CPI_POINTER_ONLY
+     digitizer_set_scale((mouse_cpi * 100) / DIGITIZER_MAX_CPI);
++#    endif
++}
++
++/**
++ * @brief Converts a change in a digitizer coordinate into pointer motion.
++ *
++ * @param[in] delta the change in the coordinate since the last report
++ * @param[in,out] carry the remainder from previous calls, so slow movements are not lost
++ * @return the pointer motion to report
++ */
++static mouse_xy_report_t digitizer_scale_motion(int32_t delta, int32_t *carry) {
++#    ifdef DIGITIZER_MOUSE_CPI_POINTER_ONLY
++    const int32_t scaled = delta * mouse_cpi + *carry;
++    *carry               = scaled % DIGITIZER_MOUSE_DEFAULT_CPI;
++    delta                = scaled / DIGITIZER_MOUSE_DEFAULT_CPI;
++#    else
++    (void)carry;
++#    endif
++    return CLIP(delta, MOUSE_REPORT_XY_MIN, MOUSE_REPORT_XY_MAX);
+ }
+ 
+ // The gesture detection state machine will transition between these states.
+@@ -208,8 +238,10 @@ void digitizer_update_mouse_report(report_digitizer_t *report) {
+             if (contacts == 0) {
+                 state = None;
+             } else if (contacts == 1) {
+-                mouse_report.x = x - last_x;
+-                mouse_report.y = y - last_y;
++                static int32_t carry_x = 0;
++                static int32_t carry_y = 0;
++                mouse_report.x         = digitizer_scale_motion(x - last_x, &carry_x);
++                mouse_report.y         = digitizer_scale_motion(y - last_y, &carry_y);
+             } else if (contacts == 3 && duration < DIGITIZER_MOUSE_SWIPE_TIMEOUT) {
+                 state = Swipe;
+             } else {
+-- 
+2.56.0
+

@@ -1,0 +1,180 @@
+From a5fe9e818e4f9b28e4c0a4773d11608bca40970e Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Fri, 9 Oct 2026 22:14:13 -0500
+Subject: [PATCH 05/20] fix(dilemma): default mac cursor speed to 25% and
+ reload stale VIA keymap
+
+CURSOR_SPEED_DOWN never reached process_record_user on a device flashed
+with an earlier VIA build from the same day: VIA only resets its EEPROM
+keymap when the build date changes, so the old layout (no custom keys)
+stayed active. Bump the user config magic and reload the dynamic keymap
+when the stored config is stale.
+
+Default the cursor to 100 CPI (25% of 1:1), allow down to 50 CPI, and
+step through a table of speeds 33-50% apart so each press is noticeable.
+---
+ .../4x6_4_procyon/keymaps/mac/config.h        | 13 ++---
+ .../4x6_4_procyon/keymaps/mac/keymap.c        | 52 +++++++++++++++----
+ .../4x6_4_procyon/keymaps/mac/readme.md       | 15 +++---
+ 3 files changed, 59 insertions(+), 21 deletions(-)
+
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+index 6a74dfcc..6e5dca0f 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+@@ -23,15 +23,16 @@
+ #define DIGITIZER_MOUSE_SWIPE_TIMEOUT 1000         // ms to finish a swipe before it becomes a scroll.
+ 
+ /*
+- * Cursor speed. CURSOR_SPEED_UP/DOWN change the CPI in steps; it is stored in
+- * EEPROM. Only pointer motion is scaled, so scroll and swipes feel the same at
+- * every speed. 400 CPI moves the cursor 1:1 with the trackpad.
++ * Cursor speed. CURSOR_SPEED_UP/DOWN step through the speeds listed in
++ * keymap.c; the choice is stored in EEPROM. Only pointer motion is scaled, so
++ * scroll and swipes feel the same at every speed. DIGITIZER_MOUSE_DEFAULT_CPI
++ * is the 1:1 reference: 400 CPI moves the cursor 1:1 with the trackpad.
+  */
+ #define DIGITIZER_MOUSE_CPI_POINTER_ONLY
+ #define DIGITIZER_MOUSE_DEFAULT_CPI 400
+-#define MAC_CURSOR_CPI_STEP 50 // 12.5% per key press.
+-#define MAC_CURSOR_CPI_MIN 100 // 25% of the 1:1 speed.
+-#define MAC_CURSOR_CPI_MAX 1000 // 250% of the 1:1 speed.
++#define MAC_CURSOR_CPI_DEFAULT 100 // 25% of the 1:1 speed.
++#define MAC_CURSOR_CPI_MIN 50      // 12.5% of the 1:1 speed.
++#define MAC_CURSOR_CPI_MAX 800     // 200% of the 1:1 speed.
+ 
+ /*
+  * Pinch to zoom. Two fingers moving apart or together send scroll while a
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+index 60877d95..7085fe9d 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+@@ -17,6 +17,9 @@
+  */
+ #include QMK_KEYBOARD_H
+ #include "digitizer_mouse_fallback.h"
++#ifdef DYNAMIC_KEYMAP_ENABLE
++#    include "dynamic_keymap.h"
++#endif
+ 
+ enum dilemma_keymap_layers {
+     LAYER_BASE = 0,
+@@ -105,10 +108,16 @@ typedef union {
+ 
+ _Static_assert(sizeof(user_config_t) == sizeof(uint32_t), "user_config_t must fit in 32 bits");
+ 
+-#define USER_CONFIG_MAGIC 0xD1
++// Bump this whenever the defaults or the keymap change, so devices that were
++// flashed before reset to the new defaults on the next boot.
++#define USER_CONFIG_MAGIC 0xD2
+ 
+ static user_config_t user_config;
+ 
++// Cursor speeds, slowest first. Each step changes the speed by 33-50%, so it
++// is easy to feel. 400 is the 1:1 speed.
++static const uint16_t cursor_cpi_steps[] = {50, 75, 100, 150, 200, 300, 400, 600, 800};
++
+ static void user_config_apply(void) {
+     pointing_device_set_cpi(user_config.cursor_cpi);
+ }
+@@ -117,7 +126,7 @@ static void user_config_set_defaults(void) {
+     user_config.raw        = 0;
+     user_config.magic      = USER_CONFIG_MAGIC;
+     user_config.pinch_mode = PINCH_MODE_CMD;
+-    user_config.cursor_cpi = DIGITIZER_MOUSE_DEFAULT_CPI;
++    user_config.cursor_cpi = MAC_CURSOR_CPI_DEFAULT;
+     eeconfig_update_user(user_config.raw);
+ }
+ 
+@@ -134,15 +143,40 @@ void keyboard_post_init_user(void) {
+     user_config.raw = eeconfig_read_user();
+     if (!user_config_is_valid()) {
+         user_config_set_defaults();
++#ifdef DYNAMIC_KEYMAP_ENABLE
++        // VIA only reloads its keymap copy when the build date changes, so a
++        // firmware flashed on the same day as an older one would keep the old
++        // layout and the custom keys would be missing. Reload it from flash.
++        dynamic_keymap_reset();
++#endif
+     }
+     user_config_apply();
+ }
+ 
+-static void cursor_speed_step(int16_t step) {
+-    const int16_t cpi      = user_config.cursor_cpi + step;
+-    user_config.cursor_cpi = cpi < MAC_CURSOR_CPI_MIN ? MAC_CURSOR_CPI_MIN : cpi > MAC_CURSOR_CPI_MAX ? MAC_CURSOR_CPI_MAX : cpi;
+-    eeconfig_update_user(user_config.raw);
+-    user_config_apply();
++static void cursor_speed_step(bool faster) {
++    const uint16_t cpi  = user_config.cursor_cpi;
++    uint16_t       next = cpi;
++    if (faster) {
++        for (uint8_t i = 0; i < ARRAY_SIZE(cursor_cpi_steps); i++) {
++            if (cursor_cpi_steps[i] > cpi) {
++                next = cursor_cpi_steps[i];
++                break;
++            }
++        }
++    } else {
++        for (uint8_t i = ARRAY_SIZE(cursor_cpi_steps); i > 0; i--) {
++            if (cursor_cpi_steps[i - 1] < cpi) {
++                next = cursor_cpi_steps[i - 1];
++                break;
++            }
++        }
++    }
++    next = next < MAC_CURSOR_CPI_MIN ? MAC_CURSOR_CPI_MIN : next > MAC_CURSOR_CPI_MAX ? MAC_CURSOR_CPI_MAX : next;
++    if (next != cpi) {
++        user_config.cursor_cpi = next;
++        eeconfig_update_user(user_config.raw);
++        user_config_apply();
++    }
+ }
+ 
+ // The fallback reads the modifier when a pinch starts, so changing it mid-pinch is safe.
+@@ -163,10 +197,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+     }
+     switch (keycode) {
+         case CURSOR_SPEED_DOWN:
+-            cursor_speed_step(-MAC_CURSOR_CPI_STEP);
++            cursor_speed_step(false);
+             return false;
+         case CURSOR_SPEED_UP:
+-            cursor_speed_step(MAC_CURSOR_CPI_STEP);
++            cursor_speed_step(true);
+             return false;
+         case PINCH_MOD_CYCLE:
+             user_config.pinch_mode = (user_config.pinch_mode + 1) % PINCH_MODE_COUNT;
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+index 5055dead..d0b6e6aa 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+@@ -27,16 +27,19 @@ positions). Both settings are saved and survive a power cycle.
+ 
+ | Key                 | Hex      | Action                                                                   |
+ | ------------------- | -------- | ------------------------------------------------------------------------ |
+-| `CURSOR_SPEED_DOWN` | `0x7E40` | Slower cursor, 12.5% per press (down to 25%)                             |
+-| `CURSOR_SPEED_UP`   | `0x7E41` | Faster cursor, 12.5% per press (up to 250%)                              |
++| `CURSOR_SPEED_DOWN` | `0x7E40` | Slower cursor, one step per press (down to 12.5%)                        |
++| `CURSOR_SPEED_UP`   | `0x7E41` | Faster cursor, one step per press (up to 200%)                           |
+ | `PINCH_MOD_CYCLE`   | `0x7E42` | Pinch modifier: `Cmd` (Figma, default) → `Ctrl` → none (AutoCAD) → `Cmd` |
+ 
+-Cursor speed only changes the pointer; scroll and swipes feel the same at every speed.
++The cursor starts at 25% of the trackpad's 1:1 speed. The steps are 12.5%, 19%, 25%, 37.5%,
++50%, 75%, 100%, 150% and 200%, so each press is easy to feel. Cursor speed only changes the
++pointer; scroll and swipes feel the same at every speed.
+ 
+ To place a key anywhere with [VIA](https://usevia.app), pick the "Any" key and type the hex
+-value. VIA keeps its own copy of the layout in EEPROM: if you already changed keys in VIA,
+-the positions above only show up after the EEPROM is cleared (`EE_CLR`), which also resets
+-the cursor speed and pinch modifier.
++value. VIA keeps its own copy of the layout in EEPROM and only reloads it when the build date
++changes. To make sure the keys above show up, this keymap stores a settings version: when a
++new firmware changes it, the first boot resets the cursor speed, the pinch modifier and the
++VIA layout to the defaults (your VIA key changes are lost once). `EE_CLR` does the same.
+ 
+ ## Build
+ 
+-- 
+2.56.0
+

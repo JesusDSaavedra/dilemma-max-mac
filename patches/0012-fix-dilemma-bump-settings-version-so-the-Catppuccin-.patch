@@ -1,0 +1,26 @@
+From eee05cf1574278a0baea13969dbd59b0f7bdb06b Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Sat, 10 Oct 2026 01:01:24 -0500
+Subject: [PATCH 12/20] fix(dilemma): bump settings version so the Catppuccin
+ theme is re-applied
+
+---
+ keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+index 9ab48150..b89d4199 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+@@ -110,7 +110,7 @@ _Static_assert(sizeof(user_config_t) == sizeof(uint32_t), "user_config_t must fi
+ 
+ // Bump this whenever the defaults or the keymap change, so devices that were
+ // flashed before reset to the new defaults on the next boot.
+-#define USER_CONFIG_MAGIC 0xD4
++#define USER_CONFIG_MAGIC 0xD5
+ 
+ static user_config_t user_config;
+ 
+-- 
+2.56.0
+

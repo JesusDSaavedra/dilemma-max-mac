@@ -1,0 +1,346 @@
+From 6b89137244f6561ee22ceca0b535630b90135bbb Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Fri, 9 Oct 2026 22:49:44 -0500
+Subject: [PATCH 10/20] feat(digitizer): add two finger flick for back and
+ forward
+
+A fast, mostly horizontal two finger flick outside the edge zones taps
+DIGITIZER_FLICK_RIGHT_KC or DIGITIZER_FLICK_LEFT_KC once and locks the
+gesture until the fingers lift. Horizontal scroll is held for up to
+DIGITIZER_FLICK_TIMEOUT and then flushed without loss; vertical scroll,
+pinch and edge swipes are unchanged. Opt-in via DIGITIZER_MOUSE_FLICK_ENABLE,
+enabled in the Dilemma mac keymap.
+---
+ docs/features/digitizer.md                    |  11 +-
+ .../4x6_4_procyon/keymaps/mac/config.h        |  16 +++
+ .../4x6_4_procyon/keymaps/mac/readme.md       |  37 ++++--
+ quantum/digitizer_mouse_fallback.c            | 121 ++++++++++++++++--
+ 4 files changed, 163 insertions(+), 22 deletions(-)
+
+diff --git a/docs/features/digitizer.md b/docs/features/digitizer.md
+index 24c9a59f..697c07e1 100644
+--- a/docs/features/digitizer.md
++++ b/docs/features/digitizer.md
+@@ -93,6 +93,13 @@ The mouse fallback gesture detection code can be tweaked with the following para
+ | `DIGITIZER_EDGE_SWIPE_THRESHOLD`               | (Optional) Vertical travel of the midpoint that cancels an edge swipe.                                                           | `400`               |
+ | `DIGITIZER_EDGE_SWIPE_BACK_KC`                 | (Optional) The keycode sent by an edge swipe from the left edge moving right.                                                    | `G(KC_LBRC)`        |
+ | `DIGITIZER_EDGE_SWIPE_FORWARD_KC`              | (Optional) The keycode sent by an edge swipe from the right edge moving left.                                                    | `G(KC_RBRC)`        |
++| `DIGITIZER_MOUSE_FLICK_ENABLE`                 | (Optional) If defined, a fast two finger horizontal flick outside the edge zones sends a keycode once (back / forward).           | _not defined_       |
++| `DIGITIZER_FLICK_DISTANCE`                     | (Optional) How far the midpoint of the fingers must move horizontally for a flick.                                              | `600`               |
++| `DIGITIZER_FLICK_TIMEOUT`                      | (Optional) The time in ms, from when the fingers start moving, to cover `DIGITIZER_FLICK_DISTANCE`. Slower motion scrolls.      | `150`               |
++| `DIGITIZER_FLICK_THRESHOLD`                    | (Optional) Vertical travel of the midpoint that turns a flick into a scroll.                                                     | `250`               |
++| `DIGITIZER_FLICK_REST_DISTANCE`                | (Optional) While both fingers moved less than this, they are resting and the flick timeout has not started.                     | `50`                |
++| `DIGITIZER_FLICK_RIGHT_KC`                     | (Optional) The keycode sent by a flick with the fingers moving right.                                                            | `G(KC_LBRC)`        |
++| `DIGITIZER_FLICK_LEFT_KC`                      | (Optional) The keycode sent by a flick with the fingers moving left.                                                             | `G(KC_RBRC)`        |
+ 
+ Swipe keycodes are sent with `tap_code16()`, so modified keycodes work. For example, to switch macOS desktops the way a native trackpad does:
+ 
+@@ -105,7 +112,9 @@ Swipe keycodes are sent with `tap_code16()`, so modified keycodes work. For exam
+ 
+ With `DIGITIZER_MOUSE_PINCH_ENABLE`, nothing is sent while two fingers start moving. Once one of them has moved `DIGITIZER_TWO_FINGER_DECISION_DISTANCE`, the gesture is classified by the direction each finger moved: fingers moving in opposite directions (see `DIGITIZER_PINCH_OPPOSITE_COS_PERCENT`) whose distance also changed (see `DIGITIZER_PINCH_MIN_DISTANCE_CHANGE_PERCENT`) pinch; fingers moving the same way, or with one of them resting, scroll using their midpoint. The choice holds until the fingers lift or change, and the motion made before it is not lost. While pinching the modifiers are held (as weak mods) and spreading the fingers scrolls up, which zooms in with `Cmd`+scroll in apps such as Figma. Without `DIGITIZER_MOUSE_PINCH_ENABLE`, two fingers always scroll.
+ 
+-With `DIGITIZER_MOUSE_EDGE_SWIPE_ENABLE`, two fingers whose midpoint starts within `DIGITIZER_EDGE_SWIPE_ZONE` of the left or right edge (for example, placed one above the other along the edge) send nothing while they move mostly inwards. Once the midpoint has moved `DIGITIZER_EDGE_SWIPE_DISTANCE` inwards, `DIGITIZER_EDGE_SWIPE_BACK_KC` (from the left edge) or `DIGITIZER_EDGE_SWIPE_FORWARD_KC` (from the right edge) is sent with `tap_code16()`, which is back and forward in macOS browsers by default. The rest of the gesture is then ignored until the fingers lift or change. If the fingers instead pinch, move outwards, move more vertically than inwards once they travelled `DIGITIZER_TWO_FINGER_DECISION_DISTANCE`, or move `DIGITIZER_EDGE_SWIPE_THRESHOLD` vertically, the gesture scrolls or pinches as usual and the motion made so far is not lost. Gestures that start outside the edge zones are not affected. The edges are measured in digitizer coordinates, so `digitizer_set_scale()` below 100% (without `DIGITIZER_MOUSE_CPI_POINTER_ONLY`) moves them inwards.
++With `DIGITIZER_MOUSE_EDGE_SWIPE_ENABLE`, two fingers whose midpoint starts within `DIGITIZER_EDGE_SWIPE_ZONE` of the left or right edge (for example, placed one above the other along the edge) send nothing while they move mostly inwards. Once the midpoint has moved `DIGITIZER_EDGE_SWIPE_DISTANCE` inwards, `DIGITIZER_EDGE_SWIPE_BACK_KC` (from the left edge) or `DIGITIZER_EDGE_SWIPE_FORWARD_KC` (from the right edge) is sent with `tap_code16()`, which is back and forward in macOS browsers by default. The rest of the gesture is then ignored until the fingers lift or change. If the fingers instead pinch, move outwards, move more vertically than inwards once they travelled `DIGITIZER_TWO_FINGER_DECISION_DISTANCE`, or move `DIGITIZER_EDGE_SWIPE_THRESHOLD` vertically, the gesture scrolls or pinches as usual and the motion made so far is not lost. Gestures that start outside the edge zones are not affected by edge swipes. The edges are measured in digitizer coordinates, so `digitizer_set_scale()` below 100% (without `DIGITIZER_MOUSE_CPI_POINTER_ONLY`) moves them inwards.
++
++With `DIGITIZER_MOUSE_FLICK_ENABLE`, two fingers that start outside the edge zones and move the same way, mostly horizontally, can flick, like swiping between pages on a Mac trackpad. Once the fingers travelled `DIGITIZER_TWO_FINGER_DECISION_DISTANCE`, horizontal motion (vertical travel of the midpoint below `DIGITIZER_FLICK_THRESHOLD` and at most half of its horizontal travel) sends nothing until either the midpoint moved `DIGITIZER_FLICK_DISTANCE` horizontally within `DIGITIZER_FLICK_TIMEOUT` ms, which sends `DIGITIZER_FLICK_RIGHT_KC` (fingers moving right) or `DIGITIZER_FLICK_LEFT_KC` (fingers moving left) once with `tap_code16()` and ignores the rest of the gesture until the fingers lift or change, or the timeout passes, which scrolls and sends the motion made so far without loss. The timeout counts from when either finger moved `DIGITIZER_FLICK_REST_DISTANCE`, so resting the fingers first does not use it up. Vertical or diagonal motion scrolls at once, a pinch still pinches, and edge swipes keep priority inside the edge zones. Without `DIGITIZER_MOUSE_PINCH_ENABLE`, two fingers also wait for `DIGITIZER_TWO_FINGER_DECISION_DISTANCE` before scrolling. If flicks fire while scrolling, raise `DIGITIZER_FLICK_DISTANCE` or lower `DIGITIZER_FLICK_TIMEOUT`.
+ 
+ ## Split Keyboard Configuration
+ 
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+index e8af6581..c952b015 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+@@ -64,6 +64,22 @@
+ #define DIGITIZER_EDGE_SWIPE_BACK_KC G(KC_LBRC)                        // Cmd+[: back.
+ #define DIGITIZER_EDGE_SWIPE_FORWARD_KC C(A(G(KC_N)))                  // Ctrl+Opt+Cmd+N: Notification Center (assign in macOS settings).
+ 
++/*
++ * Two finger flick, like swiping between pages on a Mac trackpad: anywhere
++ * outside the edge zones, flick two fingers right to go back (Cmd+[) or left
++ * to go forward (Cmd+]). It fires once, then the gesture is ignored until the
++ * fingers lift. Horizontal scroll is held back until the flick timeout passes,
++ * then sent without loss; vertical scroll and pinch are not delayed. If flicks
++ * fire while scrolling, raise DISTANCE or lower TIMEOUT.
++ */
++#define DIGITIZER_MOUSE_FLICK_ENABLE
++#define DIGITIZER_FLICK_DISTANCE 600        // Horizontal travel (6 mm) of the midpoint to fire.
++#define DIGITIZER_FLICK_TIMEOUT 150         // ms from the start of the motion to cover that distance.
++#define DIGITIZER_FLICK_THRESHOLD 250       // Vertical travel (2.5 mm) that makes it a scroll.
++#define DIGITIZER_FLICK_REST_DISTANCE 50    // Fingers moved under 0.5 mm are resting: the timeout waits.
++#define DIGITIZER_FLICK_RIGHT_KC G(KC_LBRC) // Fingers right: Cmd+[, back.
++#define DIGITIZER_FLICK_LEFT_KC G(KC_RBRC)  // Fingers left: Cmd+], forward.
++
+ /*
+  * RGB: the Catppuccin Mocha effect from rgb_matrix_user.inc, with a faint
+  * ripple on key presses. SPLIT_TRANSPORT_MIRROR (from keyboard.json) sends the
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+index 12aa6ab8..7646fcc7 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+@@ -8,16 +8,19 @@ trackpad half is the one plugged into the computer.
+ 
+ ## Gestures
+ 
+-| Gesture                      | Result                                                     |
+-| ---------------------------- | ---------------------------------------------------------- |
+-| 1 finger move                | Move the cursor                                            |
+-| 1 / 2 / 3 finger tap         | Left / right / middle click                                |
+-| Tap, then touch and move     | Drag                                                       |
+-| 2 finger move                | Scroll                                                     |
+-| 2 finger pinch / spread      | Zoom out / in: scroll while the pinch modifier is held     |
+-| 2 finger edge swipe          | From the left edge right: `Cmd+[` (back). From the right edge left: `Ctrl+Opt+Cmd+N` (Notification Center) |
+-| 3 finger swipe left / right  | `Ctrl+→` / `Ctrl+←`: next / previous desktop               |
+-| 3 finger swipe up / down     | `Ctrl+↑` / `Ctrl+↓`: Mission Control / App Exposé          |
++| Gesture                          | Result                                                     |
++| -------------------------------- | ---------------------------------------------------------- |
++| 1 finger move                    | Move the cursor                                            |
++| 1 / 2 / 3 finger tap             | Left / right / middle click                                |
++| Tap, then touch and move         | Drag                                                       |
++| 2 finger move                    | Scroll                                                     |
++| 2 finger pinch / spread          | Zoom out / in: scroll while the pinch modifier is held     |
++| 2 finger flick right, anywhere   | `Cmd+[`: back                                              |
++| 2 finger flick left, anywhere    | `Cmd+]`: forward                                           |
++| 2 finger swipe from left edge    | `Cmd+[`: back                                              |
++| 2 finger swipe from right edge   | `Ctrl+Opt+Cmd+N`: Notification Center                      |
++| 3 finger swipe left / right      | `Ctrl+→` / `Ctrl+←`: next / previous desktop               |
++| 3 finger swipe up / down         | `Ctrl+↑` / `Ctrl+↓`: Mission Control / App Exposé          |
+ 
+ Two fingers decide between scroll and pinch after one of them moves about 1.2 mm: fingers
+ moving in opposite directions (apart or together) pinch, fingers moving the same way scroll.
+@@ -29,6 +32,14 @@ their midpoint must start within about 6 mm of the edge) and swipe about 9 mm in
+ once, then the gesture is ignored until you lift your fingers. Nothing scrolls while the swipe is
+ undecided; moving up, down or outwards, or pinching, from the edge scrolls or pinches as usual.
+ 
++A flick is a quick two finger swipe sideways anywhere outside the edge zones: about 6 mm in
++150 ms, mostly horizontal (less than 2.5 mm up or down, and at most half as much up or down as
++sideways). Fingers right go back, fingers left go forward, like swiping between pages on a Mac
++trackpad. It fires once, then the gesture is ignored until you lift your fingers. To tell a flick
++from a scroll, horizontal scroll waits up to 150 ms after the fingers start moving and then
++catches up, so nothing is lost; vertical scroll and pinch are not delayed. If flicks fire while
++scrolling, raise `DIGITIZER_FLICK_DISTANCE` or lower `DIGITIZER_FLICK_TIMEOUT`.
++
+ macOS has no default shortcut for Notification Center. Assign one once in System Settings →
+ Keyboard → Keyboard Shortcuts → Mission Control → "Show Notification Center" and press
+ `Ctrl+Opt+Cmd+N` (the right-edge swipe sends it).
+@@ -47,6 +58,12 @@ The tap, scroll, swipe and pinch thresholds are in `config.h`:
+ | `DIGITIZER_EDGE_SWIPE_THRESHOLD`              | `400`   | Vertical travel (4 mm) that cancels an edge swipe                 |
+ | `DIGITIZER_EDGE_SWIPE_BACK_KC`                | `G(KC_LBRC)` | `Cmd+[`: back, from the left edge                            |
+ | `DIGITIZER_EDGE_SWIPE_FORWARD_KC`             | `C(A(G(KC_N)))` | `Ctrl+Opt+Cmd+N`: Notification Center, from the right edge |
++| `DIGITIZER_FLICK_DISTANCE`                    | `600`   | Horizontal travel (6 mm) of the midpoint for a flick              |
++| `DIGITIZER_FLICK_TIMEOUT`                     | `150`   | ms from the start of the motion to cover that distance            |
++| `DIGITIZER_FLICK_THRESHOLD`                   | `250`   | Vertical travel (2.5 mm) that makes a flick a scroll              |
++| `DIGITIZER_FLICK_REST_DISTANCE`               | `50`    | Fingers moved under 0.5 mm are resting: the timeout waits         |
++| `DIGITIZER_FLICK_RIGHT_KC`                    | `G(KC_LBRC)` | `Cmd+[`: back, fingers moving right                          |
++| `DIGITIZER_FLICK_LEFT_KC`                     | `G(KC_RBRC)` | `Cmd+]`: forward, fingers moving left                        |
+ 
+ ## Keys
+ 
+diff --git a/quantum/digitizer_mouse_fallback.c b/quantum/digitizer_mouse_fallback.c
+index d4328db0..77ae01ee 100644
+--- a/quantum/digitizer_mouse_fallback.c
++++ b/quantum/digitizer_mouse_fallback.c
+@@ -126,8 +126,39 @@
+ #        define DIGITIZER_EDGE_SWIPE_FORWARD_KC G(KC_RBRC)
+ #    endif
+ 
+-// Pinch and edge swipes both track a pair of fingers to classify two finger gestures.
+-#    if defined(DIGITIZER_MOUSE_PINCH_ENABLE) || defined(DIGITIZER_MOUSE_EDGE_SWIPE_ENABLE)
++// With DIGITIZER_MOUSE_FLICK_ENABLE, two fingers that start outside the edge zones and whose
++// midpoint moves this far horizontally within DIGITIZER_FLICK_TIMEOUT send a keycode once.
++#    ifndef DIGITIZER_FLICK_DISTANCE
++#        define DIGITIZER_FLICK_DISTANCE 600
++#    endif
++
++// How long (in ms from the start of the motion) a flick may take. Slower motion scrolls.
++#    ifndef DIGITIZER_FLICK_TIMEOUT
++#        define DIGITIZER_FLICK_TIMEOUT 150
++#    endif
++
++// Vertical travel of the midpoint that turns a flick into a scroll.
++#    ifndef DIGITIZER_FLICK_THRESHOLD
++#        define DIGITIZER_FLICK_THRESHOLD 250
++#    endif
++
++// While both fingers moved less than this, they are resting and the flick timeout restarts.
++#    ifndef DIGITIZER_FLICK_REST_DISTANCE
++#        define DIGITIZER_FLICK_REST_DISTANCE 50
++#    endif
++
++// The keycode sent by a flick with the fingers moving right (Cmd+[, back, by default).
++#    ifndef DIGITIZER_FLICK_RIGHT_KC
++#        define DIGITIZER_FLICK_RIGHT_KC G(KC_LBRC)
++#    endif
++
++// The keycode sent by a flick with the fingers moving left (Cmd+], forward, by default).
++#    ifndef DIGITIZER_FLICK_LEFT_KC
++#        define DIGITIZER_FLICK_LEFT_KC G(KC_RBRC)
++#    endif
++
++// Pinch, edge swipes and flicks all track a pair of fingers to classify two finger gestures.
++#    if defined(DIGITIZER_MOUSE_PINCH_ENABLE) || defined(DIGITIZER_MOUSE_EDGE_SWIPE_ENABLE) || defined(DIGITIZER_MOUSE_FLICK_ENABLE)
+ #        define DIGITIZER_TWO_FINGER_TRACKING
+ #    endif
+ 
+@@ -245,8 +276,9 @@ __attribute__((weak)) uint8_t digitizer_pinch_mods_user(void) {
+ }
+ #        endif
+ 
+-// TwoFingerEdgeSwipe means an edge swipe already fired: the rest of the gesture is ignored.
+-typedef enum { TwoFingerUndecided, TwoFingerScroll, TwoFingerPinch, TwoFingerEdgeSwipe } two_finger_mode_t;
++// TwoFingerEdgeSwipe and TwoFingerFlick mean an edge swipe or a flick already fired: the rest of
++// the gesture is ignored.
++typedef enum { TwoFingerUndecided, TwoFingerScroll, TwoFingerPinch, TwoFingerEdgeSwipe, TwoFingerFlick } two_finger_mode_t;
+ 
+ // Tracks a two finger gesture to tell a pinch or an edge swipe apart from a two finger scroll.
+ typedef struct {
+@@ -261,6 +293,9 @@ typedef struct {
+     int32_t           last_y;
+     int32_t           carry_h;
+     int32_t           carry_v;
++#        ifdef DIGITIZER_MOUSE_FLICK_ENABLE
++    uint32_t start_time;
++#        endif
+ } pinch_state_t;
+ 
+ static pinch_state_t pinch = {};
+@@ -342,27 +377,62 @@ static int8_t digitizer_edge_swipe_side(int32_t start_x) {
+ }
+ #        endif
+ 
++#        ifdef DIGITIZER_MOUSE_FLICK_ENABLE
++/**
++ * @brief Tells a fast horizontal two finger flick apart from a two finger scroll.
++ *
++ * Only a scroll can become a flick, so undecided motion and pinches are returned unchanged.
++ * Motion is horizontal while the vertical travel of the midpoint stays below
++ * DIGITIZER_FLICK_THRESHOLD and is at most half of its horizontal travel. Horizontal motion
++ * stays undecided until its midpoint moved DIGITIZER_FLICK_DISTANCE (a flick) or
++ * DIGITIZER_FLICK_TIMEOUT passed (a scroll). Any other motion scrolls at once.
++ *
++ * @param[in] mode the mode from digitizer_classify_two_finger()
++ * @param[in] elapsed the time in ms since the fingers started moving
++ * @param[in] mid_x, mid_y the motion of the midpoint of the fingers
++ * @return the mode of the gesture, TwoFingerUndecided while a flick is still possible
++ */
++static two_finger_mode_t digitizer_classify_flick(two_finger_mode_t mode, uint32_t elapsed, int32_t mid_x, int32_t mid_y) {
++    if (mode != TwoFingerScroll || elapsed > DIGITIZER_FLICK_TIMEOUT) {
++        return mode;
++    }
++    const int32_t horizontal = abs(mid_x);
++    const int32_t vertical   = abs(mid_y);
++    if (vertical >= DIGITIZER_FLICK_THRESHOLD || horizontal < 2 * vertical) {
++        return TwoFingerScroll;
++    }
++    return horizontal >= DIGITIZER_FLICK_DISTANCE ? TwoFingerFlick : TwoFingerUndecided;
++}
++#        endif
++
+ /**
+- * @brief Classifies a two finger gesture, including edge swipes.
++ * @brief Classifies a two finger gesture, including edge swipes and flicks.
+  *
+  * A gesture whose midpoint starts in an edge zone stays undecided while its midpoint moves
+  * mostly inwards, and becomes an edge swipe once it moved DIGITIZER_EDGE_SWIPE_DISTANCE inwards.
+  * A pinch, vertical travel of DIGITIZER_EDGE_SWIPE_THRESHOLD, or a direction that is not mostly
+  * inwards once the fingers moved DIGITIZER_TWO_FINGER_DECISION_DISTANCE cancels the edge swipe,
+- * and the gesture is classified by digitizer_classify_two_finger() as usual.
++ * and the gesture is classified by digitizer_classify_two_finger() as usual. A gesture that
++ * starts outside the edge zones can become a flick, see digitizer_classify_flick().
+  *
+  * @param[in] start_x the x coordinate of the midpoint of the fingers when the gesture started
++ * @param[in] elapsed the time in ms since the fingers started moving (only used for flicks)
+  * @param[in] ax, ay the motion of the first finger
+  * @param[in] bx, by the motion of the second finger
+  * @param[in] distance_change the change in distance between the fingers
+  * @return the mode of the gesture, TwoFingerUndecided while it is not known yet
+  */
+-static two_finger_mode_t digitizer_classify_two_finger_gesture(int32_t start_x, int32_t ax, int32_t ay, int32_t bx, int32_t by, int32_t distance_change) {
++static two_finger_mode_t digitizer_classify_two_finger_gesture(int32_t start_x, uint32_t elapsed, int32_t ax, int32_t ay, int32_t bx, int32_t by, int32_t distance_change) {
+     const two_finger_mode_t mode = digitizer_classify_two_finger(ax, ay, bx, by, distance_change);
++#        ifndef DIGITIZER_MOUSE_FLICK_ENABLE
++    (void)elapsed;
++#        endif
+ #        ifdef DIGITIZER_MOUSE_EDGE_SWIPE_ENABLE
+     const int8_t side = digitizer_edge_swipe_side(start_x);
+     if (side == 0) {
+-#            ifdef DIGITIZER_MOUSE_PINCH_ENABLE
++#            ifdef DIGITIZER_MOUSE_FLICK_ENABLE
++        return digitizer_classify_flick(mode, elapsed, (ax + bx) / 2, (ay + by) / 2);
++#            elif defined(DIGITIZER_MOUSE_PINCH_ENABLE)
+         return mode;
+ #            else
+         // Without pinch support there is nothing to wait for outside the edge zones.
+@@ -378,6 +448,9 @@ static two_finger_mode_t digitizer_classify_two_finger_gesture(int32_t start_x,
+     }
+ #        else
+     (void)start_x;
++#            ifdef DIGITIZER_MOUSE_FLICK_ENABLE
++    return digitizer_classify_flick(mode, elapsed, (ax + bx) / 2, (ay + by) / 2);
++#            endif
+ #        endif
+     return mode;
+ }
+@@ -402,8 +475,8 @@ static void digitizer_pinch_end(void) {
+  * report after it, so no scroll is lost. While pinching, the selected modifiers are held and
+  * the distance change is sent as vertical scroll (spreading the fingers scrolls up, which
+  * zooms in). A gesture that starts in an edge zone stays undecided while it may still become
+- * an edge swipe; once the swipe fires, its keycode is tapped and the rest of the gesture is
+- * ignored.
++ * an edge swipe, and a horizontal scroll stays undecided while it may still become a flick;
++ * once the swipe or flick fires, its keycode is tapped and the rest of the gesture is ignored.
+  *
+  * @param[in] report the digitizer report
+  * @return true if the report was handled
+@@ -446,6 +519,9 @@ static bool digitizer_pinch_update(const report_digitizer_t *report) {
+         pinch.last_distance = distance;
+         pinch.last_x        = mid_x;
+         pinch.last_y        = mid_y;
++#        ifdef DIGITIZER_MOUSE_FLICK_ENABLE
++        pinch.start_time = timer_read32();
++#        endif
+         return true;
+     }
+ 
+@@ -455,15 +531,38 @@ static bool digitizer_pinch_update(const report_digitizer_t *report) {
+         return true;
+     }
+ #        endif
++#        ifdef DIGITIZER_MOUSE_FLICK_ENABLE
++    // So does a flick.
++    if (pinch.mode == TwoFingerFlick) {
++        return true;
++    }
++#        endif
+ 
+     if (pinch.mode == TwoFingerUndecided) {
+         // last_distance and last_x/y still hold the start of the gesture, so the motion made
+         // while undecided is sent below as soon as the mode is known.
+         const int32_t start_x = (pinch.start_x[0] + pinch.start_x[1]) / 2;
+-        pinch.mode            = digitizer_classify_two_finger_gesture(start_x, ax - pinch.start_x[0], ay - pinch.start_y[0], bx - pinch.start_x[1], by - pinch.start_y[1], distance - pinch.last_distance);
++#        ifdef DIGITIZER_MOUSE_FLICK_ENABLE
++        // The flick timeout counts from when the fingers start moving, so resting them first is fine.
++        if (vector_length(ax - pinch.start_x[0], ay - pinch.start_y[0]) < DIGITIZER_FLICK_REST_DISTANCE && vector_length(bx - pinch.start_x[1], by - pinch.start_y[1]) < DIGITIZER_FLICK_REST_DISTANCE) {
++            pinch.start_time = timer_read32();
++        }
++        const uint32_t elapsed = timer_elapsed32(pinch.start_time);
++#        else
++        const uint32_t elapsed = 0;
++#        endif
++        pinch.mode = digitizer_classify_two_finger_gesture(start_x, elapsed, ax - pinch.start_x[0], ay - pinch.start_y[0], bx - pinch.start_x[1], by - pinch.start_y[1], distance - pinch.last_distance);
+         if (pinch.mode == TwoFingerUndecided) {
+             return true;
+         }
++#        ifdef DIGITIZER_MOUSE_FLICK_ENABLE
++        if (pinch.mode == TwoFingerFlick) {
++            if (digitizer_send_mouse_reports) {
++                tap_code16(mid_x > start_x ? DIGITIZER_FLICK_RIGHT_KC : DIGITIZER_FLICK_LEFT_KC);
++            }
++            return true;
++        }
++#        endif
+ #        ifdef DIGITIZER_MOUSE_EDGE_SWIPE_ENABLE
+         if (pinch.mode == TwoFingerEdgeSwipe) {
+             if (digitizer_send_mouse_reports) {
+-- 
+2.56.0
+

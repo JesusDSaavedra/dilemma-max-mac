@@ -1,0 +1,26 @@
+From bf1b539db08397888011fe8dea640d35c298dbbc Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Fri, 9 Oct 2026 21:29:57 -0500
+Subject: [PATCH 01/20] fix(dilemma): move split serial to GP16 after GP1
+ damage
+
+---
+ keyboards/bastardkb/dilemma/4x6_4_procyon/keyboard.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keyboard.json b/keyboards/bastardkb/dilemma/4x6_4_procyon/keyboard.json
+index 9bcd2e10..6406ac14 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keyboard.json
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keyboard.json
+@@ -14,7 +14,7 @@
+     "diode_direction": "ROW2COL",
+     "split": {
+         "enabled": true,
+-        "soft_serial_pin": "GP1",
++        "soft_serial_pin": "GP16",
+         "bootmagic": {
+             "matrix": [5, 0]
+         },
+-- 
+2.56.0
+

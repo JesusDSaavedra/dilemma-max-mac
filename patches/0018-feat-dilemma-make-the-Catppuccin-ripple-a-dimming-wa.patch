@@ -1,0 +1,130 @@
+From e140aa68277290f45a644463fb57df1da39c5b6f Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Sat, 10 Oct 2026 01:59:22 -0500
+Subject: [PATCH 18/20] feat(dilemma): make the Catppuccin ripple a dimming
+ wave across both halves
+
+---
+ .../4x6_4_procyon/keymaps/mac/config.h        |  2 +-
+ .../4x6_4_procyon/keymaps/mac/readme.md       |  5 +--
+ .../keymaps/mac/rgb_matrix_user.inc           | 33 +++++++++----------
+ 3 files changed, 20 insertions(+), 20 deletions(-)
+
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+index 905f7ca8..3860af66 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+@@ -99,7 +99,7 @@
+  * effect, so the effect scales its colors by CATPPUCCIN_POWER_SCALE to match
+  * a saturated effect at the same brightness, and the default brightness is low.
+  *
+- * RGB_MATRIX_KEYPRESSES enables the faint Lavender ripple on key presses
++ * RGB_MATRIX_KEYPRESSES enables the dimming ripple on key presses
+  * (SPLIT_TRANSPORT_MIRROR from keyboard.json sends presses to both halves).
+  * It also adds the built-in reactive effects, which shifts the custom effect's
+  * index, so USER_CONFIG_MAGIC must change whenever this define is toggled.
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+index 59ed2a66..bfbf7798 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+@@ -104,8 +104,9 @@ The default effect is a [Catppuccin](https://catppuccin.com) Mocha theme (`rgb_m
+ - Every key shows a color from the Mocha accent palette (Rosewater, Flamingo, Pink, Mauve, Red,
+   Maroon, Peach, Yellow, Green, Teal, Sky, Sapphire, Blue, Lavender) as a smooth gradient from
+   the outer edge to the center. Both halves mirror each other.
+-- Each key press sends a faint Lavender ripple outwards for about half a second, blending at most
+-  22% towards Lavender (`CATPPUCCIN_RIPPLE_*` in `rgb_matrix_user.inc`). It needs
++- Each key press sends a ripple that dims the keys it passes (up to about 55% darker at the crest)
++  as it travels from the pressed key across both halves in about 0.9 s, fading as it goes
++  (`CATPPUCCIN_RIPPLE_*` in `rgb_matrix_user.inc`). It needs
+   `RGB_MATRIX_KEYPRESSES`, which also shifts the custom effect's index, so the settings version
+   changes whenever that define is toggled. An earlier report blamed the ripple for a dead split
+   trackpad; the real cause was the power brownout described below.
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
+index bac8f415..1bf6bca0 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
+@@ -1,29 +1,31 @@
+ // SPDX-License-Identifier: GPL-2.0-or-later
+ 
+ // Catppuccin Mocha: the accent palette as a gradient, mirrored on both halves,
+-// with a faint ripple that spreads from each key press.
++// with a dimming ripple that spreads from each key press across the keyboard.
+ RGB_MATRIX_EFFECT(catppuccin_mocha)
+ 
+ #ifdef RGB_MATRIX_CUSTOM_EFFECT_IMPLS
+ 
+-// How long a ripple lasts, in ms.
++// How long a ripple lasts, in ms. It travels CATPPUCCIN_RIPPLE_RADIUS in this time.
+ #    ifndef CATPPUCCIN_RIPPLE_DURATION
+-#        define CATPPUCCIN_RIPPLE_DURATION 500
++#        define CATPPUCCIN_RIPPLE_DURATION 900
+ #    endif
+ 
+-// How far a ripple travels, in LED position units (a key is about 18 units wide).
++// How far a ripple travels, in LED position units (a key is about 18 units wide and the
++// whole keyboard is 224 wide), so 224 crosses both halves from any key.
+ #    ifndef CATPPUCCIN_RIPPLE_RADIUS
+-#        define CATPPUCCIN_RIPPLE_RADIUS 72
++#        define CATPPUCCIN_RIPPLE_RADIUS 224
+ #    endif
+ 
+ // The width of the ripple ring, in LED position units.
+ #    ifndef CATPPUCCIN_RIPPLE_WIDTH
+-#        define CATPPUCCIN_RIPPLE_WIDTH 20
++#        define CATPPUCCIN_RIPPLE_WIDTH 28
+ #    endif
+ 
+-// The strongest blend towards the ripple color, out of 255 (56 is about 22%).
+-#    ifndef CATPPUCCIN_RIPPLE_BLEND
+-#        define CATPPUCCIN_RIPPLE_BLEND 56
++// How much the ring darkens the keys it passes, out of 255 (140 is about 55% darker at the
++// crest). The ring also fades out as it travels.
++#    ifndef CATPPUCCIN_RIPPLE_DIM
++#        define CATPPUCCIN_RIPPLE_DIM 140
+ #    endif
+ 
+ // Scales every color, out of 255, so the effect draws about as much power as a saturated one at
+@@ -55,9 +57,6 @@ static const rgb_t catppuccin_mocha_palette[] = {
+     CATPPUCCIN_HEX(0xB4BEFE), // Lavender
+ };
+ 
+-// The ripple blends towards Lavender.
+-static const rgb_t catppuccin_mocha_ripple = CATPPUCCIN_HEX(0xB4BEFE);
+-
+ #    define CATPPUCCIN_PALETTE_STEPS (ARRAY_SIZE(catppuccin_mocha_palette) - 1)
+ 
+ static rgb_t catppuccin_blend(rgb_t a, rgb_t b, uint8_t amount_of_b) {
+@@ -74,7 +73,7 @@ static rgb_t catppuccin_gradient(uint8_t x) {
+     return catppuccin_blend(catppuccin_mocha_palette[index], catppuccin_mocha_palette[index + 1], pos & 0xFF);
+ }
+ 
+-// The ripple strength at an LED (0 to CATPPUCCIN_RIPPLE_BLEND): the strongest ring that reaches it.
++// How much the ripple darkens an LED (0 to CATPPUCCIN_RIPPLE_DIM): the strongest ring that reaches it.
+ static uint8_t catppuccin_ripple(uint8_t led) {
+     uint8_t strength = 0;
+ #    ifdef RGB_MATRIX_KEYREACTIVE_ENABLED
+@@ -93,7 +92,7 @@ static uint8_t catppuccin_ripple(uint8_t led) {
+         }
+         const uint8_t ring = (CATPPUCCIN_RIPPLE_WIDTH - offset) * 255 / CATPPUCCIN_RIPPLE_WIDTH;
+         const uint8_t fade = (uint32_t)(CATPPUCCIN_RIPPLE_DURATION - tick) * 255 / CATPPUCCIN_RIPPLE_DURATION;
+-        strength           = MAX(strength, scale8(scale8(ring, fade), CATPPUCCIN_RIPPLE_BLEND));
++        strength           = MAX(strength, scale8(scale8(ring, fade), CATPPUCCIN_RIPPLE_DIM));
+     }
+ #    else
+     (void)led;
+@@ -108,9 +107,9 @@ static bool catppuccin_mocha(effect_params_t *params) {
+     const uint8_t val = scale8(rgb_matrix_get_val(), CATPPUCCIN_POWER_SCALE);
+     for (uint8_t i = led_min; i < led_max; i++) {
+         RGB_MATRIX_TEST_LED_FLAGS();
+-        rgb_t rgb = catppuccin_gradient(g_led_config.point[i].x);
+-        rgb       = catppuccin_blend(rgb, catppuccin_mocha_ripple, catppuccin_ripple(i));
+-        rgb_matrix_set_color(i, scale8(rgb.r, val), scale8(rgb.g, val), scale8(rgb.b, val));
++        const rgb_t   rgb     = catppuccin_gradient(g_led_config.point[i].x);
++        const uint8_t led_val = scale8(val, 255 - catppuccin_ripple(i));
++        rgb_matrix_set_color(i, scale8(rgb.r, led_val), scale8(rgb.g, led_val), scale8(rgb.b, led_val));
+     }
+     return rgb_matrix_check_finished_leds(led_max);
+ }
+-- 
+2.56.0
+

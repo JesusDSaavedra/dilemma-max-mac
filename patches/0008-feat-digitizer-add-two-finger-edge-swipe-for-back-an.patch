@@ -1,0 +1,322 @@
+From fcc20f9db909b9f2ce96affc28ccaeea127e6f3f Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Fri, 9 Oct 2026 22:34:01 -0500
+Subject: [PATCH 08/20] feat(digitizer): add two finger edge swipe for back and
+ forward
+
+Two fingers whose midpoint starts in a left or right edge zone and moves inwards tap DIGITIZER_EDGE_SWIPE_BACK_KC (Cmd+[) or DIGITIZER_EDGE_SWIPE_FORWARD_KC (Cmd+]) once and consume the gesture. Other motion falls back to scroll or pinch without losing motion. Opt-in via DIGITIZER_MOUSE_EDGE_SWIPE_ENABLE, enabled in the mac keymap.
+---
+ docs/features/digitizer.md                    |   8 ++
+ .../4x6_4_procyon/keymaps/mac/config.h        |  14 ++
+ .../4x6_4_procyon/keymaps/mac/readme.md       |  11 ++
+ quantum/digitizer_mouse_fallback.c            | 135 ++++++++++++++++--
+ 4 files changed, 160 insertions(+), 8 deletions(-)
+
+diff --git a/docs/features/digitizer.md b/docs/features/digitizer.md
+index 0dddbd73..24c9a59f 100644
+--- a/docs/features/digitizer.md
++++ b/docs/features/digitizer.md
+@@ -87,6 +87,12 @@ The mouse fallback gesture detection code can be tweaked with the following para
+ | `DIGITIZER_PINCH_MIN_DISTANCE_CHANGE_PERCENT`  | (Optional) Fingers pinch only if their distance changed by at least this percentage of their combined travel. | `50` |
+ | `DIGITIZER_TWO_FINGER_STATIONARY_PERCENT`      | (Optional) A finger that moved less than this percentage of the other finger's travel is resting, which scrolls. | `25` |
+ | `DIGITIZER_PINCH_DIVISOR`                      | (Optional) A scaling factor that is applied to reduce the speed of pinch scrolling.                                               | `10`                |
++| `DIGITIZER_MOUSE_EDGE_SWIPE_ENABLE`            | (Optional) If defined, two fingers that start at the left or right edge and swipe inwards send a keycode once (back / forward). | _not defined_       |
++| `DIGITIZER_EDGE_SWIPE_ZONE`                    | (Optional) The midpoint of the fingers must start closer than this to the left or right edge for an edge swipe.                  | 15% of `DIGITIZER_RESOLUTION_X` |
++| `DIGITIZER_EDGE_SWIPE_DISTANCE`                | (Optional) How far the midpoint of the fingers must move inwards for an edge swipe.                                              | `900`               |
++| `DIGITIZER_EDGE_SWIPE_THRESHOLD`               | (Optional) Vertical travel of the midpoint that cancels an edge swipe.                                                           | `400`               |
++| `DIGITIZER_EDGE_SWIPE_BACK_KC`                 | (Optional) The keycode sent by an edge swipe from the left edge moving right.                                                    | `G(KC_LBRC)`        |
++| `DIGITIZER_EDGE_SWIPE_FORWARD_KC`              | (Optional) The keycode sent by an edge swipe from the right edge moving left.                                                    | `G(KC_RBRC)`        |
+ 
+ Swipe keycodes are sent with `tap_code16()`, so modified keycodes work. For example, to switch macOS desktops the way a native trackpad does:
+ 
+@@ -99,6 +105,8 @@ Swipe keycodes are sent with `tap_code16()`, so modified keycodes work. For exam
+ 
+ With `DIGITIZER_MOUSE_PINCH_ENABLE`, nothing is sent while two fingers start moving. Once one of them has moved `DIGITIZER_TWO_FINGER_DECISION_DISTANCE`, the gesture is classified by the direction each finger moved: fingers moving in opposite directions (see `DIGITIZER_PINCH_OPPOSITE_COS_PERCENT`) whose distance also changed (see `DIGITIZER_PINCH_MIN_DISTANCE_CHANGE_PERCENT`) pinch; fingers moving the same way, or with one of them resting, scroll using their midpoint. The choice holds until the fingers lift or change, and the motion made before it is not lost. While pinching the modifiers are held (as weak mods) and spreading the fingers scrolls up, which zooms in with `Cmd`+scroll in apps such as Figma. Without `DIGITIZER_MOUSE_PINCH_ENABLE`, two fingers always scroll.
+ 
++With `DIGITIZER_MOUSE_EDGE_SWIPE_ENABLE`, two fingers whose midpoint starts within `DIGITIZER_EDGE_SWIPE_ZONE` of the left or right edge (for example, placed one above the other along the edge) send nothing while they move mostly inwards. Once the midpoint has moved `DIGITIZER_EDGE_SWIPE_DISTANCE` inwards, `DIGITIZER_EDGE_SWIPE_BACK_KC` (from the left edge) or `DIGITIZER_EDGE_SWIPE_FORWARD_KC` (from the right edge) is sent with `tap_code16()`, which is back and forward in macOS browsers by default. The rest of the gesture is then ignored until the fingers lift or change. If the fingers instead pinch, move outwards, move more vertically than inwards once they travelled `DIGITIZER_TWO_FINGER_DECISION_DISTANCE`, or move `DIGITIZER_EDGE_SWIPE_THRESHOLD` vertically, the gesture scrolls or pinches as usual and the motion made so far is not lost. Gestures that start outside the edge zones are not affected. The edges are measured in digitizer coordinates, so `digitizer_set_scale()` below 100% (without `DIGITIZER_MOUSE_CPI_POINTER_ONLY`) moves them inwards.
++
+ ## Split Keyboard Configuration
+ 
+ The following configuration options are only available when using `SPLIT_DIGITIZER_ENABLE` see [data sync options](split_keyboard#data-sync-options). If using `DIGITIZER_LEFT` or `DIGITIZER_RIGHT` use the common configuration above to configure your pointing device.
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+index f7c4c4d1..d93aad8d 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+@@ -50,6 +50,20 @@
+ #define DIGITIZER_TWO_FINGER_STATIONARY_PERCENT 25     // A finger moving under 25% of the other one rests: scroll.
+ #define DIGITIZER_PINCH_DIVISOR 10                     // Higher zooms slower (trackpad units per scroll step).
+ 
++/*
++ * Edge swipe, like Safari on a Mac trackpad: put two fingers along the left
++ * edge and swipe right to go back (Cmd+[), or along the right edge and swipe
++ * left to go forward (Cmd+]). It fires once, then the gesture is ignored until
++ * the fingers lift. Other motion from the edge (up, down, outwards, pinch)
++ * scrolls or pinches as usual. Nothing is sent while the swipe is undecided.
++ */
++#define DIGITIZER_MOUSE_EDGE_SWIPE_ENABLE
++#define DIGITIZER_EDGE_SWIPE_ZONE (DIGITIZER_RESOLUTION_X * 15 / 100) // Midpoint of the fingers within 15% (6.3 mm) of an edge.
++#define DIGITIZER_EDGE_SWIPE_DISTANCE 900                              // Inward travel (9 mm) of the midpoint to fire.
++#define DIGITIZER_EDGE_SWIPE_THRESHOLD 400                             // Vertical travel (4 mm) that cancels the swipe.
++#define DIGITIZER_EDGE_SWIPE_BACK_KC G(KC_LBRC)                        // Cmd+[: back.
++#define DIGITIZER_EDGE_SWIPE_FORWARD_KC G(KC_RBRC)                     // Cmd+]: forward.
++
+ /*
+  * RGB: the Catppuccin Mocha effect from rgb_matrix_user.inc, with a faint
+  * ripple on key presses. SPLIT_TRANSPORT_MIRROR (from keyboard.json) sends the
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+index c5ce719e..750dc138 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+@@ -15,6 +15,7 @@ trackpad half is the one plugged into the computer.
+ | Tap, then touch and move     | Drag                                                       |
+ | 2 finger move                | Scroll                                                     |
+ | 2 finger pinch / spread      | Zoom out / in: scroll while the pinch modifier is held     |
++| 2 finger edge swipe          | From the left edge right / right edge left: `Cmd+[` / `Cmd+]` (back / forward) |
+ | 3 finger swipe left / right  | `Ctrl+→` / `Ctrl+←`: next / previous desktop               |
+ | 3 finger swipe up / down     | `Ctrl+↑` / `Ctrl+↓`: Mission Control / App Exposé          |
+ 
+@@ -23,6 +24,11 @@ moving in opposite directions (apart or together) pinch, fingers moving the same
+ Resting one finger and moving the other scrolls, so pinch with both fingers. The choice holds
+ until you lift your fingers, and nothing is lost while it is being made.
+ 
++For an edge swipe, put two fingers along the left or right edge (one above the other works best,
++their midpoint must start within about 6 mm of the edge) and swipe about 9 mm inwards. It fires
++once, then the gesture is ignored until you lift your fingers. Nothing scrolls while the swipe is
++undecided; moving up, down or outwards, or pinching, from the edge scrolls or pinches as usual.
++
+ The tap, scroll, swipe and pinch thresholds are in `config.h`:
+ 
+ | Define                                        | Default | Meaning                                                           |
+@@ -32,6 +38,11 @@ The tap, scroll, swipe and pinch thresholds are in `config.h`:
+ | `DIGITIZER_PINCH_MIN_DISTANCE_CHANGE_PERCENT` | `50`    | ...and their distance changes by at least half of their travel    |
+ | `DIGITIZER_TWO_FINGER_STATIONARY_PERCENT`     | `25`    | A finger moving less than 25% of the other one is resting: scroll |
+ | `DIGITIZER_PINCH_DIVISOR`                     | `10`    | Higher zooms slower                                               |
++| `DIGITIZER_EDGE_SWIPE_ZONE`                   | `630`   | Edge zone (6.3 mm, 15% of the width) for the fingers' midpoint    |
++| `DIGITIZER_EDGE_SWIPE_DISTANCE`               | `900`   | Inward travel (9 mm) of the midpoint for an edge swipe            |
++| `DIGITIZER_EDGE_SWIPE_THRESHOLD`              | `400`   | Vertical travel (4 mm) that cancels an edge swipe                 |
++| `DIGITIZER_EDGE_SWIPE_BACK_KC`                | `G(KC_LBRC)` | `Cmd+[`: back, from the left edge                            |
++| `DIGITIZER_EDGE_SWIPE_FORWARD_KC`             | `G(KC_RBRC)` | `Cmd+]`: forward, from the right edge                        |
+ 
+ ## Keys
+ 
+diff --git a/quantum/digitizer_mouse_fallback.c b/quantum/digitizer_mouse_fallback.c
+index dd5b8115..d4328db0 100644
+--- a/quantum/digitizer_mouse_fallback.c
++++ b/quantum/digitizer_mouse_fallback.c
+@@ -100,6 +100,37 @@
+ #        define DIGITIZER_PINCH_DIVISOR 10
+ #    endif
+ 
++// With DIGITIZER_MOUSE_EDGE_SWIPE_ENABLE, two fingers whose midpoint starts closer than this to
++// the left or right edge of the trackpad can swipe inwards to go back or forward.
++#    ifndef DIGITIZER_EDGE_SWIPE_ZONE
++#        define DIGITIZER_EDGE_SWIPE_ZONE (DIGITIZER_RESOLUTION_X * 15 / 100)
++#    endif
++
++// How far the midpoint of the fingers must move inwards for an edge swipe.
++#    ifndef DIGITIZER_EDGE_SWIPE_DISTANCE
++#        define DIGITIZER_EDGE_SWIPE_DISTANCE 900
++#    endif
++
++// An edge swipe is cancelled once the midpoint of the fingers moved this far vertically.
++#    ifndef DIGITIZER_EDGE_SWIPE_THRESHOLD
++#        define DIGITIZER_EDGE_SWIPE_THRESHOLD 400
++#    endif
++
++// The keycode sent by an edge swipe from the left edge moving right (Cmd+[ by default).
++#    ifndef DIGITIZER_EDGE_SWIPE_BACK_KC
++#        define DIGITIZER_EDGE_SWIPE_BACK_KC G(KC_LBRC)
++#    endif
++
++// The keycode sent by an edge swipe from the right edge moving left (Cmd+] by default).
++#    ifndef DIGITIZER_EDGE_SWIPE_FORWARD_KC
++#        define DIGITIZER_EDGE_SWIPE_FORWARD_KC G(KC_RBRC)
++#    endif
++
++// Pinch and edge swipes both track a pair of fingers to classify two finger gestures.
++#    if defined(DIGITIZER_MOUSE_PINCH_ENABLE) || defined(DIGITIZER_MOUSE_EDGE_SWIPE_ENABLE)
++#        define DIGITIZER_TWO_FINGER_TRACKING
++#    endif
++
+ #    ifdef DIGITIZER_REPORT_TAPS_AS_CLICKS
+ bool digitizer_taps_as_clicks = true;
+ #    else
+@@ -202,7 +233,8 @@ typedef enum { None, Down, MoveScroll, Tapped, DoubleTapped, Drag, Swipe, Finish
+ static State state     = None;
+ static int   tap_count = 0;
+ 
+-#    ifdef DIGITIZER_MOUSE_PINCH_ENABLE
++#    ifdef DIGITIZER_TWO_FINGER_TRACKING
++#        ifdef DIGITIZER_MOUSE_PINCH_ENABLE
+ /**
+  * @brief Selects the modifiers held while pinching. Return 0 to send plain scroll.
+  *
+@@ -211,10 +243,12 @@ static int   tap_count = 0;
+ __attribute__((weak)) uint8_t digitizer_pinch_mods_user(void) {
+     return MOD_BIT(KC_LEFT_GUI);
+ }
++#        endif
+ 
+-typedef enum { TwoFingerUndecided, TwoFingerScroll, TwoFingerPinch } two_finger_mode_t;
++// TwoFingerEdgeSwipe means an edge swipe already fired: the rest of the gesture is ignored.
++typedef enum { TwoFingerUndecided, TwoFingerScroll, TwoFingerPinch, TwoFingerEdgeSwipe } two_finger_mode_t;
+ 
+-// Tracks a two finger gesture to tell a pinch apart from a two finger scroll.
++// Tracks a two finger gesture to tell a pinch or an edge swipe apart from a two finger scroll.
+ typedef struct {
+     bool              tracking;
+     two_finger_mode_t mode;
+@@ -273,6 +307,7 @@ static two_finger_mode_t digitizer_classify_two_finger(int32_t ax, int32_t ay, i
+     if (longest < DIGITIZER_TWO_FINGER_DECISION_DISTANCE) {
+         return TwoFingerUndecided;
+     }
++#        ifdef DIGITIZER_MOUSE_PINCH_ENABLE
+     if (shortest * 100 < longest * DIGITIZER_TWO_FINGER_STATIONARY_PERCENT) {
+         return TwoFingerScroll;
+     }
+@@ -281,6 +316,70 @@ static two_finger_mode_t digitizer_classify_two_finger(int32_t ax, int32_t ay, i
+     const bool    opposite = -dot * 100 > (int64_t)DIGITIZER_PINCH_OPPOSITE_COS_PERCENT * length_a * length_b;
+     const bool    spread   = abs(distance_change) * 100 >= DIGITIZER_PINCH_MIN_DISTANCE_CHANGE_PERCENT * (length_a + length_b);
+     return opposite && spread ? TwoFingerPinch : TwoFingerScroll;
++#        else
++    // Without pinch support two fingers always scroll.
++    (void)shortest;
++    (void)distance_change;
++    return TwoFingerScroll;
++#        endif
++}
++
++#        ifdef DIGITIZER_MOUSE_EDGE_SWIPE_ENABLE
++/**
++ * @brief Finds the edge zone a two finger gesture starts in.
++ *
++ * @param[in] start_x the x coordinate of the midpoint of the fingers when the gesture started
++ * @return the direction that points inwards: 1 at the left edge, -1 at the right edge, 0 elsewhere
++ */
++static int8_t digitizer_edge_swipe_side(int32_t start_x) {
++    if (start_x < DIGITIZER_EDGE_SWIPE_ZONE) {
++        return 1;
++    }
++    if (start_x > DIGITIZER_RESOLUTION_X - DIGITIZER_EDGE_SWIPE_ZONE) {
++        return -1;
++    }
++    return 0;
++}
++#        endif
++
++/**
++ * @brief Classifies a two finger gesture, including edge swipes.
++ *
++ * A gesture whose midpoint starts in an edge zone stays undecided while its midpoint moves
++ * mostly inwards, and becomes an edge swipe once it moved DIGITIZER_EDGE_SWIPE_DISTANCE inwards.
++ * A pinch, vertical travel of DIGITIZER_EDGE_SWIPE_THRESHOLD, or a direction that is not mostly
++ * inwards once the fingers moved DIGITIZER_TWO_FINGER_DECISION_DISTANCE cancels the edge swipe,
++ * and the gesture is classified by digitizer_classify_two_finger() as usual.
++ *
++ * @param[in] start_x the x coordinate of the midpoint of the fingers when the gesture started
++ * @param[in] ax, ay the motion of the first finger
++ * @param[in] bx, by the motion of the second finger
++ * @param[in] distance_change the change in distance between the fingers
++ * @return the mode of the gesture, TwoFingerUndecided while it is not known yet
++ */
++static two_finger_mode_t digitizer_classify_two_finger_gesture(int32_t start_x, int32_t ax, int32_t ay, int32_t bx, int32_t by, int32_t distance_change) {
++    const two_finger_mode_t mode = digitizer_classify_two_finger(ax, ay, bx, by, distance_change);
++#        ifdef DIGITIZER_MOUSE_EDGE_SWIPE_ENABLE
++    const int8_t side = digitizer_edge_swipe_side(start_x);
++    if (side == 0) {
++#            ifdef DIGITIZER_MOUSE_PINCH_ENABLE
++        return mode;
++#            else
++        // Without pinch support there is nothing to wait for outside the edge zones.
++        return TwoFingerScroll;
++#            endif
++    }
++    if (mode != TwoFingerPinch) {
++        const int32_t inward   = side * (ax + bx) / 2;
++        const int32_t vertical = abs(ay + by) / 2;
++        if (vertical < DIGITIZER_EDGE_SWIPE_THRESHOLD && (mode == TwoFingerUndecided || inward > vertical)) {
++            return inward >= DIGITIZER_EDGE_SWIPE_DISTANCE ? TwoFingerEdgeSwipe : TwoFingerUndecided;
++        }
++    }
++#        else
++    (void)start_x;
++#        endif
++    return mode;
+ }
+ 
+ /**
+@@ -302,7 +401,9 @@ static void digitizer_pinch_end(void) {
+  * the fingers lift or change. The motion made before the decision is sent with the first
+  * report after it, so no scroll is lost. While pinching, the selected modifiers are held and
+  * the distance change is sent as vertical scroll (spreading the fingers scrolls up, which
+- * zooms in).
++ * zooms in). A gesture that starts in an edge zone stays undecided while it may still become
++ * an edge swipe; once the swipe fires, its keycode is tapped and the rest of the gesture is
++ * ignored.
+  *
+  * @param[in] report the digitizer report
+  * @return true if the report was handled
+@@ -348,13 +449,30 @@ static bool digitizer_pinch_update(const report_digitizer_t *report) {
+         return true;
+     }
+ 
++#        ifdef DIGITIZER_MOUSE_EDGE_SWIPE_ENABLE
++    // An edge swipe consumes the whole gesture: nothing more is sent until the fingers change.
++    if (pinch.mode == TwoFingerEdgeSwipe) {
++        return true;
++    }
++#        endif
++
+     if (pinch.mode == TwoFingerUndecided) {
+         // last_distance and last_x/y still hold the start of the gesture, so the motion made
+         // while undecided is sent below as soon as the mode is known.
+-        pinch.mode = digitizer_classify_two_finger(ax - pinch.start_x[0], ay - pinch.start_y[0], bx - pinch.start_x[1], by - pinch.start_y[1], distance - pinch.last_distance);
++        const int32_t start_x = (pinch.start_x[0] + pinch.start_x[1]) / 2;
++        pinch.mode            = digitizer_classify_two_finger_gesture(start_x, ax - pinch.start_x[0], ay - pinch.start_y[0], bx - pinch.start_x[1], by - pinch.start_y[1], distance - pinch.last_distance);
+         if (pinch.mode == TwoFingerUndecided) {
+             return true;
+         }
++#        ifdef DIGITIZER_MOUSE_EDGE_SWIPE_ENABLE
++        if (pinch.mode == TwoFingerEdgeSwipe) {
++            if (digitizer_send_mouse_reports) {
++                tap_code16(digitizer_edge_swipe_side(start_x) > 0 ? DIGITIZER_EDGE_SWIPE_BACK_KC : DIGITIZER_EDGE_SWIPE_FORWARD_KC);
++            }
++            return true;
++        }
++#        endif
++#        ifdef DIGITIZER_MOUSE_PINCH_ENABLE
+         if (pinch.mode == TwoFingerPinch && digitizer_send_mouse_reports) {
+             pinch.mods = digitizer_pinch_mods_user();
+             if (pinch.mods) {
+@@ -362,6 +480,7 @@ static bool digitizer_pinch_update(const report_digitizer_t *report) {
+                 send_keyboard_report();
+             }
+         }
++#        endif
+     }
+ 
+     if (pinch.mode == TwoFingerPinch) {
+@@ -455,9 +574,9 @@ void digitizer_update_mouse_report(report_digitizer_t *report) {
+                 mouse_report.y         = digitizer_scale_motion(y - last_y, &carry_y);
+             } else if (contacts == 3 && duration < DIGITIZER_MOUSE_SWIPE_TIMEOUT) {
+                 state = Swipe;
+-#    ifdef DIGITIZER_MOUSE_PINCH_ENABLE
++#    ifdef DIGITIZER_TWO_FINGER_TRACKING
+             } else if (contacts == 2 && state == MoveScroll && digitizer_pinch_update(report)) {
+-                // Two finger scroll or pinch, handled by digitizer_pinch_update().
++                // Two finger scroll, pinch or edge swipe, handled by digitizer_pinch_update().
+ #    endif
+             } else {
+                 static int carry_h = 0;
+@@ -549,7 +668,7 @@ void digitizer_update_mouse_report(report_digitizer_t *report) {
+         mouse_report.buttons |= 0x4;
+         if (digitizer_taps_as_clicks) report->button3 = 1;
+     }
+-#    ifdef DIGITIZER_MOUSE_PINCH_ENABLE
++#    ifdef DIGITIZER_TWO_FINGER_TRACKING
+     // Any exit from a two finger gesture ends the pinch, so its modifiers can never stick.
+     if (pinch.tracking && (state != MoveScroll || contacts != 2 || !digitizer_send_mouse_reports)) {
+         digitizer_pinch_end();
+-- 
+2.56.0
+

@@ -1,0 +1,123 @@
+From 660d4ed2459010bc916152a71c9e48c1b3b4aa38 Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Sat, 10 Oct 2026 01:39:16 -0500
+Subject: [PATCH 15/20] feat(digitizer): optional edge swipe zones and
+ horizontal scroll divisor
+
+An edge swipe keycode of KC_NO removes that edge's zone, so gestures starting there flick, scroll or pinch as anywhere else. DIGITIZER_SCROLL_DIVISOR_H sets the horizontal scroll divisor (default DIGITIZER_SCROLL_DIVISOR) in both scroll paths.
+---
+ docs/features/digitizer.md         |  7 ++++---
+ quantum/digitizer_mouse_fallback.c | 21 +++++++++++++++------
+ 2 files changed, 19 insertions(+), 9 deletions(-)
+
+diff --git a/docs/features/digitizer.md b/docs/features/digitizer.md
+index 46e16d73..ec07917f 100644
+--- a/docs/features/digitizer.md
++++ b/docs/features/digitizer.md
+@@ -70,6 +70,7 @@ The mouse fallback gesture detection code can be tweaked with the following para
+ | `DIGITIZER_MOUSE_TAP_DURATION`                 | (Optional) The length of time each simulated button press is held for.                                                           | `1`                 |
+ | `DIGITIZER_MOUSE_TAP_DISTANCE`                 | (Optional) The maximum distance a contact can move in an axis and still be detected as a tap.                                    | `25`                |
+ | `DIGITIZER_SCROLL_DIVISOR`                     | (Optional) A scaling factor that is applied to reduce the speed of scroll reporting.                                             | `10`                |
++| `DIGITIZER_SCROLL_DIVISOR_H`                   | (Optional) The scroll divisor for the horizontal axis, so sideways scroll can be faster or slower than vertical scroll.          | `DIGITIZER_SCROLL_DIVISOR` |
+ | `DIGITIZER_MOUSE_SWIPE_TIMEOUT`                | (Optional) The timeout in ms before a swipe gesture is detected.                                                                 | `1000`              |
+ | `DIGITIZER_MOUSE_SWIPE_DISTANCE`               | (Optional) Minimum move distance required for a swipe to be detected.                                                            | `500`               |
+ | `DIGITIZER_MOUSE_SWIPE_THRESHOLD`              | (Optional) Movements in the alternate axis must be less than this threshold for a swipe to be detected.                          | `300`               |
+@@ -91,8 +92,8 @@ The mouse fallback gesture detection code can be tweaked with the following para
+ | `DIGITIZER_EDGE_SWIPE_ZONE`                    | (Optional) The midpoint of the fingers must start closer than this to the left or right edge for an edge swipe.                  | 15% of `DIGITIZER_RESOLUTION_X` |
+ | `DIGITIZER_EDGE_SWIPE_DISTANCE`                | (Optional) How far the midpoint of the fingers must move inwards for an edge swipe.                                              | `900`               |
+ | `DIGITIZER_EDGE_SWIPE_THRESHOLD`               | (Optional) Vertical travel of the midpoint that cancels an edge swipe.                                                           | `400`               |
+-| `DIGITIZER_EDGE_SWIPE_BACK_KC`                 | (Optional) The keycode sent by an edge swipe from the left edge moving right. Mouse buttons are supported, see below.            | `G(KC_LBRC)`        |
+-| `DIGITIZER_EDGE_SWIPE_FORWARD_KC`              | (Optional) The keycode sent by an edge swipe from the right edge moving left. Mouse buttons are supported, see below.            | `G(KC_RBRC)`        |
++| `DIGITIZER_EDGE_SWIPE_BACK_KC`                 | (Optional) The keycode sent by an edge swipe from the left edge moving right. Mouse buttons are supported, see below. `KC_NO` removes the left edge zone. | `G(KC_LBRC)`        |
++| `DIGITIZER_EDGE_SWIPE_FORWARD_KC`              | (Optional) The keycode sent by an edge swipe from the right edge moving left. Mouse buttons are supported, see below. `KC_NO` removes the right edge zone. | `G(KC_RBRC)`        |
+ | `DIGITIZER_MOUSE_FLICK_ENABLE`                 | (Optional) If defined, a fast two finger horizontal flick outside the edge zones sends a keycode once (back / forward).           | _not defined_       |
+ | `DIGITIZER_FLICK_DISTANCE`                     | (Optional) How far the midpoint of the fingers must move horizontally for a flick.                                              | `600`               |
+ | `DIGITIZER_FLICK_TIMEOUT`                      | (Optional) The time in ms, from when the fingers start moving, to cover `DIGITIZER_FLICK_DISTANCE`. Slower motion scrolls.      | `150`               |
+@@ -112,7 +113,7 @@ Swipe keycodes are sent with `tap_code16()`, so modified keycodes work. For exam
+ 
+ With `DIGITIZER_MOUSE_PINCH_ENABLE`, nothing is sent while two fingers start moving. Once one of them has moved `DIGITIZER_TWO_FINGER_DECISION_DISTANCE`, the gesture is classified by the direction each finger moved: fingers moving in opposite directions (see `DIGITIZER_PINCH_OPPOSITE_COS_PERCENT`) whose distance also changed (see `DIGITIZER_PINCH_MIN_DISTANCE_CHANGE_PERCENT`) pinch; fingers moving the same way, or with one of them resting, scroll using their midpoint. The choice holds until the fingers lift or change, and the motion made before it is not lost. While pinching the modifiers are held (as weak mods) and spreading the fingers scrolls up, which zooms in with `Cmd`+scroll in apps such as Figma. Without `DIGITIZER_MOUSE_PINCH_ENABLE`, two fingers always scroll.
+ 
+-With `DIGITIZER_MOUSE_EDGE_SWIPE_ENABLE`, two fingers whose midpoint starts within `DIGITIZER_EDGE_SWIPE_ZONE` of the left or right edge (for example, placed one above the other along the edge) send nothing while they move mostly inwards. Once the midpoint has moved `DIGITIZER_EDGE_SWIPE_DISTANCE` inwards, `DIGITIZER_EDGE_SWIPE_BACK_KC` (from the left edge) or `DIGITIZER_EDGE_SWIPE_FORWARD_KC` (from the right edge) is sent, which is back and forward in macOS browsers by default. The rest of the gesture is then ignored until the fingers lift or change. If the fingers instead pinch, move outwards, move more vertically than inwards once they travelled `DIGITIZER_TWO_FINGER_DECISION_DISTANCE`, or move `DIGITIZER_EDGE_SWIPE_THRESHOLD` vertically, the gesture scrolls or pinches as usual and the motion made so far is not lost. Gestures that start outside the edge zones are not affected by edge swipes. The edges are measured in digitizer coordinates, so `digitizer_set_scale()` below 100% (without `DIGITIZER_MOUSE_CPI_POINTER_ONLY`) moves them inwards.
++With `DIGITIZER_MOUSE_EDGE_SWIPE_ENABLE`, two fingers whose midpoint starts within `DIGITIZER_EDGE_SWIPE_ZONE` of the left or right edge (for example, placed one above the other along the edge) send nothing while they move mostly inwards. Once the midpoint has moved `DIGITIZER_EDGE_SWIPE_DISTANCE` inwards, `DIGITIZER_EDGE_SWIPE_BACK_KC` (from the left edge) or `DIGITIZER_EDGE_SWIPE_FORWARD_KC` (from the right edge) is sent, which is back and forward in macOS browsers by default. The rest of the gesture is then ignored until the fingers lift or change. If the fingers instead pinch, move outwards, move more vertically than inwards once they travelled `DIGITIZER_TWO_FINGER_DECISION_DISTANCE`, or move `DIGITIZER_EDGE_SWIPE_THRESHOLD` vertically, the gesture scrolls or pinches as usual and the motion made so far is not lost. Gestures that start outside the edge zones are not affected by edge swipes. Setting `DIGITIZER_EDGE_SWIPE_BACK_KC` or `DIGITIZER_EDGE_SWIPE_FORWARD_KC` to `KC_NO` removes that edge's zone, so gestures starting there flick, scroll or pinch exactly as anywhere else. The edges are measured in digitizer coordinates, so `digitizer_set_scale()` below 100% (without `DIGITIZER_MOUSE_CPI_POINTER_ONLY`) moves them inwards.
+ 
+ With `DIGITIZER_MOUSE_FLICK_ENABLE`, two fingers that start outside the edge zones and move the same way, mostly horizontally, can flick, like swiping between pages on a Mac trackpad. Once the fingers travelled `DIGITIZER_TWO_FINGER_DECISION_DISTANCE`, horizontal motion (vertical travel of the midpoint below `DIGITIZER_FLICK_THRESHOLD` and at most half of its horizontal travel) sends nothing until either the midpoint moved `DIGITIZER_FLICK_DISTANCE` horizontally within `DIGITIZER_FLICK_TIMEOUT` ms, which sends `DIGITIZER_FLICK_RIGHT_KC` (fingers moving right) or `DIGITIZER_FLICK_LEFT_KC` (fingers moving left) once and ignores the rest of the gesture until the fingers lift or change, or the timeout passes, which scrolls and sends the motion made so far without loss. The timeout counts from when either finger moved `DIGITIZER_FLICK_REST_DISTANCE`, so resting the fingers first does not use it up. Vertical or diagonal motion scrolls at once, a pinch still pinches, and edge swipes keep priority inside the edge zones. Without `DIGITIZER_MOUSE_PINCH_ENABLE`, two fingers also wait for `DIGITIZER_TWO_FINGER_DECISION_DISTANCE` before scrolling. If flicks fire while scrolling, raise `DIGITIZER_FLICK_DISTANCE` or lower `DIGITIZER_FLICK_TIMEOUT`.
+ 
+diff --git a/quantum/digitizer_mouse_fallback.c b/quantum/digitizer_mouse_fallback.c
+index 0928beac..38c15f5d 100644
+--- a/quantum/digitizer_mouse_fallback.c
++++ b/quantum/digitizer_mouse_fallback.c
+@@ -29,6 +29,11 @@
+ #        define DIGITIZER_SCROLL_DIVISOR 10
+ #    endif
+ 
++// The scroll divisor for the horizontal axis, so sideways scroll can be faster or slower.
++#    ifndef DIGITIZER_SCROLL_DIVISOR_H
++#        define DIGITIZER_SCROLL_DIVISOR_H DIGITIZER_SCROLL_DIVISOR
++#    endif
++
+ #    ifndef DIGITIZER_MOUSE_SWIPE_TIMEOUT
+ #        define DIGITIZER_MOUSE_SWIPE_TIMEOUT 1000
+ #    endif
+@@ -118,11 +123,13 @@
+ 
+ // The keycode sent by an edge swipe from the left edge moving right (Cmd+[ by default). Mouse
+ // buttons (QK_MOUSE_BUTTON_1..8) are sent in the trackpad's own mouse report instead of tapped.
++// KC_NO removes the left edge zone, so gestures starting there behave as anywhere else.
+ #    ifndef DIGITIZER_EDGE_SWIPE_BACK_KC
+ #        define DIGITIZER_EDGE_SWIPE_BACK_KC G(KC_LBRC)
+ #    endif
+ 
+ // The keycode sent by an edge swipe from the right edge moving left (Cmd+] by default).
++// KC_NO removes the right edge zone, so gestures starting there behave as anywhere else.
+ #    ifndef DIGITIZER_EDGE_SWIPE_FORWARD_KC
+ #        define DIGITIZER_EDGE_SWIPE_FORWARD_KC G(KC_RBRC)
+ #    endif
+@@ -415,14 +422,16 @@ static two_finger_mode_t digitizer_classify_two_finger(int32_t ax, int32_t ay, i
+ /**
+  * @brief Finds the edge zone a two finger gesture starts in.
+  *
++ * An edge whose keycode is KC_NO has no zone, so gestures starting there classify as anywhere else.
++ *
+  * @param[in] start_x the x coordinate of the midpoint of the fingers when the gesture started
+  * @return the direction that points inwards: 1 at the left edge, -1 at the right edge, 0 elsewhere
+  */
+ static int8_t digitizer_edge_swipe_side(int32_t start_x) {
+-    if (start_x < DIGITIZER_EDGE_SWIPE_ZONE) {
++    if ((uint16_t)(DIGITIZER_EDGE_SWIPE_BACK_KC) != KC_NO && start_x < DIGITIZER_EDGE_SWIPE_ZONE) {
+         return 1;
+     }
+-    if (start_x > DIGITIZER_RESOLUTION_X - DIGITIZER_EDGE_SWIPE_ZONE) {
++    if ((uint16_t)(DIGITIZER_EDGE_SWIPE_FORWARD_KC) != KC_NO && start_x > DIGITIZER_RESOLUTION_X - DIGITIZER_EDGE_SWIPE_ZONE) {
+         return -1;
+     }
+     return 0;
+@@ -644,11 +653,11 @@ static bool digitizer_pinch_update(const report_digitizer_t *report) {
+         // Scroll with the midpoint of the fingers.
+         const int32_t h = mid_x - pinch.last_x + pinch.carry_h;
+         const int32_t v = mid_y - pinch.last_y + pinch.carry_v;
+-        pinch.carry_h   = h % DIGITIZER_SCROLL_DIVISOR;
++        pinch.carry_h   = h % DIGITIZER_SCROLL_DIVISOR_H;
+         pinch.carry_v   = v % DIGITIZER_SCROLL_DIVISOR;
+         pinch.last_x    = mid_x;
+         pinch.last_y    = mid_y;
+-        mouse_report.h  = CLIP(h / DIGITIZER_SCROLL_DIVISOR, MOUSE_REPORT_HV_MIN, MOUSE_REPORT_HV_MAX);
++        mouse_report.h  = CLIP(h / DIGITIZER_SCROLL_DIVISOR_H, MOUSE_REPORT_HV_MIN, MOUSE_REPORT_HV_MAX);
+         mouse_report.v  = CLIP(v / DIGITIZER_SCROLL_DIVISOR, MOUSE_REPORT_HV_MIN, MOUSE_REPORT_HV_MAX);
+     }
+     return true;
+@@ -736,10 +745,10 @@ void digitizer_update_mouse_report(report_digitizer_t *report) {
+                 const int  h       = x - last_x + carry_h;
+                 const int  v       = y - last_y + carry_v;
+ 
+-                carry_h = h % DIGITIZER_SCROLL_DIVISOR;
++                carry_h = h % DIGITIZER_SCROLL_DIVISOR_H;
+                 carry_v = v % DIGITIZER_SCROLL_DIVISOR;
+ 
+-                mouse_report.h = h / DIGITIZER_SCROLL_DIVISOR;
++                mouse_report.h = h / DIGITIZER_SCROLL_DIVISOR_H;
+                 mouse_report.v = v / DIGITIZER_SCROLL_DIVISOR;
+             }
+             break;
+-- 
+2.56.0
+

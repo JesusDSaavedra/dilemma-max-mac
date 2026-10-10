@@ -1,0 +1,97 @@
+From 16481eb39dab201ad1bd3a52ff231ca21b06882f Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Fri, 9 Oct 2026 23:54:30 -0500
+Subject: [PATCH 11/20] fix(dilemma): drop key press ripple that breaks split
+ trackpad and soften scroll and zoom
+
+---
+ .../dilemma/4x6_4_procyon/keymaps/mac/config.h      | 13 +++++++------
+ .../dilemma/4x6_4_procyon/keymaps/mac/keymap.c      |  2 +-
+ .../dilemma/4x6_4_procyon/keymaps/mac/readme.md     |  8 ++++----
+ 3 files changed, 12 insertions(+), 11 deletions(-)
+
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+index c952b015..d91363e5 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+@@ -15,7 +15,7 @@
+ #define DIGITIZER_SWIPE_DOWN_KC C(KC_DOWN)  // App Exposé.
+ 
+ /* Gesture tuning. */
+-#define DIGITIZER_SCROLL_DIVISOR 10                // Higher scrolls slower (trackpad units per scroll step).
++#define DIGITIZER_SCROLL_DIVISOR 20                // Higher scrolls slower (trackpad units per scroll step).
+ #define DIGITIZER_MOUSE_TAP_DETECTION_TIMEOUT 200  // ms a touch may last and still count as a tap.
+ #define DIGITIZER_MOUSE_TAP_DISTANCE 50            // Max movement (0.5 mm) for a touch to count as a tap.
+ #define DIGITIZER_MOUSE_SWIPE_DISTANCE 500         // Min travel (5 mm) for a 3-finger swipe.
+@@ -48,7 +48,7 @@
+ #define DIGITIZER_PINCH_OPPOSITE_COS_PERCENT 50        // Pinch if the fingers move more than 120 degrees apart.
+ #define DIGITIZER_PINCH_MIN_DISTANCE_CHANGE_PERCENT 50 // ...and their distance changed by half their travel.
+ #define DIGITIZER_TWO_FINGER_STATIONARY_PERCENT 25     // A finger moving under 25% of the other one rests: scroll.
+-#define DIGITIZER_PINCH_DIVISOR 10                     // Higher zooms slower (trackpad units per scroll step).
++#define DIGITIZER_PINCH_DIVISOR 25                     // Higher zooms slower (trackpad units per scroll step).
+ 
+ /*
+  * Edge swipe, like Safari on a Mac trackpad: put two fingers along the left
+@@ -81,11 +81,12 @@
+ #define DIGITIZER_FLICK_LEFT_KC G(KC_RBRC)  // Fingers left: Cmd+], forward.
+ 
+ /*
+- * RGB: the Catppuccin Mocha effect from rgb_matrix_user.inc, with a faint
+- * ripple on key presses. SPLIT_TRANSPORT_MIRROR (from keyboard.json) sends the
+- * key presses to the other half, so ripples cross both halves.
++ * RGB: the Catppuccin Mocha effect from rgb_matrix_user.inc.
++ *
++ * RGB_MATRIX_KEYPRESSES (the key press ripple) is deliberately left off: with
++ * it enabled the trackpad stops working whenever both halves are connected,
++ * even with the RGB turned off (bisected on the device, cause not yet known).
+  */
+-#define RGB_MATRIX_KEYPRESSES
+ #define RGB_MATRIX_DEFAULT_MODE RGB_MATRIX_CUSTOM_catppuccin_mocha
+ #undef RGB_MATRIX_DEFAULT_VAL
+ #define RGB_MATRIX_DEFAULT_VAL 96 // Of 255, capped at the keyboard's 176.
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+index 94ea9bb5..9ab48150 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+@@ -110,7 +110,7 @@ _Static_assert(sizeof(user_config_t) == sizeof(uint32_t), "user_config_t must fi
+ 
+ // Bump this whenever the defaults or the keymap change, so devices that were
+ // flashed before reset to the new defaults on the next boot.
+-#define USER_CONFIG_MAGIC 0xD3
++#define USER_CONFIG_MAGIC 0xD4
+ 
+ static user_config_t user_config;
+ 
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+index 7646fcc7..eca847eb 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+@@ -52,7 +52,7 @@ The tap, scroll, swipe and pinch thresholds are in `config.h`:
+ | `DIGITIZER_PINCH_OPPOSITE_COS_PERCENT`        | `50`    | Pinch only if the fingers move more than 120 degrees apart        |
+ | `DIGITIZER_PINCH_MIN_DISTANCE_CHANGE_PERCENT` | `50`    | ...and their distance changes by at least half of their travel    |
+ | `DIGITIZER_TWO_FINGER_STATIONARY_PERCENT`     | `25`    | A finger moving less than 25% of the other one is resting: scroll |
+-| `DIGITIZER_PINCH_DIVISOR`                     | `10`    | Higher zooms slower                                               |
++| `DIGITIZER_PINCH_DIVISOR`                     | `25`    | Higher zooms slower                                               |
+ | `DIGITIZER_EDGE_SWIPE_ZONE`                   | `630`   | Edge zone (6.3 mm, 15% of the width) for the fingers' midpoint    |
+ | `DIGITIZER_EDGE_SWIPE_DISTANCE`               | `900`   | Inward travel (9 mm) of the midpoint for an edge swipe            |
+ | `DIGITIZER_EDGE_SWIPE_THRESHOLD`              | `400`   | Vertical travel (4 mm) that cancels an edge swipe                 |
+@@ -93,13 +93,13 @@ The default effect is a [Catppuccin](https://catppuccin.com) Mocha theme (`rgb_m
+ - Every key shows a color from the Mocha accent palette (Rosewater, Flamingo, Pink, Mauve, Red,
+   Maroon, Peach, Yellow, Green, Teal, Sky, Sapphire, Blue, Lavender) as a smooth gradient from
+   the outer edge to the center. Both halves mirror each other.
+-- Each key press sends a faint Lavender ripple outwards for about half a second. It blends at
+-  most 22% towards Lavender, so the overall lighting barely changes. Ripples cross both halves.
++- There is no key press ripple. `RGB_MATRIX_KEYPRESSES` stays off because, with it enabled, the
++  trackpad stops working whenever both halves are connected (bisected on the device). The
++  ripple code in `rgb_matrix_user.inc` is inactive without it.
+ - The colors use the exact palette values, scaled by the brightness setting (default 96 of the
+   keyboard's maximum 176). `RM_NEXT` / `RM_PREV` / `RM_TOGG` on `LOWER` and VIA still change the
+   effect and brightness.
+ 
+-The ripple timing and strength are the `CATPPUCCIN_RIPPLE_*` defines in `rgb_matrix_user.inc`.
+ After flashing a firmware with a new settings version (see above), the first boot selects this
+ effect and the default brightness again.
+ 
+-- 
+2.56.0
+

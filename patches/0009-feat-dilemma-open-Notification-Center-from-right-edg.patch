@@ -1,0 +1,60 @@
+From 5a19ff6506937649762bcd170b6ddf791dbec764 Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Fri, 9 Oct 2026 22:36:13 -0500
+Subject: [PATCH 09/20] feat(dilemma): open Notification Center from right edge
+ swipe in mac keymap
+
+---
+ .../bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h  | 2 +-
+ .../bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md | 8 ++++++--
+ 2 files changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+index d93aad8d..e8af6581 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+@@ -62,7 +62,7 @@
+ #define DIGITIZER_EDGE_SWIPE_DISTANCE 900                              // Inward travel (9 mm) of the midpoint to fire.
+ #define DIGITIZER_EDGE_SWIPE_THRESHOLD 400                             // Vertical travel (4 mm) that cancels the swipe.
+ #define DIGITIZER_EDGE_SWIPE_BACK_KC G(KC_LBRC)                        // Cmd+[: back.
+-#define DIGITIZER_EDGE_SWIPE_FORWARD_KC G(KC_RBRC)                     // Cmd+]: forward.
++#define DIGITIZER_EDGE_SWIPE_FORWARD_KC C(A(G(KC_N)))                  // Ctrl+Opt+Cmd+N: Notification Center (assign in macOS settings).
+ 
+ /*
+  * RGB: the Catppuccin Mocha effect from rgb_matrix_user.inc, with a faint
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+index 750dc138..12aa6ab8 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+@@ -15,7 +15,7 @@ trackpad half is the one plugged into the computer.
+ | Tap, then touch and move     | Drag                                                       |
+ | 2 finger move                | Scroll                                                     |
+ | 2 finger pinch / spread      | Zoom out / in: scroll while the pinch modifier is held     |
+-| 2 finger edge swipe          | From the left edge right / right edge left: `Cmd+[` / `Cmd+]` (back / forward) |
++| 2 finger edge swipe          | From the left edge right: `Cmd+[` (back). From the right edge left: `Ctrl+Opt+Cmd+N` (Notification Center) |
+ | 3 finger swipe left / right  | `Ctrl+→` / `Ctrl+←`: next / previous desktop               |
+ | 3 finger swipe up / down     | `Ctrl+↑` / `Ctrl+↓`: Mission Control / App Exposé          |
+ 
+@@ -29,6 +29,10 @@ their midpoint must start within about 6 mm of the edge) and swipe about 9 mm in
+ once, then the gesture is ignored until you lift your fingers. Nothing scrolls while the swipe is
+ undecided; moving up, down or outwards, or pinching, from the edge scrolls or pinches as usual.
+ 
++macOS has no default shortcut for Notification Center. Assign one once in System Settings →
++Keyboard → Keyboard Shortcuts → Mission Control → "Show Notification Center" and press
++`Ctrl+Opt+Cmd+N` (the right-edge swipe sends it).
++
+ The tap, scroll, swipe and pinch thresholds are in `config.h`:
+ 
+ | Define                                        | Default | Meaning                                                           |
+@@ -42,7 +46,7 @@ The tap, scroll, swipe and pinch thresholds are in `config.h`:
+ | `DIGITIZER_EDGE_SWIPE_DISTANCE`               | `900`   | Inward travel (9 mm) of the midpoint for an edge swipe            |
+ | `DIGITIZER_EDGE_SWIPE_THRESHOLD`              | `400`   | Vertical travel (4 mm) that cancels an edge swipe                 |
+ | `DIGITIZER_EDGE_SWIPE_BACK_KC`                | `G(KC_LBRC)` | `Cmd+[`: back, from the left edge                            |
+-| `DIGITIZER_EDGE_SWIPE_FORWARD_KC`             | `G(KC_RBRC)` | `Cmd+]`: forward, from the right edge                        |
++| `DIGITIZER_EDGE_SWIPE_FORWARD_KC`             | `C(A(G(KC_N)))` | `Ctrl+Opt+Cmd+N`: Notification Center, from the right edge |
+ 
+ ## Keys
+ 
+-- 
+2.56.0
+
