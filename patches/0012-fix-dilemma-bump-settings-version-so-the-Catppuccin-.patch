@@ -1,7 +1,7 @@
 From eee05cf1574278a0baea13969dbd59b0f7bdb06b Mon Sep 17 00:00:00 2001
 From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
 Date: Sat, 10 Oct 2026 01:01:24 -0500
-Subject: [PATCH 12/20] fix(dilemma): bump settings version so the Catppuccin
+Subject: [PATCH 12/24] fix(dilemma): bump settings version so the Catppuccin
  theme is re-applied
 
 ---

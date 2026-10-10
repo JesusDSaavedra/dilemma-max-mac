@@ -1,0 +1,187 @@
+From 5fdf859c31394179d73d5ba375d05a255a8097aa Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Sat, 10 Oct 2026 03:03:01 -0500
+Subject: [PATCH 24/24] feat(dilemma): add Kanagawa Dragon and Horizon palette
+ themes
+
+---
+ .../4x6_4_procyon/keymaps/mac/keymap.c        | 16 +++++--
+ .../4x6_4_procyon/keymaps/mac/readme.md       | 17 ++++++-
+ .../keymaps/mac/rgb_matrix_user.inc           | 44 +++++++++++++++++++
+ 3 files changed, 73 insertions(+), 4 deletions(-)
+
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+index 92a84eb0..939abc78 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+@@ -44,6 +44,8 @@ enum mac_keycodes {
+     RGB_THEME_RESTORE,              // 0x7E43
+     RGB_THEME_GRUVBOX,              // 0x7E44
+     RGB_THEME_ALEGRA,               // 0x7E45
++    RGB_THEME_KANAGAWA,             // 0x7E46
++    RGB_THEME_HORIZON,              // 0x7E47
+ };
+ 
+ #define CSPD_DN CURSOR_SPEED_DOWN
+@@ -53,6 +55,8 @@ enum mac_keycodes {
+ #define THM_CAT RGB_THEME_RESTORE
+ #define THM_GRV RGB_THEME_GRUVBOX
+ #define THM_ALG RGB_THEME_ALEGRA
++#define THM_KAN RGB_THEME_KANAGAWA
++#define THM_HOR RGB_THEME_HORIZON
+ 
+ // clang-format off
+ #define LAYOUT_TRANSPARENT LAYOUT( \
+@@ -116,9 +120,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+   // Hold LOWER + RAISE. Theme and lighting controls on the right half.
+   [LAYER_THEME] = LAYOUT(
+   // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
+-       _______, _______, _______, _______, _______, _______,    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
++       _______, _______, _______, _______, _______, _______,    XXXXXXX, XXXXXXX, XXXXXXX, RM_HUED, RM_HUEU, XXXXXXX,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+-       _______, _______, _______, _______, _______, _______,    THM_CAT, THM_GRV, THM_ALG, RM_HUED, RM_HUEU, XXXXXXX,
++       _______, _______, _______, _______, _______, _______,    THM_CAT, THM_GRV, THM_ALG, THM_KAN, THM_HOR, XXXXXXX,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+        _______, _______, _______, _______, _______, _______,    RM_VALD, RM_VALU, RM_TOGG, RM_SATD, RM_SATU, XXXXXXX,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+@@ -157,7 +161,7 @@ _Static_assert(sizeof(user_config_t) == sizeof(uint32_t), "user_config_t must fi
+ 
+ // Bump this whenever the defaults or the keymap change, so devices that were
+ // flashed before reset to the new defaults on the next boot.
+-#define USER_CONFIG_MAGIC 0xDA
++#define USER_CONFIG_MAGIC 0xDB
+ 
+ static user_config_t user_config;
+ 
+@@ -285,6 +289,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+         case RGB_THEME_ALEGRA:
+             rgb_theme_select(RGB_MATRIX_CUSTOM_alegra);
+             return false;
++        case RGB_THEME_KANAGAWA:
++            rgb_theme_select(RGB_MATRIX_CUSTOM_kanagawa_dragon);
++            return false;
++        case RGB_THEME_HORIZON:
++            rgb_theme_select(RGB_MATRIX_CUSTOM_horizon);
++            return false;
+     }
+     return true;
+ }
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+index a477b851..b037a814 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+@@ -90,6 +90,8 @@ the `LOWER` layer at the `T` position.
+ | `RGB_THEME_RESTORE` | `0x7E43` | Turns the RGB on and restores the Catppuccin effect and default brightness, without touching the layout or other settings |
+ | `RGB_THEME_GRUVBOX` | `0x7E44` | Turns the RGB on and switches to the Gruvbox Dark effect, keeping the brightness |
+ | `RGB_THEME_ALEGRA`  | `0x7E45` | Turns the RGB on and switches to the Alegra effect, keeping the brightness |
++| `RGB_THEME_KANAGAWA` | `0x7E46` | Turns the RGB on and switches to the Kanagawa Dragon effect, keeping the brightness |
++| `RGB_THEME_HORIZON` | `0x7E47` | Turns the RGB on and switches to the Horizon effect, keeping the brightness |
+ 
+ VIA has 8 layers (`DYNAMIC_KEYMAP_LAYER_COUNT`). Layers 4 to 7 start transparent; use
+ `MO(3)`…`MO(6)` (or `TG`, `TO`, …) in VIA to reach them, and VIA's **Save + Load** tab to back up
+@@ -104,7 +106,9 @@ Layer 8 (`LAYER_THEME`) holds the lighting controls on the right half and turns
+ | `U` | `RGB_THEME_GRUVBOX` | Gruvbox Dark |
+ | `I` | `RGB_THEME_ALEGRA` | Alegra (Slate, Teal, Indigo) |
+ | `K` | `RM_TOGG` | RGB on/off |
+-| `O` / `P` | `RM_HUED` / `RM_HUEU` | Hue (built-in effects only) |
++| `O` | `RGB_THEME_KANAGAWA` | Kanagawa Dragon |
++| `P` | `RGB_THEME_HORIZON` | Horizon |
++| `9` / `0` | `RM_HUED` / `RM_HUEU` | Hue (built-in effects only) |
+ | `H` / `J` | `RM_VALD` / `RM_VALU` | Brightness down / up, capped at 128 |
+ | `L` / `;` | `RM_SATD` / `RM_SATU` | Saturation (built-in effects only) |
+ | `N` / `M` | `RM_PREV` / `RM_NEXT` | Previous / next effect |
+@@ -136,6 +140,17 @@ primary Teal `#30ABA9` in the middle and the secondary Indigo `#514EA6` at the c
+ Slates are left out because they look almost off on an LED. Its power scale is
+ `ALEGRA_POWER_SCALE` `228` (about 56% load).
+ 
++**Kanagawa Dragon** comes from [rebelot/kanagawa.nvim](https://github.com/rebelot/kanagawa.nvim)
++(`colors.lua`). It is the earthy variant, with muted accents: dragonRed, Orange and Yellow on
++the outer edge, then the greens, Aqua and Blue2, and dragonViolet and dragonPink at the center.
++Its power scale is `KANAGAWA_POWER_SCALE` `214` (about 60% load).
++
++**Horizon** comes from
++[jolaleye/horizon-theme-vscode](https://github.com/jolaleye/horizon-theme-vscode)
++(`src/dark/globals.json`) and is laid out as a sunset: tacao, rosebud and apricot on the outer
++edge, then cranberry and magenta, and lavender at the center. Its power scale is
++`HORIZON_POWER_SCALE` `185` (about 69% load).
++
+ The default effect is a [Catppuccin](https://catppuccin.com) Mocha theme (`rgb_matrix_user.inc`):
+ 
+ - Every key shows a color from the Mocha accent palette (Rosewater, Flamingo, Pink, Mauve, Red,
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
+index 1d2967cd..c57bfe0a 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
+@@ -7,6 +7,8 @@
+ RGB_MATRIX_EFFECT(catppuccin_mocha)
+ RGB_MATRIX_EFFECT(gruvbox_dark)
+ RGB_MATRIX_EFFECT(alegra)
++RGB_MATRIX_EFFECT(kanagawa_dragon)
++RGB_MATRIX_EFFECT(horizon)
+ 
+ #ifdef RGB_MATRIX_CUSTOM_EFFECT_IMPLS
+ 
+@@ -54,6 +56,15 @@ RGB_MATRIX_EFFECT(alegra)
+ #        define ALEGRA_POWER_SCALE 228
+ #    endif
+ 
++// Kanagawa Dragon loads each LED at about 60% on average and Horizon at about 69%, so 214 and
++// 185 match a saturated effect.
++#    ifndef KANAGAWA_POWER_SCALE
++#        define KANAGAWA_POWER_SCALE 214
++#    endif
++#    ifndef HORIZON_POWER_SCALE
++#        define HORIZON_POWER_SCALE 185
++#    endif
++
+ #    define CATPPUCCIN_HEX(hex) \
+         { .r = ((hex) >> 16) & 0xFF, .g = ((hex) >> 8) & 0xFF, .b = (hex) & 0xFF }
+ 
+@@ -101,6 +112,31 @@ static const rgb_t alegra_palette[] = {
+     CATPPUCCIN_HEX(0x514EA6), // Indigo (secondary)
+ };
+ 
++// Kanagawa Dragon (rebelot/kanagawa.nvim, colors.lua): the muted, earthy accents, warm on the
++// outer edge and cool towards the center.
++static const rgb_t kanagawa_dragon_palette[] = {
++    CATPPUCCIN_HEX(0xC4746E), // dragonRed
++    CATPPUCCIN_HEX(0xB6927B), // dragonOrange
++    CATPPUCCIN_HEX(0xC4B28A), // dragonYellow
++    CATPPUCCIN_HEX(0x8A9A7B), // dragonGreen2
++    CATPPUCCIN_HEX(0x87A987), // dragonGreen
++    CATPPUCCIN_HEX(0x8EA4A2), // dragonAqua
++    CATPPUCCIN_HEX(0x8BA4B0), // dragonBlue2
++    CATPPUCCIN_HEX(0x8992A7), // dragonViolet
++    CATPPUCCIN_HEX(0xA292A3), // dragonPink
++};
++
++// Horizon (jolaleye/horizon-theme-vscode, src/dark/globals.json): a sunset, from the warm
++// oranges on the outer edge through the reds and pinks to Lavender at the center.
++static const rgb_t horizon_palette[] = {
++    CATPPUCCIN_HEX(0xFAC29A), // tacao
++    CATPPUCCIN_HEX(0xFAB795), // rosebud
++    CATPPUCCIN_HEX(0xF09483), // apricot
++    CATPPUCCIN_HEX(0xE95678), // cranberry
++    CATPPUCCIN_HEX(0xEE64AC), // magenta
++    CATPPUCCIN_HEX(0xB877DB), // lavender
++};
++
+ // The gradient color for an LED, from its horizontal distance to the center.
+ static rgb_t palette_gradient(const rgb_t *palette, uint8_t count, uint8_t x) {
+     const uint8_t  steps  = count - 1;
+@@ -165,4 +201,12 @@ static bool alegra(effect_params_t *params) {
+     return palette_effect(params, alegra_palette, ARRAY_SIZE(alegra_palette), ALEGRA_POWER_SCALE);
+ }
+ 
++static bool kanagawa_dragon(effect_params_t *params) {
++    return palette_effect(params, kanagawa_dragon_palette, ARRAY_SIZE(kanagawa_dragon_palette), KANAGAWA_POWER_SCALE);
++}
++
++static bool horizon(effect_params_t *params) {
++    return palette_effect(params, horizon_palette, ARRAY_SIZE(horizon_palette), HORIZON_POWER_SCALE);
++}
++
+ #endif // RGB_MATRIX_CUSTOM_EFFECT_IMPLS
+-- 
+2.56.0
+

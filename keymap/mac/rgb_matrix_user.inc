@@ -1,10 +1,18 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-// Catppuccin Mocha: the accent palette as a gradient, mirrored on both halves,
-// with a dimming ripple that spreads from each key press across the keyboard.
+// Palette themes: an accent palette as a gradient, mirrored on both halves, with
+// a dimming ripple that spreads from each key press across the keyboard.
+// catppuccin_mocha is the default; gruvbox_dark comes right after it, so RM_NEXT
+// from Catppuccin switches to it. New effects go last so stored indices hold.
 RGB_MATRIX_EFFECT(catppuccin_mocha)
+RGB_MATRIX_EFFECT(gruvbox_dark)
+RGB_MATRIX_EFFECT(alegra)
+RGB_MATRIX_EFFECT(kanagawa_dragon)
+RGB_MATRIX_EFFECT(horizon)
 
 #ifdef RGB_MATRIX_CUSTOM_EFFECT_IMPLS
+
+// The ripple settings are shared by every palette theme.
 
 // How long a ripple lasts, in ms. It travels CATPPUCCIN_RIPPLE_RADIUS in this time.
 #    ifndef CATPPUCCIN_RIPPLE_DURATION
@@ -36,6 +44,27 @@ RGB_MATRIX_EFFECT(catppuccin_mocha)
 #        define CATPPUCCIN_POWER_SCALE 160
 #    endif
 
+// Gruvbox Dark bright accents load each LED at about 58% on average, so 221 (about 50/58)
+// matches a saturated effect.
+#    ifndef GRUVBOX_POWER_SCALE
+#        define GRUVBOX_POWER_SCALE 221
+#    endif
+
+// The Alegra palette loads each LED at about 56% on average, so 228 (about 50/56) matches a
+// saturated effect.
+#    ifndef ALEGRA_POWER_SCALE
+#        define ALEGRA_POWER_SCALE 228
+#    endif
+
+// Kanagawa Dragon loads each LED at about 60% on average and Horizon at about 69%, so 214 and
+// 185 match a saturated effect.
+#    ifndef KANAGAWA_POWER_SCALE
+#        define KANAGAWA_POWER_SCALE 214
+#    endif
+#    ifndef HORIZON_POWER_SCALE
+#        define HORIZON_POWER_SCALE 185
+#    endif
+
 #    define CATPPUCCIN_HEX(hex) \
         { .r = ((hex) >> 16) & 0xFF, .g = ((hex) >> 8) & 0xFF, .b = (hex) & 0xFF }
 
@@ -57,20 +86,66 @@ static const rgb_t catppuccin_mocha_palette[] = {
     CATPPUCCIN_HEX(0xB4BEFE), // Lavender
 };
 
-#    define CATPPUCCIN_PALETTE_STEPS (ARRAY_SIZE(catppuccin_mocha_palette) - 1)
+// Gruvbox Dark bright accents, from the outer edge of each half to the center.
+static const rgb_t gruvbox_dark_palette[] = {
+    CATPPUCCIN_HEX(0xFB4934), // Red
+    CATPPUCCIN_HEX(0xFE8019), // Orange
+    CATPPUCCIN_HEX(0xFABD2F), // Yellow
+    CATPPUCCIN_HEX(0xB8BB26), // Green
+    CATPPUCCIN_HEX(0x8EC07C), // Aqua
+    CATPPUCCIN_HEX(0x83A598), // Blue
+    CATPPUCCIN_HEX(0xD3869B), // Purple
+};
 
 static rgb_t catppuccin_blend(rgb_t a, rgb_t b, uint8_t amount_of_b) {
     return (rgb_t){blend8(a.r, b.r, amount_of_b), blend8(a.g, b.g, amount_of_b), blend8(a.b, b.b, amount_of_b)};
 }
 
+// Alegra: Tailwind Slate neutrals on the outer edge, the primary Teal, then the secondary
+// Indigo at the center. Darker Slates are left out: on an LED they look almost off.
+static const rgb_t alegra_palette[] = {
+    CATPPUCCIN_HEX(0xCBD5E1), // Slate 300
+    CATPPUCCIN_HEX(0x94A3B8), // Slate 400
+    CATPPUCCIN_HEX(0x30ABA9), // Teal (primary)
+    CATPPUCCIN_HEX(0x30ABA9), // Teal (primary)
+    CATPPUCCIN_HEX(0x514EA6), // Indigo (secondary)
+    CATPPUCCIN_HEX(0x514EA6), // Indigo (secondary)
+};
+
+// Kanagawa Dragon (rebelot/kanagawa.nvim, colors.lua): the muted, earthy accents, warm on the
+// outer edge and cool towards the center.
+static const rgb_t kanagawa_dragon_palette[] = {
+    CATPPUCCIN_HEX(0xC4746E), // dragonRed
+    CATPPUCCIN_HEX(0xB6927B), // dragonOrange
+    CATPPUCCIN_HEX(0xC4B28A), // dragonYellow
+    CATPPUCCIN_HEX(0x8A9A7B), // dragonGreen2
+    CATPPUCCIN_HEX(0x87A987), // dragonGreen
+    CATPPUCCIN_HEX(0x8EA4A2), // dragonAqua
+    CATPPUCCIN_HEX(0x8BA4B0), // dragonBlue2
+    CATPPUCCIN_HEX(0x8992A7), // dragonViolet
+    CATPPUCCIN_HEX(0xA292A3), // dragonPink
+};
+
+// Horizon (jolaleye/horizon-theme-vscode, src/dark/globals.json): a sunset, from the warm
+// oranges on the outer edge through the reds and pinks to Lavender at the center.
+static const rgb_t horizon_palette[] = {
+    CATPPUCCIN_HEX(0xFAC29A), // tacao
+    CATPPUCCIN_HEX(0xFAB795), // rosebud
+    CATPPUCCIN_HEX(0xF09483), // apricot
+    CATPPUCCIN_HEX(0xE95678), // cranberry
+    CATPPUCCIN_HEX(0xEE64AC), // magenta
+    CATPPUCCIN_HEX(0xB877DB), // lavender
+};
+
 // The gradient color for an LED, from its horizontal distance to the center.
-static rgb_t catppuccin_gradient(uint8_t x) {
+static rgb_t palette_gradient(const rgb_t *palette, uint8_t count, uint8_t x) {
+    const uint8_t  steps  = count - 1;
     const uint8_t  center = k_rgb_matrix_center.x;
     const uint8_t  dist   = x > center ? x - center : center - x;
     const uint8_t  span   = center > 0 ? center : 1;
-    const uint16_t pos    = MIN((uint16_t)(span - MIN(dist, span)) * CATPPUCCIN_PALETTE_STEPS * 256 / span, CATPPUCCIN_PALETTE_STEPS * 256 - 1);
+    const uint16_t pos    = MIN((uint16_t)(span - MIN(dist, span)) * steps * 256 / span, steps * 256 - 1);
     const uint8_t  index  = pos >> 8;
-    return catppuccin_blend(catppuccin_mocha_palette[index], catppuccin_mocha_palette[index + 1], pos & 0xFF);
+    return catppuccin_blend(palette[index], palette[index + 1], pos & 0xFF);
 }
 
 // How much the ripple darkens an LED (0 to CATPPUCCIN_RIPPLE_DIM): the strongest ring that reaches it.
@@ -100,18 +175,38 @@ static uint8_t catppuccin_ripple(uint8_t led) {
     return strength;
 }
 
-static bool catppuccin_mocha(effect_params_t *params) {
+static bool palette_effect(effect_params_t *params, const rgb_t *palette, uint8_t count, uint8_t power_scale) {
     RGB_MATRIX_USE_LIMITS(led_min, led_max);
 
     // The power scale folds into the brightness, so each channel is scaled once.
-    const uint8_t val = scale8(rgb_matrix_get_val(), CATPPUCCIN_POWER_SCALE);
+    const uint8_t val = scale8(rgb_matrix_get_val(), power_scale);
     for (uint8_t i = led_min; i < led_max; i++) {
         RGB_MATRIX_TEST_LED_FLAGS();
-        const rgb_t   rgb     = catppuccin_gradient(g_led_config.point[i].x);
+        const rgb_t   rgb     = palette_gradient(palette, count, g_led_config.point[i].x);
         const uint8_t led_val = scale8(val, 255 - catppuccin_ripple(i));
         rgb_matrix_set_color(i, scale8(rgb.r, led_val), scale8(rgb.g, led_val), scale8(rgb.b, led_val));
     }
     return rgb_matrix_check_finished_leds(led_max);
+}
+
+static bool catppuccin_mocha(effect_params_t *params) {
+    return palette_effect(params, catppuccin_mocha_palette, ARRAY_SIZE(catppuccin_mocha_palette), CATPPUCCIN_POWER_SCALE);
+}
+
+static bool gruvbox_dark(effect_params_t *params) {
+    return palette_effect(params, gruvbox_dark_palette, ARRAY_SIZE(gruvbox_dark_palette), GRUVBOX_POWER_SCALE);
+}
+
+static bool alegra(effect_params_t *params) {
+    return palette_effect(params, alegra_palette, ARRAY_SIZE(alegra_palette), ALEGRA_POWER_SCALE);
+}
+
+static bool kanagawa_dragon(effect_params_t *params) {
+    return palette_effect(params, kanagawa_dragon_palette, ARRAY_SIZE(kanagawa_dragon_palette), KANAGAWA_POWER_SCALE);
+}
+
+static bool horizon(effect_params_t *params) {
+    return palette_effect(params, horizon_palette, ARRAY_SIZE(horizon_palette), HORIZON_POWER_SCALE);
 }
 
 #endif // RGB_MATRIX_CUSTOM_EFFECT_IMPLS

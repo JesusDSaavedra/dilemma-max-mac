@@ -1,7 +1,7 @@
 From c91ecf3bd80f293a02da68d7c2ee3066a84f5005 Mon Sep 17 00:00:00 2001
 From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
 Date: Sat, 10 Oct 2026 02:10:45 -0500
-Subject: [PATCH 19/20] feat(dilemma): darker and slower Catppuccin ripple
+Subject: [PATCH 19/24] feat(dilemma): darker and slower Catppuccin ripple
 
 ---
  .../bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md   | 4 ++--

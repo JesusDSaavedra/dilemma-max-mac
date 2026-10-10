@@ -107,7 +107,11 @@
 #define RGB_MATRIX_KEYPRESSES
 #define RGB_MATRIX_DEFAULT_MODE RGB_MATRIX_CUSTOM_catppuccin_mocha
 #undef RGB_MATRIX_DEFAULT_VAL
-#define RGB_MATRIX_DEFAULT_VAL 64 // Of 255, capped at the keyboard's 176.
+#define RGB_MATRIX_DEFAULT_VAL 64 // Of 255.
+// Brightness cap (the keyboard allows 176). Brightness keys and VIA cannot go
+// past it, which keeps both halves well clear of the brownout.
+#undef RGB_MATRIX_MAXIMUM_BRIGHTNESS
+#define RGB_MATRIX_MAXIMUM_BRIGHTNESS 128
 #define CATPPUCCIN_POWER_SCALE 160 // Of 255: about 50/79, the load of a saturated effect.
 
 /*

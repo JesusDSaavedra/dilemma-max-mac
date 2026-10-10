@@ -88,10 +88,34 @@ the `LOWER` layer at the `T` position.
 | `CURSOR_SPEED_UP`   | `0x7E41` | Faster cursor, one step per press (up to 200%)                           |
 | `PINCH_MOD_CYCLE`   | `0x7E42` | Pinch modifier: `Cmd` (Figma, default) → `Ctrl` → none (AutoCAD) → `Cmd` |
 | `RGB_THEME_RESTORE` | `0x7E43` | Turns the RGB on and restores the Catppuccin effect and default brightness, without touching the layout or other settings |
+| `RGB_THEME_GRUVBOX` | `0x7E44` | Turns the RGB on and switches to the Gruvbox Dark effect, keeping the brightness |
+| `RGB_THEME_ALEGRA`  | `0x7E45` | Turns the RGB on and switches to the Alegra effect, keeping the brightness |
+| `RGB_THEME_KANAGAWA` | `0x7E46` | Turns the RGB on and switches to the Kanagawa Dragon effect, keeping the brightness |
+| `RGB_THEME_HORIZON` | `0x7E47` | Turns the RGB on and switches to the Horizon effect, keeping the brightness |
 
-VIA has 8 layers (`DYNAMIC_KEYMAP_LAYER_COUNT`); the ones past `RAISE` start transparent. Use
-`MO(3)`…`MO(7)` (or `TG`, `TO`, …) in VIA to reach them, and VIA's **Save + Load** tab to back up
+VIA has 8 layers (`DYNAMIC_KEYMAP_LAYER_COUNT`). Layers 4 to 7 start transparent; use
+`MO(3)`…`MO(6)` (or `TG`, `TO`, …) in VIA to reach them, and VIA's **Save + Load** tab to back up
 your layout as a `.json` file.
+
+Layer 8 (`LAYER_THEME`) holds the lighting controls on the right half and turns on while
+`LOWER` and `RAISE` are both held (`update_tri_layer_state`). The left half is transparent.
+
+| Position (right half) | Key | Action |
+| --- | --- | --- |
+| `Y` | `RGB_THEME_RESTORE` | Catppuccin + default brightness |
+| `U` | `RGB_THEME_GRUVBOX` | Gruvbox Dark |
+| `I` | `RGB_THEME_ALEGRA` | Alegra (Slate, Teal, Indigo) |
+| `K` | `RM_TOGG` | RGB on/off |
+| `O` | `RGB_THEME_KANAGAWA` | Kanagawa Dragon |
+| `P` | `RGB_THEME_HORIZON` | Horizon |
+| `9` / `0` | `RM_HUED` / `RM_HUEU` | Hue (built-in effects only) |
+| `H` / `J` | `RM_VALD` / `RM_VALU` | Brightness down / up, capped at 128 |
+| `L` / `;` | `RM_SATD` / `RM_SATU` | Saturation (built-in effects only) |
+| `N` / `M` | `RM_PREV` / `RM_NEXT` | Previous / next effect |
+| `,` / `.` | `RM_SPDD` / `RM_SPDU` | Effect speed (built-in effects only) |
+
+`RGB_MATRIX_MAXIMUM_BRIGHTNESS` is capped at 128 (the keyboard allows 176), so the brightness keys
+and VIA cannot bring the brownout back.
 
 The cursor starts at 25% of the trackpad's 1:1 speed. The steps are 12.5%, 19%, 25%, 37.5%,
 50%, 75%, 100%, 150% and 200%, so each press is easy to feel. Cursor speed only changes the
@@ -104,6 +128,28 @@ new firmware changes it, the first boot resets the cursor speed, the pinch modif
 VIA layout to the defaults (your VIA key changes are lost once). `EE_CLR` does the same.
 
 ## Lighting
+
+A second palette theme, **Gruvbox Dark** (bright accents Red, Orange, Yellow, Green, Aqua, Blue and
+Purple), comes right after Catppuccin in the effect list: `RM_NEXT` (`LOWER` + `Tab`) from
+Catppuccin switches to it, and `RGB_THEME_RESTORE` (`LOWER` + `T`) goes back. It shares the same
+gradient layout and ripple, with `GRUVBOX_POWER_SCALE` `221` (its accents load each LED at about
+58%).
+
+A third theme, **Alegra**, follows Gruvbox. It uses Tailwind Slate 300/400 on the outer edge, the
+primary Teal `#30ABA9` in the middle and the secondary Indigo `#514EA6` at the center. Darker
+Slates are left out because they look almost off on an LED. Its power scale is
+`ALEGRA_POWER_SCALE` `228` (about 56% load).
+
+**Kanagawa Dragon** comes from [rebelot/kanagawa.nvim](https://github.com/rebelot/kanagawa.nvim)
+(`colors.lua`). It is the earthy variant, with muted accents: dragonRed, Orange and Yellow on
+the outer edge, then the greens, Aqua and Blue2, and dragonViolet and dragonPink at the center.
+Its power scale is `KANAGAWA_POWER_SCALE` `214` (about 60% load).
+
+**Horizon** comes from
+[jolaleye/horizon-theme-vscode](https://github.com/jolaleye/horizon-theme-vscode)
+(`src/dark/globals.json`) and is laid out as a sunset: tacao, rosebud and apricot on the outer
+edge, then cranberry and magenta, and lavender at the center. Its power scale is
+`HORIZON_POWER_SCALE` `185` (about 69% load).
 
 The default effect is a [Catppuccin](https://catppuccin.com) Mocha theme (`rgb_matrix_user.inc`):
 

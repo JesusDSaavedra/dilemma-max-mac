@@ -1,7 +1,7 @@
 From 23f9977285fba503758412f07c869f275096ce8f Mon Sep 17 00:00:00 2001
 From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
 Date: Sat, 10 Oct 2026 01:39:15 -0500
-Subject: [PATCH 14/20] fix(maxtouch): re-apply configuration after a chip
+Subject: [PATCH 14/24] fix(maxtouch): re-apply configuration after a chip
  reset
 
 The configuration was only written in maxtouch_init, so a chip reset (for example a brownout) left the T100 touch reporting disabled until a power cycle. Move the writes into maxtouch_configure() and call it again when T6 reports a reset, releasing any contacts in progress.

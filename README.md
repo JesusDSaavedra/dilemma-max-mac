@@ -21,7 +21,22 @@ The full user guide (Spanish) is in [`docs/GUIA-CONFIGURACION.md`](docs/GUIA-CON
   - two-finger flick and left-edge swipe for back/forward, sent as mouse buttons 4/5 so they work regardless of keyboard layout;
   - 3-finger swipes for desktops, Mission Control and App Exposé;
   - adjustable cursor speed.
-- **Catppuccin Mocha RGB** with a dimming key-press ripple, power-normalized to avoid supply brownouts with both halves connected.
+- **Five palette RGB themes**, all with a dimming key-press ripple:
+  - Catppuccin Mocha (default)
+  - Gruvbox Dark
+  - Alegra (Slate / Teal / Indigo)
+  - Kanagawa Dragon
+  - Horizon
+
+  Each one is power-normalized to avoid supply brownouts with both halves connected, and brightness is capped at 128.
+- **Theme layer:** hold LOWER + RAISE, then use the right half:
+
+  | Keys | Action |
+  |---|---|
+  | `Y` `U` `I` `O` `P` | Select a theme |
+  | `K` | RGB on/off |
+  | `H` / `J` | Brightness down / up |
+  | `N` / `M` | Previous / next effect |
 - **maxtouch recovery:** the trackpad is reconfigured automatically if its chip resets.
 - **VIA** with 8 layers and custom keys:
 
@@ -30,7 +45,11 @@ The full user guide (Spanish) is in [`docs/GUIA-CONFIGURACION.md`](docs/GUIA-CON
   | Cursor speed down | `0x7E40` |
   | Cursor speed up | `0x7E41` |
   | Pinch modifier | `0x7E42` |
-  | Restore theme | `0x7E43` |
+  | Catppuccin theme | `0x7E43` |
+  | Gruvbox theme | `0x7E44` |
+  | Alegra theme | `0x7E45` |
+  | Kanagawa Dragon theme | `0x7E46` |
+  | Horizon theme | `0x7E47` |
 
 ## Rebuild from source
 

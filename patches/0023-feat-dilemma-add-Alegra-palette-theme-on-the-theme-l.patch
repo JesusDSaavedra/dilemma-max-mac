@@ -1,0 +1,175 @@
+From 67e21a56d00e908fc9072dacfa089fb75ffba018 Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Sat, 10 Oct 2026 02:52:27 -0500
+Subject: [PATCH 23/24] feat(dilemma): add Alegra palette theme on the theme
+ layer
+
+---
+ .../4x6_4_procyon/keymaps/mac/keymap.c        | 27 +++++++++++++------
+ .../4x6_4_procyon/keymaps/mac/readme.md       |  9 ++++++-
+ .../keymaps/mac/rgb_matrix_user.inc           | 22 +++++++++++++++
+ 3 files changed, 49 insertions(+), 9 deletions(-)
+
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+index b61b311c..92a84eb0 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+@@ -43,6 +43,7 @@ enum mac_keycodes {
+     PINCH_MOD_CYCLE,                // 0x7E42
+     RGB_THEME_RESTORE,              // 0x7E43
+     RGB_THEME_GRUVBOX,              // 0x7E44
++    RGB_THEME_ALEGRA,               // 0x7E45
+ };
+ 
+ #define CSPD_DN CURSOR_SPEED_DOWN
+@@ -51,6 +52,7 @@ enum mac_keycodes {
+ #define RGB_RST RGB_THEME_RESTORE
+ #define THM_CAT RGB_THEME_RESTORE
+ #define THM_GRV RGB_THEME_GRUVBOX
++#define THM_ALG RGB_THEME_ALEGRA
+ 
+ // clang-format off
+ #define LAYOUT_TRANSPARENT LAYOUT( \
+@@ -116,9 +118,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+   // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
+        _______, _______, _______, _______, _______, _______,    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+-       _______, _______, _______, _______, _______, _______,    THM_CAT, THM_GRV, RM_TOGG, RM_HUED, RM_HUEU, XXXXXXX,
++       _______, _______, _______, _______, _______, _______,    THM_CAT, THM_GRV, THM_ALG, RM_HUED, RM_HUEU, XXXXXXX,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+-       _______, _______, _______, _______, _______, _______,    RM_VALD, RM_VALU, XXXXXXX, RM_SATD, RM_SATU, XXXXXXX,
++       _______, _______, _______, _______, _______, _______,    RM_VALD, RM_VALU, RM_TOGG, RM_SATD, RM_SATU, XXXXXXX,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+        _______, _______, _______, _______, _______, _______,    RM_PREV, RM_NEXT, RM_SPDD, RM_SPDU, XXXXXXX, XXXXXXX,
+   // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
+@@ -155,7 +157,7 @@ _Static_assert(sizeof(user_config_t) == sizeof(uint32_t), "user_config_t must fi
+ 
+ // Bump this whenever the defaults or the keymap change, so devices that were
+ // flashed before reset to the new defaults on the next boot.
+-#define USER_CONFIG_MAGIC 0xD9
++#define USER_CONFIG_MAGIC 0xDA
+ 
+ static user_config_t user_config;
+ 
+@@ -194,6 +196,16 @@ static void rgb_theme_restore(void) {
+ #endif
+ }
+ 
++// Turns the RGB on and switches the effect, keeping the current brightness.
++static void rgb_theme_select(uint8_t mode) {
++#ifdef RGB_MATRIX_ENABLE
++    rgb_matrix_enable();
++    rgb_matrix_mode(mode);
++#else
++    (void)mode;
++#endif
++}
++
+ void keyboard_post_init_user(void) {
+     user_config.raw = eeconfig_read_user();
+     if (!user_config_is_valid()) {
+@@ -268,11 +280,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+             rgb_theme_restore();
+             return false;
+         case RGB_THEME_GRUVBOX:
+-#ifdef RGB_MATRIX_ENABLE
+-            // Keeps the current brightness; only switches the effect.
+-            rgb_matrix_enable();
+-            rgb_matrix_mode(RGB_MATRIX_CUSTOM_gruvbox_dark);
+-#endif
++            rgb_theme_select(RGB_MATRIX_CUSTOM_gruvbox_dark);
++            return false;
++        case RGB_THEME_ALEGRA:
++            rgb_theme_select(RGB_MATRIX_CUSTOM_alegra);
+             return false;
+     }
+     return true;
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+index 9e50dee4..a477b851 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+@@ -89,6 +89,7 @@ the `LOWER` layer at the `T` position.
+ | `PINCH_MOD_CYCLE`   | `0x7E42` | Pinch modifier: `Cmd` (Figma, default) → `Ctrl` → none (AutoCAD) → `Cmd` |
+ | `RGB_THEME_RESTORE` | `0x7E43` | Turns the RGB on and restores the Catppuccin effect and default brightness, without touching the layout or other settings |
+ | `RGB_THEME_GRUVBOX` | `0x7E44` | Turns the RGB on and switches to the Gruvbox Dark effect, keeping the brightness |
++| `RGB_THEME_ALEGRA`  | `0x7E45` | Turns the RGB on and switches to the Alegra effect, keeping the brightness |
+ 
+ VIA has 8 layers (`DYNAMIC_KEYMAP_LAYER_COUNT`). Layers 4 to 7 start transparent; use
+ `MO(3)`…`MO(6)` (or `TG`, `TO`, …) in VIA to reach them, and VIA's **Save + Load** tab to back up
+@@ -101,7 +102,8 @@ Layer 8 (`LAYER_THEME`) holds the lighting controls on the right half and turns
+ | --- | --- | --- |
+ | `Y` | `RGB_THEME_RESTORE` | Catppuccin + default brightness |
+ | `U` | `RGB_THEME_GRUVBOX` | Gruvbox Dark |
+-| `I` | `RM_TOGG` | RGB on/off |
++| `I` | `RGB_THEME_ALEGRA` | Alegra (Slate, Teal, Indigo) |
++| `K` | `RM_TOGG` | RGB on/off |
+ | `O` / `P` | `RM_HUED` / `RM_HUEU` | Hue (built-in effects only) |
+ | `H` / `J` | `RM_VALD` / `RM_VALU` | Brightness down / up, capped at 128 |
+ | `L` / `;` | `RM_SATD` / `RM_SATU` | Saturation (built-in effects only) |
+@@ -129,6 +131,11 @@ Catppuccin switches to it, and `RGB_THEME_RESTORE` (`LOWER` + `T`) goes back. It
+ gradient layout and ripple, with `GRUVBOX_POWER_SCALE` `221` (its accents load each LED at about
+ 58%).
+ 
++A third theme, **Alegra**, follows Gruvbox. It uses Tailwind Slate 300/400 on the outer edge, the
++primary Teal `#30ABA9` in the middle and the secondary Indigo `#514EA6` at the center. Darker
++Slates are left out because they look almost off on an LED. Its power scale is
++`ALEGRA_POWER_SCALE` `228` (about 56% load).
++
+ The default effect is a [Catppuccin](https://catppuccin.com) Mocha theme (`rgb_matrix_user.inc`):
+ 
+ - Every key shows a color from the Mocha accent palette (Rosewater, Flamingo, Pink, Mauve, Red,
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
+index d2f203bf..1d2967cd 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
+@@ -6,6 +6,7 @@
+ // from Catppuccin switches to it. New effects go last so stored indices hold.
+ RGB_MATRIX_EFFECT(catppuccin_mocha)
+ RGB_MATRIX_EFFECT(gruvbox_dark)
++RGB_MATRIX_EFFECT(alegra)
+ 
+ #ifdef RGB_MATRIX_CUSTOM_EFFECT_IMPLS
+ 
+@@ -47,6 +48,12 @@ RGB_MATRIX_EFFECT(gruvbox_dark)
+ #        define GRUVBOX_POWER_SCALE 221
+ #    endif
+ 
++// The Alegra palette loads each LED at about 56% on average, so 228 (about 50/56) matches a
++// saturated effect.
++#    ifndef ALEGRA_POWER_SCALE
++#        define ALEGRA_POWER_SCALE 228
++#    endif
++
+ #    define CATPPUCCIN_HEX(hex) \
+         { .r = ((hex) >> 16) & 0xFF, .g = ((hex) >> 8) & 0xFF, .b = (hex) & 0xFF }
+ 
+@@ -83,6 +90,17 @@ static rgb_t catppuccin_blend(rgb_t a, rgb_t b, uint8_t amount_of_b) {
+     return (rgb_t){blend8(a.r, b.r, amount_of_b), blend8(a.g, b.g, amount_of_b), blend8(a.b, b.b, amount_of_b)};
+ }
+ 
++// Alegra: Tailwind Slate neutrals on the outer edge, the primary Teal, then the secondary
++// Indigo at the center. Darker Slates are left out: on an LED they look almost off.
++static const rgb_t alegra_palette[] = {
++    CATPPUCCIN_HEX(0xCBD5E1), // Slate 300
++    CATPPUCCIN_HEX(0x94A3B8), // Slate 400
++    CATPPUCCIN_HEX(0x30ABA9), // Teal (primary)
++    CATPPUCCIN_HEX(0x30ABA9), // Teal (primary)
++    CATPPUCCIN_HEX(0x514EA6), // Indigo (secondary)
++    CATPPUCCIN_HEX(0x514EA6), // Indigo (secondary)
++};
++
+ // The gradient color for an LED, from its horizontal distance to the center.
+ static rgb_t palette_gradient(const rgb_t *palette, uint8_t count, uint8_t x) {
+     const uint8_t  steps  = count - 1;
+@@ -143,4 +161,8 @@ static bool gruvbox_dark(effect_params_t *params) {
+     return palette_effect(params, gruvbox_dark_palette, ARRAY_SIZE(gruvbox_dark_palette), GRUVBOX_POWER_SCALE);
+ }
+ 
++static bool alegra(effect_params_t *params) {
++    return palette_effect(params, alegra_palette, ARRAY_SIZE(alegra_palette), ALEGRA_POWER_SCALE);
++}
++
+ #endif // RGB_MATRIX_CUSTOM_EFFECT_IMPLS
+-- 
+2.56.0
+

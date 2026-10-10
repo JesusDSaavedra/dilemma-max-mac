@@ -1,7 +1,7 @@
 From 6b89137244f6561ee22ceca0b535630b90135bbb Mon Sep 17 00:00:00 2001
 From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
 Date: Fri, 9 Oct 2026 22:49:44 -0500
-Subject: [PATCH 10/20] feat(digitizer): add two finger flick for back and
+Subject: [PATCH 10/24] feat(digitizer): add two finger flick for back and
  forward
 
 A fast, mostly horizontal two finger flick outside the edge zones taps

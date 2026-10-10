@@ -1,0 +1,168 @@
+From e1e84081a990c64663c1a991d1686052f7ee60c6 Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Sat, 10 Oct 2026 02:42:34 -0500
+Subject: [PATCH 22/24] feat(dilemma): add theme layer on LOWER+RAISE and cap
+ RGB brightness
+
+---
+ .../4x6_4_procyon/keymaps/mac/config.h        |  6 ++-
+ .../4x6_4_procyon/keymaps/mac/keymap.c        | 52 ++++++++++++++++++-
+ .../4x6_4_procyon/keymaps/mac/readme.md       | 22 +++++++-
+ 3 files changed, 76 insertions(+), 4 deletions(-)
+
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+index 784fce9f..c510fedc 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+@@ -107,7 +107,11 @@
+ #define RGB_MATRIX_KEYPRESSES
+ #define RGB_MATRIX_DEFAULT_MODE RGB_MATRIX_CUSTOM_catppuccin_mocha
+ #undef RGB_MATRIX_DEFAULT_VAL
+-#define RGB_MATRIX_DEFAULT_VAL 64 // Of 255, capped at the keyboard's 176.
++#define RGB_MATRIX_DEFAULT_VAL 64 // Of 255.
++// Brightness cap (the keyboard allows 176). Brightness keys and VIA cannot go
++// past it, which keeps both halves well clear of the brownout.
++#undef RGB_MATRIX_MAXIMUM_BRIGHTNESS
++#define RGB_MATRIX_MAXIMUM_BRIGHTNESS 128
+ #define CATPPUCCIN_POWER_SCALE 160 // Of 255: about 50/79, the load of a saturated effect.
+ 
+ /*
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+index ed36fe02..b61b311c 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+@@ -25,6 +25,11 @@ enum dilemma_keymap_layers {
+     LAYER_BASE = 0,
+     LAYER_LOWER,
+     LAYER_RAISE,
++    LAYER_FREE_1, // Layers 4 to 7 in VIA: empty (transparent), free to fill from VIA.
++    LAYER_FREE_2,
++    LAYER_FREE_3,
++    LAYER_FREE_4,
++    LAYER_THEME, // Layer 8 in VIA: lighting and theme controls, on LOWER + RAISE.
+ };
+ 
+ #define LOWER MO(LAYER_LOWER)
+@@ -37,12 +42,24 @@ enum mac_keycodes {
+     CURSOR_SPEED_UP,                // 0x7E41
+     PINCH_MOD_CYCLE,                // 0x7E42
+     RGB_THEME_RESTORE,              // 0x7E43
++    RGB_THEME_GRUVBOX,              // 0x7E44
+ };
+ 
+ #define CSPD_DN CURSOR_SPEED_DOWN
+ #define CSPD_UP CURSOR_SPEED_UP
+ #define PINCH_M PINCH_MOD_CYCLE
+ #define RGB_RST RGB_THEME_RESTORE
++#define THM_CAT RGB_THEME_RESTORE
++#define THM_GRV RGB_THEME_GRUVBOX
++
++// clang-format off
++#define LAYOUT_TRANSPARENT LAYOUT( \
++    _______, _______, _______, _______, _______, _______,    _______, _______, _______, _______, _______, _______, \
++    _______, _______, _______, _______, _______, _______,    _______, _______, _______, _______, _______, _______, \
++    _______, _______, _______, _______, _______, _______,    _______, _______, _______, _______, _______, _______, \
++    _______, _______, _______, _______, _______, _______,    _______, _______, _______, _______, _______, _______, \
++                      _______, _______, _______, _______,    _______, _______, _______, _______)
++// clang-format on
+ 
+ // clang-format off
+ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+@@ -87,9 +104,35 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+                          _______, _______, _______, _______,    _______, XXXXXXX, XXXXXXX, XXXXXXX
+   //                    ╰───────────────────────────────────╯ ╰───────────────────────────────────╯
+   ),
++
++  // Explicitly transparent, so VIA's reset fills them with _______ instead of KC_NO.
++  [LAYER_FREE_1] = LAYOUT_TRANSPARENT,
++  [LAYER_FREE_2] = LAYOUT_TRANSPARENT,
++  [LAYER_FREE_3] = LAYOUT_TRANSPARENT,
++  [LAYER_FREE_4] = LAYOUT_TRANSPARENT,
++
++  // Hold LOWER + RAISE. Theme and lighting controls on the right half.
++  [LAYER_THEME] = LAYOUT(
++  // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
++       _______, _______, _______, _______, _______, _______,    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
++  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
++       _______, _______, _______, _______, _______, _______,    THM_CAT, THM_GRV, RM_TOGG, RM_HUED, RM_HUEU, XXXXXXX,
++  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
++       _______, _______, _______, _______, _______, _______,    RM_VALD, RM_VALU, XXXXXXX, RM_SATD, RM_SATU, XXXXXXX,
++  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
++       _______, _______, _______, _______, _______, _______,    RM_PREV, RM_NEXT, RM_SPDD, RM_SPDU, XXXXXXX, XXXXXXX,
++  // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
++                         _______, _______, _______, _______,    _______, _______, _______, _______
++  //                    ╰───────────────────────────────────╯ ╰───────────────────────────────────╯
++  ),
+ };
+ // clang-format on
+ 
++// LOWER + RAISE together turn on the theme layer.
++layer_state_t layer_state_set_user(layer_state_t state) {
++    return update_tri_layer_state(state, LAYER_LOWER, LAYER_RAISE, LAYER_THEME);
++}
++
+ // Modifier held while pinching.
+ enum pinch_mode {
+     PINCH_MODE_CMD = 0, // Figma.
+@@ -112,7 +155,7 @@ _Static_assert(sizeof(user_config_t) == sizeof(uint32_t), "user_config_t must fi
+ 
+ // Bump this whenever the defaults or the keymap change, so devices that were
+ // flashed before reset to the new defaults on the next boot.
+-#define USER_CONFIG_MAGIC 0xD8
++#define USER_CONFIG_MAGIC 0xD9
+ 
+ static user_config_t user_config;
+ 
+@@ -224,6 +267,13 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+         case RGB_THEME_RESTORE:
+             rgb_theme_restore();
+             return false;
++        case RGB_THEME_GRUVBOX:
++#ifdef RGB_MATRIX_ENABLE
++            // Keeps the current brightness; only switches the effect.
++            rgb_matrix_enable();
++            rgb_matrix_mode(RGB_MATRIX_CUSTOM_gruvbox_dark);
++#endif
++            return false;
+     }
+     return true;
+ }
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+index eab28f82..9e50dee4 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+@@ -88,11 +88,29 @@ the `LOWER` layer at the `T` position.
+ | `CURSOR_SPEED_UP`   | `0x7E41` | Faster cursor, one step per press (up to 200%)                           |
+ | `PINCH_MOD_CYCLE`   | `0x7E42` | Pinch modifier: `Cmd` (Figma, default) → `Ctrl` → none (AutoCAD) → `Cmd` |
+ | `RGB_THEME_RESTORE` | `0x7E43` | Turns the RGB on and restores the Catppuccin effect and default brightness, without touching the layout or other settings |
++| `RGB_THEME_GRUVBOX` | `0x7E44` | Turns the RGB on and switches to the Gruvbox Dark effect, keeping the brightness |
+ 
+-VIA has 8 layers (`DYNAMIC_KEYMAP_LAYER_COUNT`); the ones past `RAISE` start transparent. Use
+-`MO(3)`…`MO(7)` (or `TG`, `TO`, …) in VIA to reach them, and VIA's **Save + Load** tab to back up
++VIA has 8 layers (`DYNAMIC_KEYMAP_LAYER_COUNT`). Layers 4 to 7 start transparent; use
++`MO(3)`…`MO(6)` (or `TG`, `TO`, …) in VIA to reach them, and VIA's **Save + Load** tab to back up
+ your layout as a `.json` file.
+ 
++Layer 8 (`LAYER_THEME`) holds the lighting controls on the right half and turns on while
++`LOWER` and `RAISE` are both held (`update_tri_layer_state`). The left half is transparent.
++
++| Position (right half) | Key | Action |
++| --- | --- | --- |
++| `Y` | `RGB_THEME_RESTORE` | Catppuccin + default brightness |
++| `U` | `RGB_THEME_GRUVBOX` | Gruvbox Dark |
++| `I` | `RM_TOGG` | RGB on/off |
++| `O` / `P` | `RM_HUED` / `RM_HUEU` | Hue (built-in effects only) |
++| `H` / `J` | `RM_VALD` / `RM_VALU` | Brightness down / up, capped at 128 |
++| `L` / `;` | `RM_SATD` / `RM_SATU` | Saturation (built-in effects only) |
++| `N` / `M` | `RM_PREV` / `RM_NEXT` | Previous / next effect |
++| `,` / `.` | `RM_SPDD` / `RM_SPDU` | Effect speed (built-in effects only) |
++
++`RGB_MATRIX_MAXIMUM_BRIGHTNESS` is capped at 128 (the keyboard allows 176), so the brightness keys
++and VIA cannot bring the brownout back.
++
+ The cursor starts at 25% of the trackpad's 1:1 speed. The steps are 12.5%, 19%, 25%, 37.5%,
+ 50%, 75%, 100%, 150% and 200%, so each press is easy to feel. Cursor speed only changes the
+ pointer; scroll and swipes feel the same at every speed.
+-- 
+2.56.0
+

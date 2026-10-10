@@ -1,7 +1,7 @@
 From 3f78f78e683c846daac57a67b95eac4aa58ee8f8 Mon Sep 17 00:00:00 2001
 From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
 Date: Sat, 10 Oct 2026 02:25:17 -0500
-Subject: [PATCH 20/20] feat(dilemma): add theme restore key and 8 VIA layers
+Subject: [PATCH 20/24] feat(dilemma): add theme restore key and 8 VIA layers
  to mac keymap
 
 ---

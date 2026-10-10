@@ -152,6 +152,26 @@ Desde la capa **LOWER** (`MO(1)`: el pulgar izquierdo más cercano al centro):
 | **Tab** | `RM_NEXT` | Siguiente efecto de luz |
 | **Ctrl izquierdo** | `RM_PREV` | Efecto de luz anterior |
 
+### Capa 8: temas y luces (LOWER + RAISE)
+
+Mantené **los dos pulgares del centro a la vez** (LOWER y RAISE) y usá la mano derecha:
+
+| Tecla | Función | Acción |
+|---|---|---|
+| **Y** | `RGB_THEME_RESTORE` | Tema **Catppuccin** con el brillo por defecto |
+| **U** | `RGB_THEME_GRUVBOX` | Tema **Gruvbox Dark** (mantiene el brillo) |
+| **I** | `RGB_THEME_ALEGRA` | Tema **Alegra** (mantiene el brillo) |
+| **K** | `RM_TOGG` | Prende o apaga las luces |
+| **H** / **J** | `RM_VALD` / `RM_VALU` | Baja / sube el brillo (tope 128) |
+| **N** / **M** | `RM_PREV` / `RM_NEXT` | Efecto anterior / siguiente |
+| **O** | `RGB_THEME_KANAGAWA` | Tema **Kanagawa Dragon** (mantiene el brillo) |
+| **P** | `RGB_THEME_HORIZON` | Tema **Horizon** (mantiene el brillo) |
+| **9** / **0** | `RM_HUED` / `RM_HUEU` | Tono (solo efectos de VIA, no los temas) |
+| **L** / **;** | `RM_SATD` / `RM_SATU` | Saturación (solo efectos de VIA) |
+| **,** / **.** | `RM_SPDD` / `RM_SPDU` | Velocidad del efecto (solo efectos de VIA) |
+
+El brillo máximo quedó limitado a **128** (el teclado permitía 176), así ni las teclas ni VIA pueden volver a provocar la caída de voltaje.
+
 > Estas posiciones corresponden al layout por defecto. Si las movés en VIA, valen las que hayas asignado vos.
 
 **Velocidades del cursor** (de más lenta a más rápida):
@@ -172,6 +192,10 @@ La velocidad y el modo de zoom **se guardan** aunque desconectes el teclado.
 | `CURSOR_SPEED_UP` | `0x7E41` |
 | `PINCH_MOD_CYCLE` | `0x7E42` |
 | `RGB_THEME_RESTORE` | `0x7E43` |
+| `RGB_THEME_GRUVBOX` | `0x7E44` |
+| `RGB_THEME_ALEGRA` | `0x7E45` |
+| `RGB_THEME_KANAGAWA` | `0x7E46` |
+| `RGB_THEME_HORIZON` | `0x7E47` |
 
 ---
 
@@ -182,6 +206,38 @@ La velocidad y el modo de zoom **se guardan** aunque desconectes el teclado.
 - **Brillo:** se controla desde VIA (pestaña *Lighting*). El valor por defecto es 64 de 255. El tema Catppuccin, además, se atenúa al ~63% para consumir lo mismo que un color saturado de VIA (ver sección 10).
 
 **Cómo probarlo:** con las dos mitades conectadas, las luces deben verse con la paleta (no rojas) y el trackpad debe funcionar.
+
+### Tema alternativo: Gruvbox Dark
+
+- **Colores:** los acentos brillantes de Gruvbox Dark (Red, Orange, Yellow, Green, Aqua, Blue y Purple). Van en degradé desde los bordes hacia el centro, con la misma onda que Catppuccin.
+- **Cómo activarlo:** desde Catppuccin, **LOWER + Tab** (siguiente efecto) pasa a Gruvbox.
+- **Cómo volver a Catppuccin:** **LOWER + T**.
+- **Consumo:** Gruvbox es más saturado que Catppuccin (58% de carga contra 79%), así que solo se atenúa al ~87% (`GRUVBOX_POWER_SCALE` `221`).
+
+### Tema alternativo: Alegra
+
+- **Colores:** la paleta de Alegra en degradé simétrico, con la misma onda.
+  - Bordes exteriores: neutrales **Slate 300 → Slate 400**.
+  - Zona media: el **Teal** primario `#30ABA9`.
+  - Centro: el **Índigo** secundario `#514EA6`.
+
+  Los Slate oscuros (600–900) no se usan porque en un LED se ven casi apagados.
+- **Cómo activarlo:** LOWER + RAISE + **I**.
+- **Consumo:** 56% de carga, atenuado al ~89% (`ALEGRA_POWER_SCALE` `228`).
+
+### Tema alternativo: Kanagawa Dragon
+
+- **Origen:** la variante más terrosa de Kanagawa, con colores apagados y cálidos. La paleta sale del repositorio oficial [rebelot/kanagawa.nvim](https://github.com/rebelot/kanagawa.nvim), archivo `colors.lua`.
+- **Degradé:** en los bordes exteriores, rojo, naranja y amarillo tierra (`#C4746E`, `#B6927B`, `#C4B28A`). Al medio, los verdes, el aqua y el azul. En el centro, el violeta y el rosa apagados (`#8992A7`, `#A292A3`).
+- **Cómo activarlo:** LOWER + RAISE + **O**.
+- **Consumo:** 60% de carga, atenuado al ~84% (`KANAGAWA_POWER_SCALE` `214`).
+
+### Tema alternativo: Horizon
+
+- **Origen:** la paleta oficial de [jolaleye/horizon-theme-vscode](https://github.com/jolaleye/horizon-theme-vscode), archivo `src/dark/globals.json`.
+- **Degradé (un atardecer):** en los bordes exteriores, naranjas cálidos (tacao `#FAC29A`, rosebud `#FAB795`, apricot `#F09483`). Al medio, cranberry `#E95678` y magenta `#EE64AC`. En el centro, lavender `#B877DB`.
+- **Cómo activarlo:** LOWER + RAISE + **P**.
+- **Consumo:** 69% de carga (es el más claro después de Catppuccin), atenuado al ~73% (`HORIZON_POWER_SCALE` `185`).
 
 ---
 
@@ -300,7 +356,12 @@ Tu configuración vive en dos lugares, y cada uno se respalda distinto:
 | Gestos, tema, velocidades y layout de fábrica | El firmware (`.uf2`) | Hay copias en `~/Downloads/dilemma/respaldo/`. Flasheá la versión que quieras recuperar. |
 | Lo que cambies en VIA (teclas, capas, color, brillo) | La memoria del teclado | VIA → pestaña **SAVE + LOAD** → **Save** baja un `.json`; **Load** lo vuelve a cargar. |
 
-- **Capas:** VIA tiene **8 capas**. Las 3 primeras son las de fábrica (base, LOWER y RAISE); de la 4 a la 8 arrancan vacías (transparentes). Para usar una, asigná en VIA una tecla `MO(3)` … `MO(7)` (la capa funciona mientras la mantenés apretada) o `TG(n)` (prende o apaga la capa).
+- **Capas:** VIA tiene **8 capas**:
+  - las 3 primeras son las de fábrica (base, LOWER y RAISE);
+  - de la 4 a la 7 arrancan vacías (transparentes);
+  - la 8 tiene los temas y las luces, y se activa con LOWER + RAISE.
+
+  Para usar una capa libre, asigná en VIA una tecla `MO(3)` … `MO(6)` (la capa funciona mientras la mantenés apretada) o `TG(n)` (prende o apaga la capa).
 - **Volver al tema después de cambiar colores:** LOWER + **T**. No borra nada más.
 - **Volver a todo lo de fábrica:** LOWER + **V** (`EE_CLR`). Después cargá tu `.json` de VIA si tenías un layout propio.
 - **Si cambiás el código:** guardá cada `.uf2` nuevo con fecha en `respaldo/` antes de flashearlo.
@@ -363,6 +424,10 @@ Por eso el tema se atenúa (`CATPPUCCIN_POWER_SCALE`) y el brillo por defecto es
 | `e140aa68` | La onda pasa a ser un anillo que oscurece y cruza todo el teclado |
 | `c91ecf3b` | Onda más oscura (82%) y más lenta (1.3 s) |
 | `3f78f78e` | Tecla LOWER + T para volver al tema; 8 capas en VIA |
+| `8a40b57e` | Tema alternativo Gruvbox Dark (LOWER + Tab desde Catppuccin) |
+| `e1e84081` | Capa 8 de temas y luces (LOWER + RAISE); brillo máximo limitado a 128 |
+| `67e21a56` | Tema Alegra (LOWER + RAISE + I); prender/apagar luces pasa a K |
+| `5fdf859c` | Temas Kanagawa Dragon (O) y Horizon (P) en la capa 8; el tono pasa a 9/0 |
 | `126f13ad` | Catppuccin atenuado para consumir menos, brillo por defecto 64, se quita el gesto de notificaciones, atrás/adelante más rápido (100 ms), scroll horizontal más rápido |
 
 Los cambios están solo en tu computadora: no se subieron a ningún repositorio remoto.

@@ -25,6 +25,11 @@ enum dilemma_keymap_layers {
     LAYER_BASE = 0,
     LAYER_LOWER,
     LAYER_RAISE,
+    LAYER_FREE_1, // Layers 4 to 7 in VIA: empty (transparent), free to fill from VIA.
+    LAYER_FREE_2,
+    LAYER_FREE_3,
+    LAYER_FREE_4,
+    LAYER_THEME, // Layer 8 in VIA: lighting and theme controls, on LOWER + RAISE.
 };
 
 #define LOWER MO(LAYER_LOWER)
@@ -37,12 +42,30 @@ enum mac_keycodes {
     CURSOR_SPEED_UP,                // 0x7E41
     PINCH_MOD_CYCLE,                // 0x7E42
     RGB_THEME_RESTORE,              // 0x7E43
+    RGB_THEME_GRUVBOX,              // 0x7E44
+    RGB_THEME_ALEGRA,               // 0x7E45
+    RGB_THEME_KANAGAWA,             // 0x7E46
+    RGB_THEME_HORIZON,              // 0x7E47
 };
 
 #define CSPD_DN CURSOR_SPEED_DOWN
 #define CSPD_UP CURSOR_SPEED_UP
 #define PINCH_M PINCH_MOD_CYCLE
 #define RGB_RST RGB_THEME_RESTORE
+#define THM_CAT RGB_THEME_RESTORE
+#define THM_GRV RGB_THEME_GRUVBOX
+#define THM_ALG RGB_THEME_ALEGRA
+#define THM_KAN RGB_THEME_KANAGAWA
+#define THM_HOR RGB_THEME_HORIZON
+
+// clang-format off
+#define LAYOUT_TRANSPARENT LAYOUT( \
+    _______, _______, _______, _______, _______, _______,    _______, _______, _______, _______, _______, _______, \
+    _______, _______, _______, _______, _______, _______,    _______, _______, _______, _______, _______, _______, \
+    _______, _______, _______, _______, _______, _______,    _______, _______, _______, _______, _______, _______, \
+    _______, _______, _______, _______, _______, _______,    _______, _______, _______, _______, _______, _______, \
+                      _______, _______, _______, _______,    _______, _______, _______, _______)
+// clang-format on
 
 // clang-format off
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -87,8 +110,34 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                          _______, _______, _______, _______,    _______, XXXXXXX, XXXXXXX, XXXXXXX
   //                    ╰───────────────────────────────────╯ ╰───────────────────────────────────╯
   ),
+
+  // Explicitly transparent, so VIA's reset fills them with _______ instead of KC_NO.
+  [LAYER_FREE_1] = LAYOUT_TRANSPARENT,
+  [LAYER_FREE_2] = LAYOUT_TRANSPARENT,
+  [LAYER_FREE_3] = LAYOUT_TRANSPARENT,
+  [LAYER_FREE_4] = LAYOUT_TRANSPARENT,
+
+  // Hold LOWER + RAISE. Theme and lighting controls on the right half.
+  [LAYER_THEME] = LAYOUT(
+  // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
+       _______, _______, _______, _______, _______, _______,    XXXXXXX, XXXXXXX, XXXXXXX, RM_HUED, RM_HUEU, XXXXXXX,
+  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+       _______, _______, _______, _______, _______, _______,    THM_CAT, THM_GRV, THM_ALG, THM_KAN, THM_HOR, XXXXXXX,
+  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+       _______, _______, _______, _______, _______, _______,    RM_VALD, RM_VALU, RM_TOGG, RM_SATD, RM_SATU, XXXXXXX,
+  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+       _______, _______, _______, _______, _______, _______,    RM_PREV, RM_NEXT, RM_SPDD, RM_SPDU, XXXXXXX, XXXXXXX,
+  // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
+                         _______, _______, _______, _______,    _______, _______, _______, _______
+  //                    ╰───────────────────────────────────╯ ╰───────────────────────────────────╯
+  ),
 };
 // clang-format on
+
+// LOWER + RAISE together turn on the theme layer.
+layer_state_t layer_state_set_user(layer_state_t state) {
+    return update_tri_layer_state(state, LAYER_LOWER, LAYER_RAISE, LAYER_THEME);
+}
 
 // Modifier held while pinching.
 enum pinch_mode {
@@ -112,7 +161,7 @@ _Static_assert(sizeof(user_config_t) == sizeof(uint32_t), "user_config_t must fi
 
 // Bump this whenever the defaults or the keymap change, so devices that were
 // flashed before reset to the new defaults on the next boot.
-#define USER_CONFIG_MAGIC 0xD8
+#define USER_CONFIG_MAGIC 0xDB
 
 static user_config_t user_config;
 
@@ -148,6 +197,16 @@ static void rgb_theme_restore(void) {
     rgb_matrix_enable();
     rgb_matrix_mode(RGB_MATRIX_DEFAULT_MODE);
     rgb_matrix_sethsv(rgb_matrix_get_hue(), rgb_matrix_get_sat(), RGB_MATRIX_DEFAULT_VAL);
+#endif
+}
+
+// Turns the RGB on and switches the effect, keeping the current brightness.
+static void rgb_theme_select(uint8_t mode) {
+#ifdef RGB_MATRIX_ENABLE
+    rgb_matrix_enable();
+    rgb_matrix_mode(mode);
+#else
+    (void)mode;
 #endif
 }
 
@@ -223,6 +282,18 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             return false;
         case RGB_THEME_RESTORE:
             rgb_theme_restore();
+            return false;
+        case RGB_THEME_GRUVBOX:
+            rgb_theme_select(RGB_MATRIX_CUSTOM_gruvbox_dark);
+            return false;
+        case RGB_THEME_ALEGRA:
+            rgb_theme_select(RGB_MATRIX_CUSTOM_alegra);
+            return false;
+        case RGB_THEME_KANAGAWA:
+            rgb_theme_select(RGB_MATRIX_CUSTOM_kanagawa_dragon);
+            return false;
+        case RGB_THEME_HORIZON:
+            rgb_theme_select(RGB_MATRIX_CUSTOM_horizon);
             return false;
     }
     return true;
