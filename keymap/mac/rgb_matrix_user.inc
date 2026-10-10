@@ -7,7 +7,7 @@
 RGB_MATRIX_EFFECT(catppuccin_mocha)
 RGB_MATRIX_EFFECT(gruvbox_dark)
 RGB_MATRIX_EFFECT(alegra)
-RGB_MATRIX_EFFECT(kanagawa_dragon)
+RGB_MATRIX_EFFECT(desert)
 RGB_MATRIX_EFFECT(horizon)
 
 #ifdef RGB_MATRIX_CUSTOM_EFFECT_IMPLS
@@ -56,10 +56,10 @@ RGB_MATRIX_EFFECT(horizon)
 #        define ALEGRA_POWER_SCALE 255
 #    endif
 
-// Kanagawa Dragon loads each LED at about 60% on average and Horizon at about 69%, so 214 and
-// 185 match a saturated effect.
-#    ifndef KANAGAWA_POWER_SCALE
-#        define KANAGAWA_POWER_SCALE 214
+// Desert loads each LED at about 58% on average and Horizon at about 69%, so 222 and 185 match
+// a saturated effect.
+#    ifndef DESERT_POWER_SCALE
+#        define DESERT_POWER_SCALE 222
 #    endif
 #    ifndef HORIZON_POWER_SCALE
 #        define HORIZON_POWER_SCALE 185
@@ -111,18 +111,15 @@ static const rgb_t alegra_palette[] = {
     CATPPUCCIN_HEX(0x30ABA9), // Teal (primary)
 };
 
-// Kanagawa Dragon (rebelot/kanagawa.nvim, colors.lua): the muted, earthy accents, warm on the
-// outer edge and cool towards the center.
-static const rgb_t kanagawa_dragon_palette[] = {
-    CATPPUCCIN_HEX(0xC4746E), // dragonRed
-    CATPPUCCIN_HEX(0xB6927B), // dragonOrange
-    CATPPUCCIN_HEX(0xC4B28A), // dragonYellow
-    CATPPUCCIN_HEX(0x8A9A7B), // dragonGreen2
-    CATPPUCCIN_HEX(0x87A987), // dragonGreen
-    CATPPUCCIN_HEX(0x8EA4A2), // dragonAqua
-    CATPPUCCIN_HEX(0x8BA4B0), // dragonBlue2
-    CATPPUCCIN_HEX(0x8992A7), // dragonViolet
-    CATPPUCCIN_HEX(0xA292A3), // dragonPink
+// Desert: a red-rock canyon at sunset, laid out like Horizon. Pale sand on the outer edge,
+// through golden sand, dune orange, amber and terracotta, to canyon rust at the center.
+static const rgb_t desert_palette[] = {
+    CATPPUCCIN_HEX(0xF6D69A), // Pale sand
+    CATPPUCCIN_HEX(0xF2C14E), // Golden sand
+    CATPPUCCIN_HEX(0xF4A259), // Dune orange
+    CATPPUCCIN_HEX(0xE07A3F), // Amber
+    CATPPUCCIN_HEX(0xC8553D), // Terracotta
+    CATPPUCCIN_HEX(0xA33A2A), // Canyon rust
 };
 
 // Horizon (jolaleye/horizon-theme-vscode, src/dark/globals.json): a sunset, from the warm
@@ -200,8 +197,8 @@ static bool alegra(effect_params_t *params) {
     return palette_effect(params, alegra_palette, ARRAY_SIZE(alegra_palette), ALEGRA_POWER_SCALE);
 }
 
-static bool kanagawa_dragon(effect_params_t *params) {
-    return palette_effect(params, kanagawa_dragon_palette, ARRAY_SIZE(kanagawa_dragon_palette), KANAGAWA_POWER_SCALE);
+static bool desert(effect_params_t *params) {
+    return palette_effect(params, desert_palette, ARRAY_SIZE(desert_palette), DESERT_POWER_SCALE);
 }
 
 static bool horizon(effect_params_t *params) {

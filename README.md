@@ -25,7 +25,7 @@ The full user guide (Spanish) is in [`docs/GUIA-CONFIGURACION.md`](docs/GUIA-CON
   - Catppuccin Mocha (default)
   - Gruvbox Dark
   - Alegra (Teal, with Indigo edges)
-  - Kanagawa Dragon
+  - Desert (sand, orange, terracotta and canyon red)
   - Horizon
 
   Each one is power-normalized to avoid supply brownouts with both halves connected, and brightness is capped at 128.
@@ -48,7 +48,7 @@ The full user guide (Spanish) is in [`docs/GUIA-CONFIGURACION.md`](docs/GUIA-CON
   | Catppuccin theme | `0x7E43` |
   | Gruvbox theme | `0x7E44` |
   | Alegra theme | `0x7E45` |
-  | Kanagawa Dragon theme | `0x7E46` |
+  | Desert theme | `0x7E46` |
   | Horizon theme | `0x7E47` |
 
 ## Rebuild from source

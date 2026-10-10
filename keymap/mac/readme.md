@@ -90,7 +90,7 @@ the `LOWER` layer at the `T` position.
 | `RGB_THEME_RESTORE` | `0x7E43` | Turns the RGB on and restores the Catppuccin effect and default brightness, without touching the layout or other settings |
 | `RGB_THEME_GRUVBOX` | `0x7E44` | Turns the RGB on and switches to the Gruvbox Dark effect, keeping the brightness |
 | `RGB_THEME_ALEGRA`  | `0x7E45` | Turns the RGB on and switches to the Alegra effect, keeping the brightness |
-| `RGB_THEME_KANAGAWA` | `0x7E46` | Turns the RGB on and switches to the Kanagawa Dragon effect, keeping the brightness |
+| `RGB_THEME_DESERT`  | `0x7E46` | Turns the RGB on and switches to the Desert effect, keeping the brightness |
 | `RGB_THEME_HORIZON` | `0x7E47` | Turns the RGB on and switches to the Horizon effect, keeping the brightness |
 
 VIA has 8 layers (`DYNAMIC_KEYMAP_LAYER_COUNT`). Layers 4 to 7 start transparent; use
@@ -106,7 +106,7 @@ Layer 8 (`LAYER_THEME`) holds the lighting controls on the right half and turns 
 | `U` | `RGB_THEME_GRUVBOX` | Gruvbox Dark |
 | `I` | `RGB_THEME_ALEGRA` | Alegra (Indigo edges, Teal) |
 | `K` | `RM_TOGG` | RGB on/off |
-| `O` | `RGB_THEME_KANAGAWA` | Kanagawa Dragon |
+| `O` | `RGB_THEME_DESERT` | Desert |
 | `P` | `RGB_THEME_HORIZON` | Horizon |
 | `9` / `0` | `RM_HUED` / `RM_HUEU` | Hue (built-in effects only) |
 | `H` / `J` | `RM_VALD` / `RM_VALU` | Brightness down / up, capped at 128 |
@@ -140,10 +140,11 @@ edge, and the primary Teal `#30ABA9` covers the rest of each half. Teal dominate
 reads as a strong blue on the LEDs. The palette loads each LED at about 49%, so it needs no
 dimming: `ALEGRA_POWER_SCALE` is `255`.
 
-**Kanagawa Dragon** comes from [rebelot/kanagawa.nvim](https://github.com/rebelot/kanagawa.nvim)
-(`colors.lua`). It is the earthy variant, with muted accents: dragonRed, Orange and Yellow on
-the outer edge, then the greens, Aqua and Blue2, and dragonViolet and dragonPink at the center.
-Its power scale is `KANAGAWA_POWER_SCALE` `214` (about 60% load).
+**Desert** is a custom palette laid out like Horizon: a red-rock canyon at sunset. From the
+outer edge to the center it runs pale sand `#F6D69A`, golden sand `#F2C14E`, dune orange
+`#F4A259`, amber `#E07A3F`, terracotta `#C8553D` and canyon rust `#A33A2A`. Its power scale is
+`DESERT_POWER_SCALE` `222` (about 58% load). It replaced Kanagawa Dragon in the same effect slot
+and on the same key.
 
 **Horizon** comes from
 [jolaleye/horizon-theme-vscode](https://github.com/jolaleye/horizon-theme-vscode)

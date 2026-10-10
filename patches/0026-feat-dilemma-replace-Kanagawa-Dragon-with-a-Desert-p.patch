@@ -1,0 +1,162 @@
+From da45894cf23e646a43ec19f6b3d51dfb72c1e546 Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Sat, 10 Oct 2026 03:14:32 -0500
+Subject: [PATCH 26/26] feat(dilemma): replace Kanagawa Dragon with a Desert
+ palette theme
+
+---
+ .../4x6_4_procyon/keymaps/mac/keymap.c        | 10 +++---
+ .../4x6_4_procyon/keymaps/mac/readme.md       | 13 +++----
+ .../keymaps/mac/rgb_matrix_user.inc           | 35 +++++++++----------
+ 3 files changed, 28 insertions(+), 30 deletions(-)
+
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+index 939abc78..5d4cf904 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+@@ -44,7 +44,7 @@ enum mac_keycodes {
+     RGB_THEME_RESTORE,              // 0x7E43
+     RGB_THEME_GRUVBOX,              // 0x7E44
+     RGB_THEME_ALEGRA,               // 0x7E45
+-    RGB_THEME_KANAGAWA,             // 0x7E46
++    RGB_THEME_DESERT,               // 0x7E46
+     RGB_THEME_HORIZON,              // 0x7E47
+ };
+ 
+@@ -55,7 +55,7 @@ enum mac_keycodes {
+ #define THM_CAT RGB_THEME_RESTORE
+ #define THM_GRV RGB_THEME_GRUVBOX
+ #define THM_ALG RGB_THEME_ALEGRA
+-#define THM_KAN RGB_THEME_KANAGAWA
++#define THM_DES RGB_THEME_DESERT
+ #define THM_HOR RGB_THEME_HORIZON
+ 
+ // clang-format off
+@@ -122,7 +122,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+   // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
+        _______, _______, _______, _______, _______, _______,    XXXXXXX, XXXXXXX, XXXXXXX, RM_HUED, RM_HUEU, XXXXXXX,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+-       _______, _______, _______, _______, _______, _______,    THM_CAT, THM_GRV, THM_ALG, THM_KAN, THM_HOR, XXXXXXX,
++       _______, _______, _______, _______, _______, _______,    THM_CAT, THM_GRV, THM_ALG, THM_DES, THM_HOR, XXXXXXX,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+        _______, _______, _______, _______, _______, _______,    RM_VALD, RM_VALU, RM_TOGG, RM_SATD, RM_SATU, XXXXXXX,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+@@ -289,8 +289,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+         case RGB_THEME_ALEGRA:
+             rgb_theme_select(RGB_MATRIX_CUSTOM_alegra);
+             return false;
+-        case RGB_THEME_KANAGAWA:
+-            rgb_theme_select(RGB_MATRIX_CUSTOM_kanagawa_dragon);
++        case RGB_THEME_DESERT:
++            rgb_theme_select(RGB_MATRIX_CUSTOM_desert);
+             return false;
+         case RGB_THEME_HORIZON:
+             rgb_theme_select(RGB_MATRIX_CUSTOM_horizon);
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+index 76350d22..9f4cb370 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+@@ -90,7 +90,7 @@ the `LOWER` layer at the `T` position.
+ | `RGB_THEME_RESTORE` | `0x7E43` | Turns the RGB on and restores the Catppuccin effect and default brightness, without touching the layout or other settings |
+ | `RGB_THEME_GRUVBOX` | `0x7E44` | Turns the RGB on and switches to the Gruvbox Dark effect, keeping the brightness |
+ | `RGB_THEME_ALEGRA`  | `0x7E45` | Turns the RGB on and switches to the Alegra effect, keeping the brightness |
+-| `RGB_THEME_KANAGAWA` | `0x7E46` | Turns the RGB on and switches to the Kanagawa Dragon effect, keeping the brightness |
++| `RGB_THEME_DESERT`  | `0x7E46` | Turns the RGB on and switches to the Desert effect, keeping the brightness |
+ | `RGB_THEME_HORIZON` | `0x7E47` | Turns the RGB on and switches to the Horizon effect, keeping the brightness |
+ 
+ VIA has 8 layers (`DYNAMIC_KEYMAP_LAYER_COUNT`). Layers 4 to 7 start transparent; use
+@@ -106,7 +106,7 @@ Layer 8 (`LAYER_THEME`) holds the lighting controls on the right half and turns
+ | `U` | `RGB_THEME_GRUVBOX` | Gruvbox Dark |
+ | `I` | `RGB_THEME_ALEGRA` | Alegra (Indigo edges, Teal) |
+ | `K` | `RM_TOGG` | RGB on/off |
+-| `O` | `RGB_THEME_KANAGAWA` | Kanagawa Dragon |
++| `O` | `RGB_THEME_DESERT` | Desert |
+ | `P` | `RGB_THEME_HORIZON` | Horizon |
+ | `9` / `0` | `RM_HUED` / `RM_HUEU` | Hue (built-in effects only) |
+ | `H` / `J` | `RM_VALD` / `RM_VALU` | Brightness down / up, capped at 128 |
+@@ -140,10 +140,11 @@ edge, and the primary Teal `#30ABA9` covers the rest of each half. Teal dominate
+ reads as a strong blue on the LEDs. The palette loads each LED at about 49%, so it needs no
+ dimming: `ALEGRA_POWER_SCALE` is `255`.
+ 
+-**Kanagawa Dragon** comes from [rebelot/kanagawa.nvim](https://github.com/rebelot/kanagawa.nvim)
+-(`colors.lua`). It is the earthy variant, with muted accents: dragonRed, Orange and Yellow on
+-the outer edge, then the greens, Aqua and Blue2, and dragonViolet and dragonPink at the center.
+-Its power scale is `KANAGAWA_POWER_SCALE` `214` (about 60% load).
++**Desert** is a custom palette laid out like Horizon: a red-rock canyon at sunset. From the
++outer edge to the center it runs pale sand `#F6D69A`, golden sand `#F2C14E`, dune orange
++`#F4A259`, amber `#E07A3F`, terracotta `#C8553D` and canyon rust `#A33A2A`. Its power scale is
++`DESERT_POWER_SCALE` `222` (about 58% load). It replaced Kanagawa Dragon in the same effect slot
++and on the same key.
+ 
+ **Horizon** comes from
+ [jolaleye/horizon-theme-vscode](https://github.com/jolaleye/horizon-theme-vscode)
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
+index 63dbd536..55eb6dca 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
+@@ -7,7 +7,7 @@
+ RGB_MATRIX_EFFECT(catppuccin_mocha)
+ RGB_MATRIX_EFFECT(gruvbox_dark)
+ RGB_MATRIX_EFFECT(alegra)
+-RGB_MATRIX_EFFECT(kanagawa_dragon)
++RGB_MATRIX_EFFECT(desert)
+ RGB_MATRIX_EFFECT(horizon)
+ 
+ #ifdef RGB_MATRIX_CUSTOM_EFFECT_IMPLS
+@@ -56,10 +56,10 @@ RGB_MATRIX_EFFECT(horizon)
+ #        define ALEGRA_POWER_SCALE 255
+ #    endif
+ 
+-// Kanagawa Dragon loads each LED at about 60% on average and Horizon at about 69%, so 214 and
+-// 185 match a saturated effect.
+-#    ifndef KANAGAWA_POWER_SCALE
+-#        define KANAGAWA_POWER_SCALE 214
++// Desert loads each LED at about 58% on average and Horizon at about 69%, so 222 and 185 match
++// a saturated effect.
++#    ifndef DESERT_POWER_SCALE
++#        define DESERT_POWER_SCALE 222
+ #    endif
+ #    ifndef HORIZON_POWER_SCALE
+ #        define HORIZON_POWER_SCALE 185
+@@ -111,18 +111,15 @@ static const rgb_t alegra_palette[] = {
+     CATPPUCCIN_HEX(0x30ABA9), // Teal (primary)
+ };
+ 
+-// Kanagawa Dragon (rebelot/kanagawa.nvim, colors.lua): the muted, earthy accents, warm on the
+-// outer edge and cool towards the center.
+-static const rgb_t kanagawa_dragon_palette[] = {
+-    CATPPUCCIN_HEX(0xC4746E), // dragonRed
+-    CATPPUCCIN_HEX(0xB6927B), // dragonOrange
+-    CATPPUCCIN_HEX(0xC4B28A), // dragonYellow
+-    CATPPUCCIN_HEX(0x8A9A7B), // dragonGreen2
+-    CATPPUCCIN_HEX(0x87A987), // dragonGreen
+-    CATPPUCCIN_HEX(0x8EA4A2), // dragonAqua
+-    CATPPUCCIN_HEX(0x8BA4B0), // dragonBlue2
+-    CATPPUCCIN_HEX(0x8992A7), // dragonViolet
+-    CATPPUCCIN_HEX(0xA292A3), // dragonPink
++// Desert: a red-rock canyon at sunset, laid out like Horizon. Pale sand on the outer edge,
++// through golden sand, dune orange, amber and terracotta, to canyon rust at the center.
++static const rgb_t desert_palette[] = {
++    CATPPUCCIN_HEX(0xF6D69A), // Pale sand
++    CATPPUCCIN_HEX(0xF2C14E), // Golden sand
++    CATPPUCCIN_HEX(0xF4A259), // Dune orange
++    CATPPUCCIN_HEX(0xE07A3F), // Amber
++    CATPPUCCIN_HEX(0xC8553D), // Terracotta
++    CATPPUCCIN_HEX(0xA33A2A), // Canyon rust
+ };
+ 
+ // Horizon (jolaleye/horizon-theme-vscode, src/dark/globals.json): a sunset, from the warm
+@@ -200,8 +197,8 @@ static bool alegra(effect_params_t *params) {
+     return palette_effect(params, alegra_palette, ARRAY_SIZE(alegra_palette), ALEGRA_POWER_SCALE);
+ }
+ 
+-static bool kanagawa_dragon(effect_params_t *params) {
+-    return palette_effect(params, kanagawa_dragon_palette, ARRAY_SIZE(kanagawa_dragon_palette), KANAGAWA_POWER_SCALE);
++static bool desert(effect_params_t *params) {
++    return palette_effect(params, desert_palette, ARRAY_SIZE(desert_palette), DESERT_POWER_SCALE);
+ }
+ 
+ static bool horizon(effect_params_t *params) {
+-- 
+2.56.0
+

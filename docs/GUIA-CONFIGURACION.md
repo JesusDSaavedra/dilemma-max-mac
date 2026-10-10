@@ -164,7 +164,7 @@ Mantené **los dos pulgares del centro a la vez** (LOWER y RAISE) y usá la mano
 | **K** | `RM_TOGG` | Prende o apaga las luces |
 | **H** / **J** | `RM_VALD` / `RM_VALU` | Baja / sube el brillo (tope 128) |
 | **N** / **M** | `RM_PREV` / `RM_NEXT` | Efecto anterior / siguiente |
-| **O** | `RGB_THEME_KANAGAWA` | Tema **Kanagawa Dragon** (mantiene el brillo) |
+| **O** | `RGB_THEME_DESERT` | Tema **Desierto** (mantiene el brillo) |
 | **P** | `RGB_THEME_HORIZON` | Tema **Horizon** (mantiene el brillo) |
 | **9** / **0** | `RM_HUED` / `RM_HUEU` | Tono (solo efectos de VIA, no los temas) |
 | **L** / **;** | `RM_SATD` / `RM_SATU` | Saturación (solo efectos de VIA) |
@@ -194,7 +194,7 @@ La velocidad y el modo de zoom **se guardan** aunque desconectes el teclado.
 | `RGB_THEME_RESTORE` | `0x7E43` |
 | `RGB_THEME_GRUVBOX` | `0x7E44` |
 | `RGB_THEME_ALEGRA` | `0x7E45` |
-| `RGB_THEME_KANAGAWA` | `0x7E46` |
+| `RGB_THEME_DESERT` | `0x7E46` |
 | `RGB_THEME_HORIZON` | `0x7E47` |
 
 ---
@@ -221,12 +221,23 @@ La velocidad y el modo de zoom **se guardan** aunque desconectes el teclado.
 - **Consumo:** 49% de carga, ya igual que un color saturado, así que no se atenúa (`ALEGRA_POWER_SCALE` `255`).
 - **Para ajustar la proporción:** en `rgb_matrix_user.inc`, la lista `alegra_palette` tiene 1 Índigo y 4 Teal. Agregar más Teal achica todavía más la franja índigo.
 
-### Tema alternativo: Kanagawa Dragon
+### Tema alternativo: Desierto
 
-- **Origen:** la variante más terrosa de Kanagawa, con colores apagados y cálidos. La paleta sale del repositorio oficial [rebelot/kanagawa.nvim](https://github.com/rebelot/kanagawa.nvim), archivo `colors.lua`.
-- **Degradé:** en los bordes exteriores, rojo, naranja y amarillo tierra (`#C4746E`, `#B6927B`, `#C4B28A`). Al medio, los verdes, el aqua y el azul. En el centro, el violeta y el rosa apagados (`#8992A7`, `#A292A3`).
+- **Origen:** una paleta propia con la misma forma que Horizon: un cañón de roca roja al atardecer. Reemplazó a Kanagawa Dragon.
+- **Degradé (desde los bordes exteriores hacia el centro):**
+
+  | Color | Hex |
+  |---|---|
+  | Arena clara | `#F6D69A` |
+  | Arena dorada | `#F2C14E` |
+  | Duna naranja | `#F4A259` |
+  | Ámbar | `#E07A3F` |
+  | Terracota | `#C8553D` |
+  | Rojo cañón | `#A33A2A` |
+
 - **Cómo activarlo:** LOWER + RAISE + **O**.
-- **Consumo:** 60% de carga, atenuado al ~84% (`KANAGAWA_POWER_SCALE` `214`).
+- **Consumo:** 58% de carga, atenuado al ~87% (`DESERT_POWER_SCALE` `222`).
+- **Para cambiar colores:** editá la lista `desert_palette` en `rgb_matrix_user.inc`. Va del borde exterior al centro.
 
 ### Tema alternativo: Horizon
 
@@ -425,6 +436,7 @@ Por eso el tema se atenúa (`CATPPUCCIN_POWER_SCALE`) y el brillo por defecto es
 | `67e21a56` | Tema Alegra (LOWER + RAISE + I); prender/apagar luces pasa a K |
 | `5fdf859c` | Temas Kanagawa Dragon (O) y Horizon (P) en la capa 8; el tono pasa a 9/0 |
 | `7131d727` | Tema Alegra: Índigo solo en los bordes y Teal predominante |
+| `da45894c` | Tema Desierto reemplaza a Kanagawa Dragon (tecla O) |
 | `126f13ad` | Catppuccin atenuado para consumir menos, brillo por defecto 64, se quita el gesto de notificaciones, atrás/adelante más rápido (100 ms), scroll horizontal más rápido |
 
 Los cambios están solo en tu computadora: no se subieron a ningún repositorio remoto.

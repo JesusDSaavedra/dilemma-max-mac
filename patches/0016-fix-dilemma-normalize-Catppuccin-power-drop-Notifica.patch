@@ -1,7 +1,7 @@
 From 126f13addf52bd6c0af67cedcdc24e69e654ec60 Mon Sep 17 00:00:00 2001
 From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
 Date: Sat, 10 Oct 2026 01:39:17 -0500
-Subject: [PATCH 16/25] fix(dilemma): normalize Catppuccin power, drop
+Subject: [PATCH 16/26] fix(dilemma): normalize Catppuccin power, drop
  Notification Center edge, tune flick and horizontal scroll
 
 Scale the Catppuccin colors by CATPPUCCIN_POWER_SCALE (160/255) so the effect draws about as much as a saturated one, lower the default brightness to 64 and bump the user config magic so it applies once. Remove the right edge zone, shorten the flick timeout to 100 ms and scroll horizontally one step per 1 mm.

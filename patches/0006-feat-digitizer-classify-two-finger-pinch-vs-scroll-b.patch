@@ -1,7 +1,7 @@
 From 7b8c8116ac24b270a4100fac29e711e08e41da38 Mon Sep 17 00:00:00 2001
 From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
 Date: Fri, 9 Oct 2026 22:16:20 -0500
-Subject: [PATCH 06/25] feat(digitizer): classify two finger pinch vs scroll by
+Subject: [PATCH 06/26] feat(digitizer): classify two finger pinch vs scroll by
  direction
 
 Replace the distance-vs-midpoint pinch check with a decision window:

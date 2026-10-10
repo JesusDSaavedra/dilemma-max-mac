@@ -44,7 +44,7 @@ enum mac_keycodes {
     RGB_THEME_RESTORE,              // 0x7E43
     RGB_THEME_GRUVBOX,              // 0x7E44
     RGB_THEME_ALEGRA,               // 0x7E45
-    RGB_THEME_KANAGAWA,             // 0x7E46
+    RGB_THEME_DESERT,               // 0x7E46
     RGB_THEME_HORIZON,              // 0x7E47
 };
 
@@ -55,7 +55,7 @@ enum mac_keycodes {
 #define THM_CAT RGB_THEME_RESTORE
 #define THM_GRV RGB_THEME_GRUVBOX
 #define THM_ALG RGB_THEME_ALEGRA
-#define THM_KAN RGB_THEME_KANAGAWA
+#define THM_DES RGB_THEME_DESERT
 #define THM_HOR RGB_THEME_HORIZON
 
 // clang-format off
@@ -122,7 +122,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
        _______, _______, _______, _______, _______, _______,    XXXXXXX, XXXXXXX, XXXXXXX, RM_HUED, RM_HUEU, XXXXXXX,
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
-       _______, _______, _______, _______, _______, _______,    THM_CAT, THM_GRV, THM_ALG, THM_KAN, THM_HOR, XXXXXXX,
+       _______, _______, _______, _______, _______, _______,    THM_CAT, THM_GRV, THM_ALG, THM_DES, THM_HOR, XXXXXXX,
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
        _______, _______, _______, _______, _______, _______,    RM_VALD, RM_VALU, RM_TOGG, RM_SATD, RM_SATU, XXXXXXX,
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
@@ -289,8 +289,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         case RGB_THEME_ALEGRA:
             rgb_theme_select(RGB_MATRIX_CUSTOM_alegra);
             return false;
-        case RGB_THEME_KANAGAWA:
-            rgb_theme_select(RGB_MATRIX_CUSTOM_kanagawa_dragon);
+        case RGB_THEME_DESERT:
+            rgb_theme_select(RGB_MATRIX_CUSTOM_desert);
             return false;
         case RGB_THEME_HORIZON:
             rgb_theme_select(RGB_MATRIX_CUSTOM_horizon);
