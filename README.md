@@ -17,11 +17,11 @@ The full user guide (Spanish) is in [`docs/GUIA-CONFIGURACION.md`](docs/GUIA-CON
 
 - **Split serial on `GP16`**, a bodge-wire repair after `GP1` was damaged.
 - **Layout based on Gentleman's** [`vendor` keymap](https://github.com/Alan-TheGentleman/qmk_userspace/tree/main/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/vendor). It assumes a US macOS input source.
-  - **Base layer:** QWERTY with GACS home-row mods.
+  - **Base layer:** QWERTY with GACS home-row mods. The tap-hold timings are tuned for a learner: Shift 200 ms; Cmd, Alt and Ctrl 260 ms; other tap-hold keys 200 ms. Flow Tap (150 ms) is on.
   - **Layers:** MAGIC, PROG, NUMBERS, NAV (hold Backspace) and POINTER (hold Z or /).
   - **Thumbs:** `Click Space PROG NUMBS | MAGIC Enter NAV HERDR`.
 - **Herdr layer:** hold the right outer thumb and every key sends the Herdr prefix `Ctrl+Q` followed by that key.
-- **Layer colors:** while a layer is held, only its active keys light up in the layer's color, and the held keys light up white.
+- **Layer colors:** while a layer is held, only its active keys light up in the layer's color, and the held keys light up white. The colors appear once the layer has been on for 250 ms.
 - **macOS trackpad gestures** in mouse-fallback mode:
   - pinch-to-zoom;
   - two-finger flick and left-edge swipe for back/forward, sent as mouse buttons 4/5 so they work regardless of keyboard layout;

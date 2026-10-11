@@ -1,7 +1,7 @@
 From fcc20f9db909b9f2ce96affc28ccaeea127e6f3f Mon Sep 17 00:00:00 2001
 From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
 Date: Fri, 9 Oct 2026 22:34:01 -0500
-Subject: [PATCH 08/30] feat(digitizer): add two finger edge swipe for back and
+Subject: [PATCH 08/31] feat(digitizer): add two finger edge swipe for back and
  forward
 
 Two fingers whose midpoint starts in a left or right edge zone and moves inwards tap DIGITIZER_EDGE_SWIPE_BACK_KC (Cmd+[) or DIGITIZER_EDGE_SWIPE_FORWARD_KC (Cmd+]) once and consume the gesture. Other motion falls back to scroll or pinch without losing motion. Opt-in via DIGITIZER_MOUSE_EDGE_SWIPE_ENABLE, enabled in the mac keymap.

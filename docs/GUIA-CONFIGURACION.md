@@ -194,12 +194,14 @@ Las teclas de la fila del medio funcionan como modificador si las mantenés (*ho
 
 | Tecla | Al mantenerla | Tiempo |
 |---|---|---|
-| **A** / **;** | `Cmd` | 180 ms |
-| **S** / **L** | `Alt` (`Option`) | 200 ms |
-| **D** / **K** | `Ctrl` | 200 ms |
-| **F** / **J** | `Shift` | 120 ms |
+| **A** / **;** | `Cmd` | 260 ms |
+| **S** / **L** | `Alt` (`Option`) | 260 ms |
+| **D** / **K** | `Ctrl` | 260 ms |
+| **F** / **J** | `Shift` | 200 ms |
 
-El *tiempo* es cuánto tenés que mantener la tecla para que cuente como modificador. Está en `get_tapping_term` (`keymap.c`); el resto de las teclas usa `TAPPING_TERM` (120 ms, en `config.h`).
+El *tiempo* es cuánto tenés que mantener la tecla para que cuente como modificador. Está en `get_tapping_term` (`keymap.c`); el resto de las teclas de doble función (`⌫`/NAV, Z y / para POINTER) usa `TAPPING_TERM` (200 ms, en `config.h`).
+
+Además está activado **Flow Tap** (`FLOW_TAP_TERM` 150 ms): si apretás una tecla de doble función menos de 150 ms después de la tecla anterior, **siempre escribe la letra**. Así, cuando escribís seguido, no se activan modificadores ni capas sin querer, aunque la mantengas un poco de más. Para usar el modificador, hacé una pausa corta antes.
 
 #### Consejos para acostumbrarte
 
@@ -537,7 +539,7 @@ Si cambiás `MAC_CURSOR_CPI_DEFAULT`, el valor nuevo solo se aplica después de 
 
 | Problema | Parámetro | Actual | Qué hacer |
 |---|---|---|---|
-| Al escribir rápido salen modificadores en vez de letras | `get_tapping_term` en `keymap.c` | `Cmd` 180, `Shift` 120, `Alt`/`Ctrl` 200 ms | Subí el tiempo de esa tecla de a 20 ms |
+| Al escribir rápido salen modificadores en vez de letras | `get_tapping_term` en `keymap.c` | `Cmd` 260, `Shift` 200, `Alt`/`Ctrl` 260 ms (Flow Tap 150 ms) | Subí el tiempo de esa tecla de a 20 ms |
 | Cuesta activar el modificador | `get_tapping_term` en `keymap.c` | Igual | Bajá el tiempo de esa tecla de a 20 ms |
 | Cambiaste el prefijo de Herdr | `HERDR_PREFIX` en `config.h` | `C(KC_Q)` (`Ctrl+Q`) | Poné el mismo prefijo que en `~/.config/herdr/config.toml` (sección 6.7) |
 
@@ -663,5 +665,6 @@ Por eso el tema se atenúa (`CATPPUCCIN_POWER_SCALE`) y el brillo por defecto es
 | `126f13ad` | Catppuccin atenuado para consumir menos, brillo por defecto 64, se quita el gesto de notificaciones, atrás/adelante más rápido (100 ms), scroll horizontal más rápido |
 | `b1dd10c7` | Layout de Gentleman (home-row mods, capas PROG/NUM/NAV/POINTER/MAGIC) y capa Herdr; temas en NUM + MAGIC |
 | `34e0389e` | Colores por capa: al mantener una capa se iluminan solo sus teclas activas |
+| `04892854` | Teclas de doble función más tolerantes (Shift 200 ms; Cmd, Alt y Ctrl 260 ms; resto 200 ms) con Flow Tap; los colores de capa aparecen a los 250 ms |
 
 Los cambios están solo en tu computadora: no se subieron a ningún repositorio remoto.

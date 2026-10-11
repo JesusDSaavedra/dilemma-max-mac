@@ -84,9 +84,11 @@ The layout follows Gentleman's `vendor` keymap
 source, so the symbol keys produce the symbols printed in the keymap.
 
 The base layer has home-row mods: `A` `S` `D` `F` hold for `Cmd` `Alt` `Ctrl` `Shift`, and
-`J` `K` `L` `;` for `Shift` `Ctrl` `Alt` `Cmd`. The tapping term is 120 ms (`TAPPING_TERM`), with
-per-key terms in `get_tapping_term()`: 180 ms for `Cmd`, 120 ms for `Shift` and 200 ms for `Alt`
-and `Ctrl`. The thumbs are, from left to right: left click, `Space`, `PROG`, `NUMBS` | `MAGIC`,
+`J` `K` `L` `;` for `Shift` `Ctrl` `Alt` `Cmd`. The tapping term is 200 ms (`TAPPING_TERM`), raised from Gentleman's 120 ms for a learner. The
+per-key terms in `get_tapping_term()` are 260 ms for `Cmd`, `Alt` and `Ctrl` and 200 ms for `Shift`.
+`FLOW_TAP_TERM` 150 ms makes a tap-hold key pressed within 150 ms of the previous key always tap,
+so fast typing never triggers a modifier or a layer. Layer colors appear only after the layer has
+been on for `LAYER_INDICATOR_DELAY` (250 ms). The thumbs are, from left to right: left click, `Space`, `PROG`, `NUMBS` | `MAGIC`,
 `Enter`, `Backspace` (`NAV` on hold), `HERDR`.
 
 | # | Layer | How to reach it | Contents |

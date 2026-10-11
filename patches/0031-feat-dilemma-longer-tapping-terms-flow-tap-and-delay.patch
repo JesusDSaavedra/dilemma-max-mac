@@ -1,0 +1,97 @@
+From 048928542dec823ffcc2df90fe7e4fcbaefb0b00 Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Sat, 10 Oct 2026 23:06:13 -0500
+Subject: [PATCH 31/31] feat(dilemma): longer tapping terms, flow tap and
+ delayed layer colors
+
+---
+ .../dilemma/4x6_4_procyon/keymaps/mac/config.h | 10 +++++++++-
+ .../dilemma/4x6_4_procyon/keymaps/mac/keymap.c | 18 +++++++++++++-----
+ .../4x6_4_procyon/keymaps/mac/readme.md        |  8 +++++---
+ 3 files changed, 27 insertions(+), 9 deletions(-)
+
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+index dc915121..3e6cc08f 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+@@ -125,7 +125,15 @@
+  * Home-row mods, from Gentleman's `vendor` keymap: 120 ms by default, with
+  * per-key terms in get_tapping_term() (GUI 180, Shift 120, Alt and Ctrl 200).
+  */
+-#define TAPPING_TERM 120
++// Longer than Gentleman's 120 so slower presses while learning still count as
++// taps. Home-row mods get their own terms in get_tapping_term (keymap.c).
++#define TAPPING_TERM 200
++// Flow Tap: a tap-hold key pressed within 150 ms of the previous key while
++// typing always taps, so fast typing never triggers a modifier or a layer.
++#define FLOW_TAP_TERM 150
++// Layer colors show only after the layer has been on this long, so a quick
++// tap of a layer key does not flash the lights.
++#define LAYER_INDICATOR_DELAY 250
+ #define TAPPING_TERM_PER_KEY
+ 
+ /* Sync the layer and LED state to both halves. */
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+index 54ee298b..ed90b515 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+@@ -220,8 +220,16 @@ static bool is_layer_trigger(uint16_t keycode, uint8_t layer) {
+ }
+ 
+ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
+-    const uint8_t layer = get_highest_layer(layer_state);
+-    if (layer == LAYER_BASE || layer >= ARRAY_SIZE(layer_colors)) {
++    // Tracked here rather than in layer_state_set_user, because the other half
++    // gets the layer state over the split link without calling that hook.
++    static uint8_t  last_layer = LAYER_BASE;
++    static uint16_t layer_since;
++    const uint8_t   layer = get_highest_layer(layer_state);
++    if (layer != last_layer) {
++        last_layer  = layer;
++        layer_since = timer_read();
++    }
++    if (layer == LAYER_BASE || layer >= ARRAY_SIZE(layer_colors) || timer_elapsed(layer_since) < LAYER_INDICATOR_DELAY) {
+         return false;
+     }
+     const uint8_t val   = rgb_matrix_get_val();
+@@ -255,15 +263,15 @@ uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
+     switch (keycode) {
+         case LGUI_T(KC_A):
+         case RGUI_T(KC_SCLN):
+-            return 180;
++            return 260;
+         case LSFT_T(KC_F):
+         case RSFT_T(KC_J):
+-            return 120;
++            return 200;
+         case LALT_T(KC_S):
+         case LCTL_T(KC_D):
+         case RCTL_T(KC_K):
+         case LALT_T(KC_L):
+-            return 200;
++            return 260;
+         default:
+             return TAPPING_TERM;
+     }
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+index 2a39648d..5c25fad4 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+@@ -84,9 +84,11 @@ The layout follows Gentleman's `vendor` keymap
+ source, so the symbol keys produce the symbols printed in the keymap.
+ 
+ The base layer has home-row mods: `A` `S` `D` `F` hold for `Cmd` `Alt` `Ctrl` `Shift`, and
+-`J` `K` `L` `;` for `Shift` `Ctrl` `Alt` `Cmd`. The tapping term is 120 ms (`TAPPING_TERM`), with
+-per-key terms in `get_tapping_term()`: 180 ms for `Cmd`, 120 ms for `Shift` and 200 ms for `Alt`
+-and `Ctrl`. The thumbs are, from left to right: left click, `Space`, `PROG`, `NUMBS` | `MAGIC`,
++`J` `K` `L` `;` for `Shift` `Ctrl` `Alt` `Cmd`. The tapping term is 200 ms (`TAPPING_TERM`), raised from Gentleman's 120 ms for a learner. The
++per-key terms in `get_tapping_term()` are 260 ms for `Cmd`, `Alt` and `Ctrl` and 200 ms for `Shift`.
++`FLOW_TAP_TERM` 150 ms makes a tap-hold key pressed within 150 ms of the previous key always tap,
++so fast typing never triggers a modifier or a layer. Layer colors appear only after the layer has
++been on for `LAYER_INDICATOR_DELAY` (250 ms). The thumbs are, from left to right: left click, `Space`, `PROG`, `NUMBS` | `MAGIC`,
+ `Enter`, `Backspace` (`NAV` on hold), `HERDR`.
+ 
+ | # | Layer | How to reach it | Contents |
+-- 
+2.56.0
+

@@ -125,7 +125,15 @@
  * Home-row mods, from Gentleman's `vendor` keymap: 120 ms by default, with
  * per-key terms in get_tapping_term() (GUI 180, Shift 120, Alt and Ctrl 200).
  */
-#define TAPPING_TERM 120
+// Longer than Gentleman's 120 so slower presses while learning still count as
+// taps. Home-row mods get their own terms in get_tapping_term (keymap.c).
+#define TAPPING_TERM 200
+// Flow Tap: a tap-hold key pressed within 150 ms of the previous key while
+// typing always taps, so fast typing never triggers a modifier or a layer.
+#define FLOW_TAP_TERM 150
+// Layer colors show only after the layer has been on this long, so a quick
+// tap of a layer key does not flash the lights.
+#define LAYER_INDICATOR_DELAY 250
 #define TAPPING_TERM_PER_KEY
 
 /* Sync the layer and LED state to both halves. */

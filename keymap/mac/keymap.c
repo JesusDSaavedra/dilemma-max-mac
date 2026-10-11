@@ -220,8 +220,16 @@ static bool is_layer_trigger(uint16_t keycode, uint8_t layer) {
 }
 
 bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
-    const uint8_t layer = get_highest_layer(layer_state);
-    if (layer == LAYER_BASE || layer >= ARRAY_SIZE(layer_colors)) {
+    // Tracked here rather than in layer_state_set_user, because the other half
+    // gets the layer state over the split link without calling that hook.
+    static uint8_t  last_layer = LAYER_BASE;
+    static uint16_t layer_since;
+    const uint8_t   layer = get_highest_layer(layer_state);
+    if (layer != last_layer) {
+        last_layer  = layer;
+        layer_since = timer_read();
+    }
+    if (layer == LAYER_BASE || layer >= ARRAY_SIZE(layer_colors) || timer_elapsed(layer_since) < LAYER_INDICATOR_DELAY) {
         return false;
     }
     const uint8_t val   = rgb_matrix_get_val();
@@ -255,15 +263,15 @@ uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
         case LGUI_T(KC_A):
         case RGUI_T(KC_SCLN):
-            return 180;
+            return 260;
         case LSFT_T(KC_F):
         case RSFT_T(KC_J):
-            return 120;
+            return 200;
         case LALT_T(KC_S):
         case LCTL_T(KC_D):
         case RCTL_T(KC_K):
         case LALT_T(KC_L):
-            return 200;
+            return 260;
         default:
             return TAPPING_TERM;
     }
