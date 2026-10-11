@@ -48,15 +48,15 @@ El TRRS **se queda conectado todo el tiempo**: solo movés el cable USB. Flashea
 
 `QK_BOOT` siempre reinicia en modo de carga **la mitad que tiene el USB**, aunque apretes la tecla en la otra mitad.
 
-1. **USB en la mitad derecha.** Mantené **`FN` derecho** (`MAGIC`, el pulgar derecho más cercano al centro) y apretá **`Tab`**. También sirve la tecla de `\` (columna exterior derecha, fila de la Q).
+1. **USB en la mitad derecha.** Mantené **`FN` derecho** (`MAGIC`, el pulgar derecho más cercano al centro) y **mantené 2 segundos** la tecla de **`\`** (columna exterior derecha, fila de la Q). Mientras la mantenés se pone **roja**; a los 2 segundos entra en modo de carga. Si la soltás antes, no pasa nada. También sirve `Tab`, pero esa no se pone roja porque está en la otra mitad.
 2. Aparece la unidad **`RPI-RP2`**. Arrastrá el `.uf2` a esa unidad. La mitad se reinicia sola.
 3. **Desenchufá el USB de la derecha y enchufalo en la izquierda.** El TRRS sigue conectado.
-4. Mantené otra vez **`FN` derecho** y apretá **`Tab`**. Ahora entra en modo de carga la izquierda. Arrastrá el `.uf2`.
+4. Mantené otra vez **`FN` derecho** y **mantené 2 segundos `Tab`** (ahora es la mitad del USB, así que se pone roja). Entra en modo de carga la izquierda. Arrastrá el `.uf2`.
 5. Volvé a pasar el USB a la **mitad derecha**, la del trackpad.
 
 > **Si una mitad todavía tiene el firmware anterior al layout de Gentleman**, `QK_BOOT` está en LOWER + **B** (izquierda) o RAISE + **N** (derecha).
 >
-> **Cuidado con la tecla de abajo:** justo debajo de `Tab` y de `\`, en la columna exterior de la fila de la A (donde están `Esc` y `'`), está `EE_CLR`. Con `FN` derecho, esa tecla borra los ajustes guardados (layout de VIA, velocidad del cursor, modo de zoom y luces).
+> **Cuidado con la tecla de abajo:** justo debajo de `Tab` y de `\`, en la columna exterior de la fila de la A (donde están `Esc` y `'`), está `EE_CLR`. Con `FN` derecho, esa tecla borra los ajustes guardados (layout de VIA, velocidad del cursor, modo de zoom y luces). Está **protegida igual que `QK_BOOT`**: un toque no hace nada, hay que mantenerla 2 segundos (`DANGER_KEY_HOLD_MS` en `config.h`).
 
 ### Método alternativo: botón de reset
 
@@ -216,8 +216,8 @@ Mantené **MAGIC** (el pulgar derecho más cercano al centro). Las dos mitades s
 
 | Mitad izquierda | Mitad derecha | Función | Acción |
 |---|---|---|---|
-| Columna exterior, fila de la Q (`Tab`) | Columna exterior, fila de la Q (`\`) | `QK_BOOT` | Modo de carga de firmware (sección 3) |
-| Columna exterior, fila de la A (`Esc`) | Columna exterior, fila de la A (`'`) | `EE_CLR` | Borra la memoria y vuelve a los valores por defecto |
+| Columna exterior, fila de la Q (`Tab`) | Columna exterior, fila de la Q (`\`) | `QK_BOOT` | Modo de carga de firmware (sección 3). **Hay que mantenerla 2 s** |
+| Columna exterior, fila de la A (`Esc`) | Columna exterior, fila de la A (`'`) | `EE_CLR` | Borra la memoria y vuelve a los valores por defecto. **Hay que mantenerla 2 s** |
 | **T** | **Y** | `RM_TOGG` | Prende o apaga las luces |
 | **G** | **H** | `RM_NEXT` | Siguiente efecto de luz |
 | **R** / **F** | **U** / **J** | `RM_VALU` / `RM_VALD` | Sube / baja el brillo (tope 128) |
@@ -490,7 +490,7 @@ qmk compile -kb bastardkb/dilemma/4x6_4_procyon -km mac
 |---|---|---|---|
 | El cursor arranca muy lento o muy rápido | `MAC_CURSOR_CPI_DEFAULT` | `100` (25%) | `400` = 100%. Usá un valor de la lista: 50, 75, 100, 150, 200, 300, 400, 600 u 800. |
 
-Si cambiás `MAC_CURSOR_CPI_DEFAULT`, el valor nuevo solo se aplica después de borrar la memoria con `EE_CLR` (MAGIC + la tecla donde está `Esc`), o subiendo el número `USER_CONFIG_MAGIC` en `keymap.c`. Para el uso diario es más simple usar las teclas de velocidad.
+Si cambiás `MAC_CURSOR_CPI_DEFAULT`, el valor nuevo solo se aplica después de borrar la memoria con `EE_CLR` (MAGIC + la tecla donde está `Esc`, mantenida 2 segundos), o subiendo el número `USER_CONFIG_MAGIC` en `keymap.c`. Para el uso diario es más simple usar las teclas de velocidad.
 
 #### Click y scroll
 
@@ -589,7 +589,7 @@ Tu configuración vive en dos lugares, y cada uno se respalda distinto:
 
 - **Capas:** VIA tiene **8 capas** (numeradas del 0 al 7) y **todas están en uso**: `BASE` (0), `MAGIC` (1), `PROG` (2), `NUMBERS` (3), `NAV` (4), `POINTER` (5), `HERDR` (6) y `THEME` (7), que se activa con NUMBS + MAGIC (sección 6). Ya no quedan capas libres: para una capa propia, reemplazá una que no uses (por ejemplo `HERDR`) y cambiá en VIA la tecla que la activa. Para tener más de 8 hay que subir `DYNAMIC_KEYMAP_LAYER_COUNT` en `config.h`, y eso mueve los datos de VIA (hay que subir también `USER_CONFIG_MAGIC` en `keymap.c`).
 - **Volver al tema después de cambiar colores:** NUMBS + MAGIC + **Y** (`RGB_THEME_RESTORE`). No borra nada más.
-- **Volver a todo lo de fábrica:** MAGIC + la tecla donde está `Esc` (`EE_CLR`). Después cargá tu `.json` de VIA si tenías un layout propio (guardado con el layout de Gentleman: uno anterior trae las capas viejas).
+- **Volver a todo lo de fábrica:** MAGIC + la tecla donde está `Esc` (`EE_CLR`), mantenida 2 segundos. Después cargá tu `.json` de VIA si tenías un layout propio (guardado con el layout de Gentleman: uno anterior trae las capas viejas).
 - **Si cambiás el código:** guardá cada `.uf2` nuevo con fecha en `respaldo/` antes de flashearlo.
 
 ---
@@ -600,7 +600,7 @@ Tu configuración vive en dos lugares, y cada uno se respalda distinto:
 |---|---|---|
 | Solo funciona la mitad que tiene el USB | Problema con el TRRS o con el cable puente | Revisá con un multímetro la continuidad del cable puente (pad `S` ↔ pad del IO) en ambas mitades |
 | Los gestos y el zoom no hacen nada, pero el cursor sí | El USB está en la mitad sin trackpad | Conectá el USB a la mitad derecha |
-| Las teclas de velocidad no hacen nada | VIA conserva un layout viejo | `EE_CLR` (MAGIC + la tecla donde está `Esc`), o reasignalas en VIA con `0x7E40`/`0x7E41` |
+| Las teclas de velocidad no hacen nada | VIA conserva un layout viejo | `EE_CLR` (MAGIC + la tecla donde está `Esc`, mantenida 2 s), o reasignalas en VIA con `0x7E40`/`0x7E41` |
 | El trackpad deja de responder y las luces se ven rojas o naranjas | Caída de voltaje por exceso de brillo | Bajá el brillo en VIA. El firmware reconfigura el trackpad solo; si no vuelve, desenchufá y volvé a enchufar el USB |
 | VIA no detecta el teclado | El navegador no es compatible | Usá Chrome o Edge (Safari no soporta WebHID) |
 | El teclado no entra en modo de carga | — | Usá el botón interno con el USB conectado (método de recuperación) |
@@ -666,5 +666,6 @@ Por eso el tema se atenúa (`CATPPUCCIN_POWER_SCALE`) y el brillo por defecto es
 | `b1dd10c7` | Layout de Gentleman (home-row mods, capas PROG/NUM/NAV/POINTER/MAGIC) y capa Herdr; temas en NUM + MAGIC |
 | `34e0389e` | Colores por capa: al mantener una capa se iluminan solo sus teclas activas |
 | `04892854` | Teclas de doble función más tolerantes (Shift 200 ms; Cmd, Alt y Ctrl 260 ms; resto 200 ms) con Flow Tap; los colores de capa aparecen a los 250 ms |
+| `16177ff1` | `QK_BOOT` y `EE_CLR` protegidas: hay que mantenerlas 2 segundos (se ponen rojas) |
 
 Los cambios están solo en tu computadora: no se subieron a ningún repositorio remoto.

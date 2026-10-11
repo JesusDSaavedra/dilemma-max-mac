@@ -94,7 +94,7 @@ been on for `LAYER_INDICATOR_DELAY` (250 ms). The thumbs are, from left to right
 | # | Layer | How to reach it | Contents |
 | --- | --- | --- | --- |
 | 0 | `BASE` | Default | Letters, digits, home-row mods |
-| 1 | `MAGIC` | Hold `MAGIC` (right inner thumb) | RGB controls, media keys, `QK_BOOT`, `EE_CLR` |
+| 1 | `MAGIC` | Hold `MAGIC` (right inner thumb) | RGB controls, media keys, `QK_BOOT`, `EE_CLR` (both must be held for `DANGER_KEY_HOLD_MS`, 2 s; the key turns red on the USB half while held, and releasing early cancels) |
 | 2 | `PROG` | Hold `PROG` (left thumb, third from the left) | Programming symbols |
 | 3 | `NUMBERS` | Hold `NUMBS` (left inner thumb) | Number pad on the right, `F1`–`F9` on the left |
 | 4 | `NAV` | Hold `Backspace` (right thumb, third from the left) | Arrows, `Home`/`End`, `PgUp`/`PgDn`, `Insert`, `Caps Lock` |

@@ -1,0 +1,105 @@
+From 16177ff1dfe8b0d8c9ef83234413281d4565a2bc Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Sun, 11 Oct 2026 00:29:28 -0500
+Subject: [PATCH 32/32] feat(dilemma): require a 2 s hold for QK_BOOT and
+ EE_CLR
+
+---
+ .../4x6_4_procyon/keymaps/mac/config.h        |  2 +
+ .../4x6_4_procyon/keymaps/mac/keymap.c        | 39 +++++++++++++++++++
+ .../4x6_4_procyon/keymaps/mac/readme.md       |  2 +-
+ 3 files changed, 42 insertions(+), 1 deletion(-)
+
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+index 3e6cc08f..1f5c6493 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+@@ -134,6 +134,8 @@
+ // Layer colors show only after the layer has been on this long, so a quick
+ // tap of a layer key does not flash the lights.
+ #define LAYER_INDICATOR_DELAY 250
++// QK_BOOT and EE_CLR fire only after being held this long (2 s).
++#define DANGER_KEY_HOLD_MS 2000
+ #define TAPPING_TERM_PER_KEY
+ 
+ /* Sync the layer and LED state to both halves. */
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+index ed90b515..aa11d6bf 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+@@ -190,6 +190,28 @@ layer_state_t layer_state_set_user(layer_state_t state) {
+     return update_tri_layer_state(state, LAYER_NUMBERS, LAYER_MAGIC, LAYER_THEME);
+ }
+ 
++// Firmware keys (QK_BOOT, EE_CLR) only fire after being held for
++// DANGER_KEY_HOLD_MS, so an accidental tap does nothing. Releasing the key
++// earlier cancels it. Handled on the half connected over USB.
++static uint16_t danger_keycode = KC_NO;
++static uint16_t danger_since;
++static keypos_t danger_pos;
++
++void housekeeping_task_user(void) {
++    if (danger_keycode == KC_NO || timer_elapsed(danger_since) < DANGER_KEY_HOLD_MS) {
++        return;
++    }
++    const uint16_t keycode = danger_keycode;
++    danger_keycode         = KC_NO;
++    if (keycode == QK_BOOT) {
++        reset_keyboard();
++    } else {
++        // Same as QMK's own EE_CLR handling.
++        eeconfig_disable();
++        soft_reset_keyboard();
++    }
++}
++
+ #ifdef RGB_MATRIX_ENABLE
+ // Layer indicators: while a layer is held, only the keys that do something on it
+ // light up in the layer's color, the keys held to reach it light up white, and
+@@ -254,6 +276,13 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
+             }
+         }
+     }
++    // A firmware key being held to confirm shows full red.
++    if (danger_keycode != KC_NO) {
++        const uint8_t led = g_led_config.matrix_co[danger_pos.row][danger_pos.col];
++        if (led != NO_LED && led >= led_min && led < led_max) {
++            rgb_matrix_set_color(led, 0xFF, 0, 0);
++        }
++    }
+     return false;
+ }
+ #endif
+@@ -414,6 +443,16 @@ static bool herdr_prefixed(uint16_t keycode) {
+ }
+ 
+ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
++    if (keycode == QK_BOOT || keycode == EE_CLR) {
++        if (record->event.pressed) {
++            danger_keycode = keycode;
++            danger_since   = timer_read();
++            danger_pos     = record->event.key;
++        } else if (danger_keycode == keycode) {
++            danger_keycode = KC_NO; // Released before the hold time: cancel.
++        }
++        return false;
++    }
+     if (!record->event.pressed) {
+         return true;
+     }
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+index 5c25fad4..cd129a2c 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+@@ -94,7 +94,7 @@ been on for `LAYER_INDICATOR_DELAY` (250 ms). The thumbs are, from left to right
+ | # | Layer | How to reach it | Contents |
+ | --- | --- | --- | --- |
+ | 0 | `BASE` | Default | Letters, digits, home-row mods |
+-| 1 | `MAGIC` | Hold `MAGIC` (right inner thumb) | RGB controls, media keys, `QK_BOOT`, `EE_CLR` |
++| 1 | `MAGIC` | Hold `MAGIC` (right inner thumb) | RGB controls, media keys, `QK_BOOT`, `EE_CLR` (both must be held for `DANGER_KEY_HOLD_MS`, 2 s; the key turns red on the USB half while held, and releasing early cancels) |
+ | 2 | `PROG` | Hold `PROG` (left thumb, third from the left) | Programming symbols |
+ | 3 | `NUMBERS` | Hold `NUMBS` (left inner thumb) | Number pad on the right, `F1`–`F9` on the left |
+ | 4 | `NAV` | Hold `Backspace` (right thumb, third from the left) | Arrows, `Home`/`End`, `PgUp`/`PgDn`, `Insert`, `Caps Lock` |
+-- 
+2.56.0
+

@@ -134,6 +134,8 @@
 // Layer colors show only after the layer has been on this long, so a quick
 // tap of a layer key does not flash the lights.
 #define LAYER_INDICATOR_DELAY 250
+// QK_BOOT and EE_CLR fire only after being held this long (2 s).
+#define DANGER_KEY_HOLD_MS 2000
 #define TAPPING_TERM_PER_KEY
 
 /* Sync the layer and LED state to both halves. */

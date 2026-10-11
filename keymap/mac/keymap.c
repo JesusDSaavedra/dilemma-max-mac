@@ -190,6 +190,28 @@ layer_state_t layer_state_set_user(layer_state_t state) {
     return update_tri_layer_state(state, LAYER_NUMBERS, LAYER_MAGIC, LAYER_THEME);
 }
 
+// Firmware keys (QK_BOOT, EE_CLR) only fire after being held for
+// DANGER_KEY_HOLD_MS, so an accidental tap does nothing. Releasing the key
+// earlier cancels it. Handled on the half connected over USB.
+static uint16_t danger_keycode = KC_NO;
+static uint16_t danger_since;
+static keypos_t danger_pos;
+
+void housekeeping_task_user(void) {
+    if (danger_keycode == KC_NO || timer_elapsed(danger_since) < DANGER_KEY_HOLD_MS) {
+        return;
+    }
+    const uint16_t keycode = danger_keycode;
+    danger_keycode         = KC_NO;
+    if (keycode == QK_BOOT) {
+        reset_keyboard();
+    } else {
+        // Same as QMK's own EE_CLR handling.
+        eeconfig_disable();
+        soft_reset_keyboard();
+    }
+}
+
 #ifdef RGB_MATRIX_ENABLE
 // Layer indicators: while a layer is held, only the keys that do something on it
 // light up in the layer's color, the keys held to reach it light up white, and
@@ -252,6 +274,13 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
             } else if (keycode != KC_NO && keycode != KC_TRNS) {
                 rgb_matrix_set_color(led, color.r * val / 255, color.g * val / 255, color.b * val / 255);
             }
+        }
+    }
+    // A firmware key being held to confirm shows full red.
+    if (danger_keycode != KC_NO) {
+        const uint8_t led = g_led_config.matrix_co[danger_pos.row][danger_pos.col];
+        if (led != NO_LED && led >= led_min && led < led_max) {
+            rgb_matrix_set_color(led, 0xFF, 0, 0);
         }
     }
     return false;
@@ -414,6 +443,16 @@ static bool herdr_prefixed(uint16_t keycode) {
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    if (keycode == QK_BOOT || keycode == EE_CLR) {
+        if (record->event.pressed) {
+            danger_keycode = keycode;
+            danger_since   = timer_read();
+            danger_pos     = record->event.key;
+        } else if (danger_keycode == keycode) {
+            danger_keycode = KC_NO; // Released before the hold time: cancel.
+        }
+        return false;
+    }
     if (!record->event.pressed) {
         return true;
     }
