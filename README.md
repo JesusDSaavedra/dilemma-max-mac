@@ -25,6 +25,8 @@ The full user guide (Spanish) is in [`docs/GUIA-CONFIGURACION.md`](docs/GUIA-CON
   - **Thumbs:** `Click Space PROG NUMBS | MAGIC Enter NAV HERDR`.
 - **Herdr layer:** hold the right outer thumb and every key sends the Herdr prefix `Ctrl+Q` followed by that key.
 - **Layer colors:** while a layer is held, only its active keys light up in the layer's color, and the held keys light up white. The colors appear once the layer has been on for 250 ms.
+- **Mac lock key:** the top-left key sends `Ctrl+Cmd+Q` (Lock Screen).
+- **Idle RGB off:** the LEDs turn off after 15 minutes without input and come back on the next input; both halves stay in sync.
 - **Protected firmware keys:** `QK_BOOT` and `EE_CLR` only fire after being held for 2 s, and the key turns red while held.
 - **macOS trackpad gestures** in mouse-fallback mode:
   - pinch-to-zoom;
