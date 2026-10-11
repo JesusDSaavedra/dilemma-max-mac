@@ -703,8 +703,8 @@ footer{border-top:1px solid var(--surface0);margin-top:2rem;padding-top:1rem;fon
   var CUSTOM = { CSPD_DN: ['Cursor −', 'Baja la velocidad del cursor del trackpad.'], CSPD_UP: ['Cursor +', 'Sube la velocidad del cursor del trackpad.'], PINCH_M: ['Modo zoom', 'Cambia el modo del gesto de pinza (zoom) del trackpad.'] };
   var THEMES = { THM_CAT: ['Catppuccin', 'Tema RGB Catppuccin, el tema por defecto.'], THM_GRV: ['Gruvbox', 'Tema RGB Gruvbox.'], THM_ALG: ['Alegra', 'Tema RGB Alegra.'], THM_DES: ['Desierto', 'Tema RGB Desierto.'], THM_HOR: ['Horizon', 'Tema RGB Horizon.'] };
   var DANGER = {
-    QK_BOOT: ['Modo carga', 'Reinicia el teclado en modo de carga (bootloader) para flashear firmware. Deja de escribir hasta que lo flashees o lo reconectes.'],
-    EE_CLR: ['Borrar ajustes', 'Borra la memoria EEPROM: los ajustes guardados (RGB, velocidades, etc.) vuelven a los valores por defecto.']
+    QK_BOOT: ['Modo carga', 'Reinicia el teclado en modo de carga (bootloader) para flashear firmware. Está protegida: hay que mantenerla 2 segundos (se pone roja); un toque no hace nada. Deja de escribir hasta que lo flashees o lo reconectes.'],
+    EE_CLR: ['Borrar ajustes', 'Borra la memoria EEPROM: los ajustes guardados (RGB, velocidades, etc.) vuelven a los valores por defecto. Está protegida: hay que mantenerla 2 segundos (se pone roja); un toque no hace nada.']
   };
   var MOUSE = { MS_BTN1: ['Clic', 'Clic izquierdo.'], MS_BTN2: ['Clic der.', 'Clic derecho.'], MS_BTN3: ['Clic central', 'Clic central (como la rueda del ratón).'] };
   var LAYERKEYS = { PROG: ['PROG', 'PROG', 'símbolos'], NUMBS: ['NUMBERS', 'NUMBS', 'números'], MAGIC: ['MAGIC', 'MAGIC', 'luces'], HERDR: ['HERDR', 'HERDR', 'terminal'] };
@@ -742,7 +742,7 @@ footer{border-top:1px solid var(--surface0);margin-top:2rem;padding-top:1rem;fon
     if (RGB[code]) { v = RGB[code]; return { kind: 'rgb', main: v[0], sub: 'RGB', desc: v[1], tap: v[1], hold: '—' }; }
     if (CUSTOM[code]) { v = CUSTOM[code]; return { kind: 'custom', main: v[0], sub: 'trackpad', desc: v[1], tap: v[1], hold: '—' }; }
     if (THEMES[code]) { v = THEMES[code]; return { kind: 'theme', main: v[0], sub: 'tema', desc: v[1], tap: 'Aplica el tema ' + v[0], hold: '—' }; }
-    if (DANGER[code]) { v = DANGER[code]; return { kind: 'danger', main: v[0], sub: 'firmware', desc: v[1], tap: v[1], hold: '—' }; }
+    if (DANGER[code]) { v = DANGER[code]; return { kind: 'danger', main: v[0], sub: 'firmware', desc: v[1], tap: 'Nada: un toque no la activa (protección)', hold: 'Mantener 2 s: se pone roja y se activa' }; }
     if (MOUSE[code]) { v = MOUSE[code]; return { kind: 'mouse', main: v[0], sub: 'ratón', desc: v[1], tap: v[1], hold: 'Mantiene el botón pulsado (para arrastrar)' }; }
     return { kind: 'other', main: code.replace(/^KC_/, ''), sub: '', desc: code, tap: '—', hold: '—' };
   }
