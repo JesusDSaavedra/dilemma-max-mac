@@ -40,29 +40,29 @@ Esta guía describe todos los cambios que se hicieron al firmware del teclado, c
 
 ## 3. Cómo flashear el firmware
 
-Cada mitad tiene su propio chip, así que **siempre se flashean por separado**, una a la vez y con el mismo archivo `.uf2`:
+Cada mitad tiene su propio chip, así que **siempre se flashean por separado**, una a la vez y con el mismo archivo `.uf2`.
 
-1. **Desconectá el cable de audio (TRRS)** entre las mitades.
-2. Conectá el USB a una mitad.
-3. Entrá al modo de carga con alguna de estas dos opciones:
-   - **Con el teclado (`QK_BOOT`, en la capa `MAGIC`)**. `QK_BOOT` está en la columna exterior de la fila de la Q de cada mitad, y `MAGIC` es el pulgar derecho más cercano al centro (al lado de `Enter`):
+### Método recomendado: con teclas y sin tocar el TRRS
 
-     | Mitad con el USB | Mantené | Y apretá |
-     |---|---|---|
-     | **Derecha** | **MAGIC** | La tecla de la columna exterior derecha en la fila de la Q (donde está `\`) |
-     | **Izquierda** | — | No se puede con el teclado: con el TRRS desconectado la mitad izquierda está sola y `MAGIC` queda en la otra mitad. Usá el botón de reset. |
+El TRRS **se queda conectado todo el tiempo**: solo movés el cable USB. Flashear con las dos mitades conectadas no es un problema (lo confirmó Quentin, de Bastard KB). Lo peligroso es conectar o desconectar el TRRS con el USB enchufado, y en este método no lo tocás nunca.
 
-     Si la mitad todavía tiene el firmware anterior al layout de Gentleman, `QK_BOOT` sigue donde estaba: LOWER + **B** en la izquierda y RAISE + **N** en la derecha.
+`QK_BOOT` siempre reinicia en modo de carga **la mitad que tiene el USB**, aunque apretes la tecla en la otra mitad.
 
-   - **Doble toque rápido en el botón de reset.** Usá esta opción para la mitad izquierda, y también si una mitad no responde porque tiene un firmware roto: en ese caso `QK_BOOT` no funciona.
-4. Aparece una unidad llamada `RPI-RP2`. Arrastrá el archivo `.uf2` a esa unidad. El teclado se reinicia solo.
-5. Repetí con la otra mitad.
+1. **USB en la mitad derecha.** Mantené **`FN` derecho** (`MAGIC`, el pulgar derecho más cercano al centro) y apretá **`Tab`**. También sirve la tecla de `\` (columna exterior derecha, fila de la Q).
+2. Aparece la unidad **`RPI-RP2`**. Arrastrá el `.uf2` a esa unidad. La mitad se reinicia sola.
+3. **Desenchufá el USB de la derecha y enchufalo en la izquierda.** El TRRS sigue conectado.
+4. Mantené otra vez **`FN` derecho** y apretá **`Tab`**. Ahora entra en modo de carga la izquierda. Arrastrá el `.uf2`.
+5. Volvé a pasar el USB a la **mitad derecha**, la del trackpad.
 
-> `QK_BOOT` **no flashea las dos mitades a la vez**. Solo reinicia en modo de carga la mitad que tiene el USB: reemplaza al doble toque del botón de reset.
+> **Si una mitad todavía tiene el firmware anterior al layout de Gentleman**, `QK_BOOT` está en LOWER + **B** (izquierda) o RAISE + **N** (derecha).
 >
-> **Cuidado con la tecla de abajo:** justo debajo de `QK_BOOT`, en la columna exterior de la fila de la A (donde están `Esc` y `'`), está `EE_CLR`, que borra los ajustes guardados (layout de VIA, velocidad del cursor, modo de zoom y luces).
+> **Cuidado con la tecla de abajo:** justo debajo de `Tab` y de `\`, en la columna exterior de la fila de la A (donde están `Esc` y `'`), está `EE_CLR`. Con `FN` derecho, esa tecla borra los ajustes guardados (layout de VIA, velocidad del cursor, modo de zoom y luces).
 
-**Al terminar, conectá el TRRS primero y el USB después.** Nunca conectes ni desconectes el TRRS con el USB enchufado: eso fue lo que dañó el pin `GP1`.
+### Método alternativo: botón de reset
+
+Si una mitad no responde (por ejemplo, porque tiene un firmware roto), `QK_BOOT` no funciona. En ese caso, conectá el USB a esa mitad y hacé **doble toque rápido en el botón de reset**. Después arrastrá el `.uf2` igual que antes.
+
+**Regla de oro:** si alguna vez tenés que conectar o desconectar el TRRS, hacelo **siempre con el USB desenchufado**. Primero el TRRS y después el USB. Conectar o desconectar el TRRS con el USB enchufado fue lo que dañó el pin `GP1`.
 
 > **Importante:** conectá el USB a la **mitad del trackpad** (la derecha). El cursor y el scroll funcionan desde cualquier lado. Los swipes, el zoom y los atajos solo llegan al Mac desde la mitad que tiene el USB.
 
