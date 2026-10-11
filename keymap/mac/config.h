@@ -115,8 +115,27 @@
 #define CATPPUCCIN_POWER_SCALE 160 // Of 255: about 50/79, the load of a saturated effect.
 
 /*
- * VIA: 8 layers instead of the default 4, so there is room to add layers from
- * VIA. Layers past the ones in keymap.c start as transparent keys. Changing this
- * moves the VIA data in EEPROM, so USER_CONFIG_MAGIC must change with it.
+ * VIA: 8 layers instead of the default 4, all of them defined in keymap.c.
+ * Changing this moves the VIA data in EEPROM, so USER_CONFIG_MAGIC must change
+ * with it.
  */
 #define DYNAMIC_KEYMAP_LAYER_COUNT 8
+
+/*
+ * Home-row mods, from Gentleman's `vendor` keymap: 120 ms by default, with
+ * per-key terms in get_tapping_term() (GUI 180, Shift 120, Alt and Ctrl 200).
+ */
+#define TAPPING_TERM 120
+#define TAPPING_TERM_PER_KEY
+
+/* Sync the layer and LED state to both halves. */
+#define SPLIT_LAYER_STATE_ENABLE
+#define SPLIT_LED_STATE_ENABLE
+
+/*
+ * Herdr layer: every key sends this prefix first, then itself. It matches
+ * `[keys] prefix = "ctrl+q"` in ~/.config/herdr/config.toml.
+ */
+#ifndef HERDR_PREFIX
+#    define HERDR_PREFIX C(KC_Q)
+#endif

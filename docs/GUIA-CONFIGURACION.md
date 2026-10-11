@@ -19,6 +19,7 @@ Esta guía describe todos los cambios que se hicieron al firmware del teclado, c
 | 7 | Gesto desde el borde izquierdo con dos dedos | Atrás en el navegador |
 | 8 | Movimiento rápido con dos dedos | Atrás y adelante en el navegador desde cualquier parte |
 | 9 | Tema de luces Catppuccin Mocha | Iluminación con la paleta oficial de Catppuccin |
+| 10 | Layout de Gentleman y capa Herdr | QWERTY con home-row mods y las capas `MAGIC`, `PROG`, `NUMBERS`, `NAV`, `POINTER` y `THEME` del keymap `vendor` de Gentleman, más una capa que manda los atajos de Herdr con una sola mano |
 
 ---
 
@@ -31,6 +32,7 @@ Esta guía describe todos los cambios que se hicieron al firmware del teclado, c
 | **Configuración de gestos (el archivo que vas a editar)** | `~/bastardkb-qmk/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h` |
 | Teclas personalizadas y capas | `.../keymaps/mac/keymap.c` |
 | Efecto de luces Catppuccin | `.../keymaps/mac/rgb_matrix_user.inc` |
+| Configuración de Herdr (el prefijo tiene que coincidir con el del teclado) | `~/.config/herdr/config.toml` |
 | Documentación técnica (inglés) | `~/Downloads/dilemma/trackpad-mac-gestures-readme.md` |
 | Registro de tareas | `~/Downloads/dilemma/odd/tasks/mac-trackpad-gestures.md` |
 
@@ -43,20 +45,22 @@ Cada mitad tiene su propio chip, así que **siempre se flashean por separado**, 
 1. **Desconectá el cable de audio (TRRS)** entre las mitades.
 2. Conectá el USB a una mitad.
 3. Entrá al modo de carga con alguna de estas dos opciones:
-   - **Con el teclado (`QK_BOOT`)**. Es lo más cómodo:
+   - **Con el teclado (`QK_BOOT`, en la capa `MAGIC`)**. `QK_BOOT` está en la columna exterior de la fila de la Q de cada mitad, y `MAGIC` es el pulgar derecho más cercano al centro (al lado de `Enter`):
 
      | Mitad con el USB | Mantené | Y apretá |
      |---|---|---|
-     | **Izquierda** | **MO(1)** (LOWER: el pulgar izquierdo más cercano al centro) | **B** |
-     | **Derecha** | **MO(2)** (RAISE: el pulgar derecho más cercano al centro) | **N** |
+     | **Derecha** | **MAGIC** | La tecla de la columna exterior derecha en la fila de la Q (donde está `\`) |
+     | **Izquierda** | — | No se puede con el teclado: con el TRRS desconectado la mitad izquierda está sola y `MAGIC` queda en la otra mitad. Usá el botón de reset. |
 
-   - **Doble toque rápido en el botón de reset.** Usá esta opción si la mitad no responde porque tiene un firmware roto: en ese caso `QK_BOOT` no funciona.
+     Si la mitad todavía tiene el firmware anterior al layout de Gentleman, `QK_BOOT` sigue donde estaba: LOWER + **B** en la izquierda y RAISE + **N** en la derecha.
+
+   - **Doble toque rápido en el botón de reset.** Usá esta opción para la mitad izquierda, y también si una mitad no responde porque tiene un firmware roto: en ese caso `QK_BOOT` no funciona.
 4. Aparece una unidad llamada `RPI-RP2`. Arrastrá el archivo `.uf2` a esa unidad. El teclado se reinicia solo.
 5. Repetí con la otra mitad.
 
 > `QK_BOOT` **no flashea las dos mitades a la vez**. Solo reinicia en modo de carga la mitad que tiene el USB: reemplaza al doble toque del botón de reset.
 >
-> **Cuidado con la tecla vecina:** LOWER + **V** y RAISE + **M** son `EE_CLR`, que borra los ajustes guardados (layout de VIA, velocidad del cursor, modo de zoom y luces).
+> **Cuidado con la tecla de abajo:** justo debajo de `QK_BOOT`, en la columna exterior de la fila de la A (donde están `Esc` y `'`), está `EE_CLR`, que borra los ajustes guardados (layout de VIA, velocidad del cursor, modo de zoom y luces).
 
 **Al terminar, conectá el TRRS primero y el USB después.** Nunca conectes ni desconectes el TRRS con el USB enchufado: eso fue lo que dañó el pin `GP1`.
 
@@ -64,23 +68,47 @@ Cada mitad tiene su propio chip, así que **siempre se flashean por separado**, 
 
 ### Primer arranque
 
-La primera vez que arranques este firmware se **resetea una sola vez**:
+La primera vez que arranques este firmware (versión de ajustes `0xDC`, la del layout de Gentleman) se **resetea una sola vez**:
 - el layout de VIA,
 - la velocidad del cursor,
 - el modo de zoom,
 - las luces.
 
-Es intencional: VIA solo resetea el layout cuando cambia la *fecha* de compilación (`quantum/via.c:71-74`). Por eso, un firmware anterior compilado el mismo día dejó las teclas nuevas sin asignar.
+Es intencional: VIA solo resetea el layout cuando cambia la *fecha* de compilación (`quantum/via.c:71-74`). Por eso, un firmware anterior compilado el mismo día dejó las teclas nuevas sin asignar. Con el cambio de versión (`USER_CONFIG_MAGIC` en `keymap.c`), el teclado carga las 8 capas nuevas aunque tuvieras un layout propio en VIA. Ojo: un `.json` de VIA guardado antes de este cambio trae el layout viejo, y si lo cargás pisa el nuevo.
 
 ---
 
-## 4. Atajos de macOS que usa el firmware
+## 4. Ajustes de macOS
+
+### 4.1 Fuente de entrada: inglés (US)
+
+El layout de Gentleman supone que macOS usa una fuente de entrada **en inglés (US)**. El teclado manda códigos de tecla, y es macOS el que decide qué símbolo sale: con la distribución en español, la capa de símbolos (`PROG`) y la puntuación de la capa Herdr mandan otros caracteres (por ejemplo, `@`, `{` o `[` salen cambiados).
+
+Para cambiarla:
+
+1. Abrí **Ajustes del Sistema → Teclado**.
+2. En **Entrada de texto**, apretá **Editar…** al lado de **Fuentes de entrada**.
+3. Apretá **+** y agregá **ABC** o **EE. UU.** (*U.S.*), que están en **Inglés**.
+4. Quitá **Español** con **−**, o dejalo y cambiá de fuente con el menú de la barra superior o con `Ctrl+Espacio`. Si lo dejás, asegurate de estar en ABC/U.S. cuando uses el teclado.
+
+Con la fuente en inglés, la **ñ** y los **acentos** salen con `Option`:
+
+| Para escribir | Apretá |
+|---|---|
+| `ñ` | `Option+n` y después `n` |
+| `á` `é` `í` `ó` `ú` | `Option+e` y después la vocal |
+| `ü` | `Option+u` y después `u` |
+| `¿` / `¡` | `Option+Shift+/` / `Option+1` |
+
+> `Option` es `Alt`: en el teclado está en **S** o **L** mantenidas (home-row mods, sección 6.1) y en la columna exterior derecha de la fila de la Z (a la derecha de `/`).
+
+### 4.2 Atajos que usa el firmware
 
 No hace falta configurar nada. Estos atajos ya vienen activados por defecto en macOS:
 - `Ctrl+flechas` para escritorios, Mission Control y App Exposé.
-- Atrás y adelante se envían como **botones 4 y 5 del mouse** (no como `Cmd+[` / `Cmd+]`, que con la distribución de teclado en español se convierten en tilde y zoom). Funciona en Brave, Chrome, Arc, Edge y Firefox; no en Safari.
+- Atrás y adelante se envían como **botones 4 y 5 del mouse** (no como `Cmd+[` / `Cmd+]`, que dependen de la distribución de teclado: en español se convierten en tilde y zoom). Funciona en Brave, Chrome, Arc, Edge y Firefox; no en Safari.
 
-Si alguno no responde, revisá que esté activado en esa misma pantalla.
+Si alguno no responde, revisá que esté activado en **Ajustes del Sistema → Teclado → Funciones rápidas de teclado**.
 
 ---
 
@@ -129,32 +157,196 @@ Cómo decide el firmware qué gesto hiciste con dos dedos:
 
 ---
 
-## 6. Teclas especiales (capa RAISE)
+## 6. Capas y teclas especiales
 
-Mantené **RAISE** (`MO(2)` en VIA: el pulgar derecho más cercano al centro, al lado de `Enter`) y presioná:
+El layout sigue el keymap `vendor` de Gentleman ([Alan-TheGentleman/qmk_userspace](https://github.com/Alan-TheGentleman/qmk_userspace)). Las posiciones se nombran por la tecla que hay ahí en la capa base: "la tecla donde está la Q". La **columna exterior** es la del borde de cada mitad: `Tab`, `Esc` y `` ` `` a la izquierda; `\`, `'` y `Alt` a la derecha.
+
+**Pulgares**, de izquierda a derecha:
+
+| Izquierda 1 | Izquierda 2 | Izquierda 3 | Izquierda 4 | Derecha 1 | Derecha 2 | Derecha 3 | Derecha 4 |
+|---|---|---|---|---|---|---|---|
+| Click izquierdo | `Space` | `PROG` | `NUMBS` | `MAGIC` | `Enter` | `Backspace` (`NAV` al mantener) | `HERDR` |
+
+`NUMBS` y `MAGIC` son los dos pulgares más cercanos al centro.
+
+| # | Capa | Cómo se activa | Qué tiene |
+|---|---|---|---|
+| 0 | `BASE` | Siempre | QWERTY con home-row mods |
+| 1 | `MAGIC` | Mantené `MAGIC` | Luces, multimedia, `QK_BOOT` y `EE_CLR` |
+| 2 | `PROG` | Mantené `PROG` | Símbolos de programación |
+| 3 | `NUMBERS` | Mantené `NUMBS` | Números a la derecha, `F1`–`F9` a la izquierda |
+| 4 | `NAV` | Mantené `Backspace` | Flechas, `Home`/`End`, `PgUp`/`PgDn`, `Caps Lock` |
+| 5 | `POINTER` | Mantené **Z** o **/** | Botones del mouse, velocidad del cursor y modo de zoom |
+| 6 | `HERDR` | Mantené `HERDR` | Atajos de Herdr |
+| 7 | `THEME` | Mantené `NUMBS` + `MAGIC` a la vez | Temas y luces |
+
+> Estas posiciones corresponden al layout por defecto. Si las movés en VIA, valen las que hayas asignado vos.
+
+### 6.1 Capa base y home-row mods
+
+Es QWERTY, con estas particularidades:
+
+- Fila de números: `1`…`0`, y `-` en la columna exterior derecha. La columna exterior izquierda de esa fila no hace nada.
+- Columna exterior izquierda: `Tab`, `Esc` y `` ` ``. Columna exterior derecha: `\`, `'` y `Alt`.
+- **Z** y **/**, si las mantenés, activan `POINTER` (sección 6.6).
+
+Las teclas de la fila del medio funcionan como modificador si las mantenés (*home-row mods*, en orden GACS):
+
+| Tecla | Al mantenerla | Tiempo |
+|---|---|---|
+| **A** / **;** | `Cmd` | 180 ms |
+| **S** / **L** | `Alt` (`Option`) | 200 ms |
+| **D** / **K** | `Ctrl` | 200 ms |
+| **F** / **J** | `Shift` | 120 ms |
+
+El *tiempo* es cuánto tenés que mantener la tecla para que cuente como modificador. Está en `get_tapping_term` (`keymap.c`); el resto de las teclas usa `TAPPING_TERM` (120 ms, en `config.h`).
+
+#### Consejos para acostumbrarte
+
+- **Para el modificador, mantené la tecla un poco más** y recién ahí apretá la otra. Por ejemplo, mantené **A** y apretá **C** para `Cmd+C`.
+- **Para escribir, escribí normal**: soltá cada tecla rápido aunque las encadenes (*rolling*). Si dejás una tecla apretada de más, sale el modificador en vez de la letra.
+- Para un atajo con una sola mano, usá el modificador de la otra mano: `Shift` con **J** para las letras de la izquierda y con **F** para las de la derecha.
+- Si se disparan modificadores sin querer, subí el tiempo de esa tecla en `get_tapping_term` (`keymap.c`). Si te cuesta activarlos, bajalo. Después compilá y flasheá (sección 8.1).
+
+### 6.2 MAGIC: luces, multimedia y modo de carga
+
+Mantené **MAGIC** (el pulgar derecho más cercano al centro). Las dos mitades son espejo:
+
+| Mitad izquierda | Mitad derecha | Función | Acción |
+|---|---|---|---|
+| Columna exterior, fila de la Q (`Tab`) | Columna exterior, fila de la Q (`\`) | `QK_BOOT` | Modo de carga de firmware (sección 3) |
+| Columna exterior, fila de la A (`Esc`) | Columna exterior, fila de la A (`'`) | `EE_CLR` | Borra la memoria y vuelve a los valores por defecto |
+| **T** | **Y** | `RM_TOGG` | Prende o apaga las luces |
+| **G** | **H** | `RM_NEXT` | Siguiente efecto de luz |
+| **R** / **F** | **U** / **J** | `RM_VALU` / `RM_VALD` | Sube / baja el brillo (tope 128) |
+| **E** / **D** | **I** / **K** | `RM_HUEU` / `RM_HUED` | Tono (solo efectos de VIA, no los temas) |
+| **W** / **S** | **O** / **L** | `RM_SATU` / `RM_SATD` | Saturación (solo efectos de VIA) |
+| **Q** / **A** | **P** / **;** | `RM_SPDU` / `RM_SPDD` | Velocidad del efecto (solo efectos de VIA) |
+| `` ` `` / **X** | Columna exterior, fila de la Z (`Alt`) / **.** | `KC_VOLU` / `KC_VOLD` | Sube / baja el volumen |
+| **Z** | **/** | `KC_MUTE` | Silencio |
+| **C** / **V** | **,** / **M** | `KC_MPRV` / `KC_MNXT` | Pista anterior / siguiente |
+| Pulgar `Space` | Pulgar `Backspace` | `KC_MPLY` | Reproducir / pausar |
+| Pulgar `PROG` | Pulgar `Enter` | `KC_MSTP` | Detener |
+
+### 6.3 PROG: símbolos
+
+Mantené **PROG** (pulgar izquierdo, el tercero desde la izquierda). Debajo de cada tecla de la base está lo que manda; `·` no hace nada. La fila de números y las columnas exteriores tampoco hacen nada.
+
+```
+Q    W    E    R    T        Y    U    I    O    P
+·    `    ·    $    ·        ^    (    )    -    ·
+
+A    S    D    F    G        H    J    K    L    ;
+⇧    @    #    %    ·        &    {    }    =    '
+
+Z    X    C    V    B        N    M    ,    .    /
+`    ·    ·    ?    ·        *    [    ]    !    \
+```
+
+- `⇧` (en la **A**) es `Shift`: combinalo con los símbolos de la capa para sacar `~` (con `` ` ``), `"` (con `'`), `|` (con `\`), `_` (con `-`) o `+` (con `=`).
+- Pulgares derechos: `Enter` sigue en `Enter`, `<` queda en `Backspace` y `>` en `HERDR`; `MAGIC` no hace nada. Los pulgares izquierdos quedan como en la base.
+
+### 6.4 NUMBERS: números y teclas F
+
+Mantené **NUMBS** (el pulgar izquierdo más cercano al centro). `·` funciona igual que en la base. La fila de números, las columnas exteriores y los pulgares también quedan como en la base.
+
+```
+Q    W    E    R    T        Y    U    I    O    P
+·    ·    F7   F8   F9       ·    7    8    9    ·
+
+A    S    D    F    G        H    J    K    L    ;
+⇧    ⌥    F4   F5   F6       ·    4    5    6    0
+
+Z    X    C    V    B        N    M    ,    .    /
+⌘    ⌃    F1   F2   F3       ·    1    2    3    ·
+```
+
+`⇧` `⌥` `⌘` `⌃` son `Shift`, `Alt`, `Cmd` y `Ctrl` normales (sin home-row mods), para combinarlos con los números y las teclas F.
+
+### 6.5 NAV: flechas y navegación
+
+Mantené **Backspace** (pulgar derecho, el tercero desde la izquierda). Si lo tocás sin mantenerlo, borra como siempre.
+
+| Tecla | Función |
+|---|---|
+| **H** / **J** / **K** / **L** | ← / ↓ / ↑ / → |
+| **;** | `Caps Lock` |
+| **N** | `Insert` |
+| **M** / **/** | `Home` / `End` |
+| **,** / **.** | `PgDn` / `PgUp` |
+| **A** / **S** / **D** / **F** | `Cmd` / `Alt` / `Ctrl` / `Shift` normales, para `Shift`+flechas (seleccionar) o `Alt`+flechas (saltar palabras) |
+| Pulgar `Enter` | `Enter` |
+
+El resto de las teclas no hace nada en esta capa.
+
+### 6.6 POINTER: mouse, velocidad del cursor y modo de zoom
+
+Mantené **Z** con la mano izquierda (o **/** con la derecha) y usá el trackpad con la otra. Si la tocás sin mantenerla, escribe la letra.
 
 | Tecla | Función | Acción |
 |---|---|---|
-| **Y** | `CURSOR_SPEED_DOWN` | Cursor más lento |
-| **U** | `CURSOR_SPEED_UP` | Cursor más rápido |
-| **I** | `PINCH_MOD_CYCLE` | Cambia el modo de zoom |
-| **N** | `QK_BOOT` | Entra en modo de carga de firmware (mitad derecha) |
-| **M** | `EE_CLR` | Borra la memoria y vuelve a los valores por defecto |
+| **2** / **3** | `CURSOR_SPEED_DOWN` / `CURSOR_SPEED_UP` | Cursor más lento / más rápido |
+| **8** / **9** | `CURSOR_SPEED_UP` / `CURSOR_SPEED_DOWN` | Lo mismo, en espejo (como en el keymap de Gentleman) |
+| **5** | `PINCH_MOD_CYCLE` | Cambia el modo de zoom |
+| Pulgares click / `Space` / `PROG` | `MS_BTN2` / `MS_BTN1` / `MS_BTN3` | Click derecho / izquierdo / del medio |
+| Pulgares `Enter` / `Backspace` / `HERDR` | `MS_BTN3` / `MS_BTN1` / `MS_BTN2` | Click del medio / izquierdo / derecho |
+| **A S D F** y **J K L ;** | Modificadores | `Cmd` `Alt` `Ctrl` `Shift` y `Shift` `Ctrl` `Alt` `Cmd`, para `Cmd`+click o `Shift`+click |
 
-Desde la capa **LOWER** (`MO(1)`: el pulgar izquierdo más cercano al centro):
+**Velocidades del cursor** (de más lenta a más rápida):
+12.5% → 19% → **25% (por defecto)** → 37% → 50% → 75% → 100% → 150% → 200%
 
-| Tecla | Función | Acción |
-|---|---|---|
-| **T** | `RGB_THEME_RESTORE` | **Vuelve al tema Catppuccin** con el brillo por defecto, sin tocar tu layout ni la velocidad |
-| **B** | `QK_BOOT` | Entra en modo de carga de firmware (mitad izquierda) |
-| **V** | `EE_CLR` | Borra la memoria y vuelve a los valores por defecto |
-| **Shift izquierdo** | `RM_TOGG` | Prende o apaga las luces |
-| **Tab** | `RM_NEXT` | Siguiente efecto de luz |
-| **Ctrl izquierdo** | `RM_PREV` | Efecto de luz anterior |
+**Modos de zoom** (cada toque de `PINCH_MOD_CYCLE` pasa al siguiente):
+1. `Cmd` + scroll: **por defecto**, para Figma.
+2. `Ctrl` + scroll.
+3. Scroll solo, para AutoCAD.
 
-### Capa 8: temas y luces (LOWER + RAISE)
+La velocidad y el modo de zoom **se guardan** aunque desconectes el teclado.
 
-Mantené **los dos pulgares del centro a la vez** (LOWER y RAISE) y usá la mano derecha:
+### 6.7 HERDR: atajos de Herdr con una tecla
+
+Herdr usa una tecla prefijo, como tmux. Mantené **HERDR** (el pulgar derecho exterior) y apretá una tecla: el teclado manda el prefijo `Ctrl+Q` (`HERDR_PREFIX`) y después esa tecla. Por ejemplo, **HERDR** + **C** es `prefijo c` (pestaña nueva).
+
+- Las letras, los números y la puntuación están donde en la base, pero **sin home-row mods**.
+- `[` (modo copia) está en la posición de `Esc`, y `?` (ayuda) a la derecha de `/` (columna exterior derecha de la fila de la Z).
+- Para los atajos con `shift+…`, mantené también **Shift**, que está en el pulgar de `Space`. Para `alt+…`, mantené **Alt**, en el pulgar de `PROG`. El prefijo sale sin modificadores; el `Shift` o el `Alt` se aplican solo a la tecla.
+
+Atajos por defecto de Herdr:
+
+| Grupo | Acción | Herdr | Con HERDR mantenido, apretá |
+|---|---|---|---|
+| Pestañas | Nueva | `c` | **C** |
+| | Siguiente / anterior | `n` / `p` | **N** / **P** |
+| | Ir a la pestaña 1 a 9 | `1`…`9` | **1**…**9** |
+| | Renombrar | `shift+t` | Shift + **T** |
+| | Cerrar | `shift+x` | Shift + **X** |
+| Paneles | Foco a la izquierda / abajo / arriba / derecha | `h` / `j` / `k` / `l` | **H** / **J** / **K** / **L** |
+| | Intercambiar | `shift+h/j/k/l` | Shift + **H** / **J** / **K** / **L** |
+| | Siguiente / anterior | `tab` / `shift+tab` | **Tab** / Shift + **Tab** |
+| | Dividir vertical / horizontal | `v` / `-` | **V** / **-** |
+| | Cerrar | `x` | **X** |
+| | Zoom | `z` | **Z** |
+| | Redimensionar | `r` | **R** |
+| | Modo copia | `[` | **[** (posición de `Esc`) |
+| | Atajos con Alt | `alt+j` / `alt+k` | Alt + **J** / **K** |
+| Workspaces | Selector | `w` | **W** |
+| | Nuevo | `shift+n` | Shift + **N** |
+| Otros | Ir a (*goto*) | `g` | **G** |
+| | Barra lateral | `b` | **B** |
+| | Ajustes | `s` | **S** |
+| | Ayuda | `?` | **?** (a la derecha de `/`) |
+| | Desconectar (*detach*) | `q` | **Q** |
+| | Recargar | `shift+r` | Shift + **R** |
+
+**El prefijo tiene que coincidir con el de Herdr.** El teclado manda `Ctrl+Q`, que corresponde a `[keys] prefix = "ctrl+q"` en `~/.config/herdr/config.toml`. Si cambiás el prefijo en Herdr, cambialo también en el firmware:
+
+1. En `config.h`, cambiá `HERDR_PREFIX`. Por ejemplo, para `ctrl+b`: `#define HERDR_PREFIX C(KC_B)`.
+2. Compilá y flasheá las dos mitades (sección 8.1).
+
+Los modificadores, las teclas de capa, los botones del mouse y las teclas personalizadas nunca mandan el prefijo.
+
+### 6.8 THEME: temas y luces (NUMBS + MAGIC)
+
+Mantené **los dos pulgares del centro a la vez** (`NUMBS` y `MAGIC`) y usá la mano derecha:
 
 | Tecla | Función | Acción |
 |---|---|---|
@@ -170,21 +362,19 @@ Mantené **los dos pulgares del centro a la vez** (LOWER y RAISE) y usá la mano
 | **L** / **;** | `RM_SATD` / `RM_SATU` | Saturación (solo efectos de VIA) |
 | **,** / **.** | `RM_SPDD` / `RM_SPDU` | Velocidad del efecto (solo efectos de VIA) |
 
+`RGB_THEME_RESTORE` **vuelve al tema Catppuccin** con el brillo por defecto, sin tocar tu layout ni la velocidad del cursor.
+
 El brillo máximo quedó limitado a **128** (el teclado permitía 176), así ni las teclas ni VIA pueden volver a provocar la caída de voltaje.
 
-> Estas posiciones corresponden al layout por defecto. Si las movés en VIA, valen las que hayas asignado vos.
+### 6.9 Lo que no se copió del layout de Gentleman
 
-**Velocidades del cursor** (de más lenta a más rápida):
-12.5% → 19% → **25% (por defecto)** → 37% → 50% → 75% → 100% → 150% → 200%
+- **La capa del LCD:** este teclado no tiene pantalla.
+- **Las teclas de DPI, *sniping* y *drag-scroll*:** no existen en este firmware. En su lugar, la capa `POINTER` tiene las teclas de velocidad del cursor y de modo de zoom; las demás posiciones quedan vacías.
+- **El scroll invertido:** rompería los gestos del trackpad (sección 5).
 
-**Modos de zoom** (cada toque de `PINCH_MOD_CYCLE` pasa al siguiente):
-1. `Cmd` + scroll: **por defecto**, para Figma.
-2. `Ctrl` + scroll.
-3. Scroll solo, para AutoCAD.
+### 6.10 Códigos para VIA
 
-La velocidad y el modo de zoom **se guardan** aunque desconectes el teclado.
-
-**Si usás VIA** y querés mover estas teclas a otra posición, usá la tecla **"Any"** con estos códigos:
+**Si usás VIA** y querés mover las teclas personalizadas a otra posición, usá la tecla **"Any"** con estos códigos:
 
 | Tecla | Código |
 |---|---|
@@ -210,14 +400,14 @@ La velocidad y el modo de zoom **se guardan** aunque desconectes el teclado.
 ### Tema alternativo: Gruvbox Dark
 
 - **Colores:** los acentos brillantes de Gruvbox Dark (Red, Orange, Yellow, Green, Aqua, Blue y Purple). Van en degradé desde los bordes hacia el centro, con la misma onda que Catppuccin.
-- **Cómo activarlo:** desde Catppuccin, **LOWER + Tab** (siguiente efecto) pasa a Gruvbox.
-- **Cómo volver a Catppuccin:** **LOWER + T**.
+- **Cómo activarlo:** NUMBS + MAGIC + **U**. También, desde Catppuccin, el siguiente efecto (`RM_NEXT`: NUMBS + MAGIC + **M**, o MAGIC + **G**) pasa a Gruvbox.
+- **Cómo volver a Catppuccin:** NUMBS + MAGIC + **Y**.
 - **Consumo:** Gruvbox es más saturado que Catppuccin (58% de carga contra 79%), así que solo se atenúa al ~87% (`GRUVBOX_POWER_SCALE` `221`).
 
 ### Tema alternativo: Alegra
 
 - **Colores:** el **Índigo** secundario `#514EA6` solo en los bordes exteriores, y el **Teal** primario `#30ABA9` en todo el resto de cada mitad, para que predomine. En los LEDs el índigo se ve como un azul fuerte. Tiene la misma onda que los demás temas.
-- **Cómo activarlo:** LOWER + RAISE + **I**.
+- **Cómo activarlo:** NUMBS + MAGIC + **I**.
 - **Consumo:** 49% de carga, ya igual que un color saturado, así que no se atenúa (`ALEGRA_POWER_SCALE` `255`).
 - **Para ajustar la proporción:** en `rgb_matrix_user.inc`, la lista `alegra_palette` tiene 1 Índigo y 4 Teal. Agregar más Teal achica todavía más la franja índigo.
 
@@ -228,23 +418,47 @@ La velocidad y el modo de zoom **se guardan** aunque desconectes el teclado.
 
   | Color | Hex |
   |---|---|
-  | Arena clara | `#F6D69A` |
-  | Arena dorada | `#F2C14E` |
-  | Duna naranja | `#F4A259` |
-  | Ámbar | `#E07A3F` |
-  | Terracota | `#C8553D` |
-  | Rojo cañón | `#A33A2A` |
+  | Arena dorada | `#FF5A00` |
+  | Ámbar | `#FF4600` |
+  | Duna naranja | `#FF3600` |
+  | Naranja quemado | `#F22800` |
+  | Terracota | `#DA1A00` |
+  | Rojo cañón | `#B00C00` |
 
-- **Cómo activarlo:** LOWER + RAISE + **O**.
-- **Consumo:** 58% de carga, atenuado al ~87% (`DESERT_POWER_SCALE` `222`).
+- **Colores ajustados para LED:** en los LEDs del teclado el verde brilla mucho más que el rojo. Por eso estos colores tienen mucho rojo, poco verde y nada de azul. En el teclado se ven arena, naranja y rojo; en pantalla, estos hex se ven más naranjas. La primera versión, con tonos "reales" de arena, se veía verdosa o azulada en los bordes.
+- **Cómo activarlo:** NUMBS + MAGIC + **O**.
+- **Consumo y brillo:** al ser colores saturados, consume solo 37%. Por eso, en vez de atenuarlo, el firmware lo **aclara** hasta consumir lo mismo que los demás temas (`DESERT_POWER_SCALE` `346`, más de 255 = más brillo).
+- **Regla para que no se vea verde:** el verde debe quedar en más o menos **un tercio del rojo o menos** (por ejemplo `#FF5A00`). Con más verde, en estos LEDs el amarillo se ve verdoso.
 - **Para cambiar colores:** editá la lista `desert_palette` en `rgb_matrix_user.inc`. Va del borde exterior al centro.
 
 ### Tema alternativo: Horizon
 
 - **Origen:** la paleta oficial de [jolaleye/horizon-theme-vscode](https://github.com/jolaleye/horizon-theme-vscode), archivo `src/dark/globals.json`.
 - **Degradé (un atardecer):** en los bordes exteriores, naranjas cálidos (tacao `#FAC29A`, rosebud `#FAB795`, apricot `#F09483`). Al medio, cranberry `#E95678` y magenta `#EE64AC`. En el centro, lavender `#B877DB`.
-- **Cómo activarlo:** LOWER + RAISE + **P**.
+- **Cómo activarlo:** NUMBS + MAGIC + **P**.
 - **Consumo:** 69% de carga (es el más claro después de Catppuccin), atenuado al ~73% (`HORIZON_POWER_SCALE` `185`).
+
+### Colores por capa
+
+Mientras mantenés una capa, las luces te muestran qué teclas usar:
+- **Las teclas que hacen algo en esa capa** se encienden con el color de la capa.
+- **La tecla que estás manteniendo** se ve en **blanco**.
+- **El resto** se apaga.
+
+Al soltar, vuelve el tema.
+
+| Capa | Color | Cómo se activa |
+|---|---|---|
+| PROG (símbolos) | Morado | `=+` (pulgar izquierdo) |
+| NUMBS (números y F) | Naranja | `FN` izquierdo |
+| NAV (flechas) | Verde | `⌫` mantenido |
+| POINTER (mouse) | Azul | Z o / mantenidas |
+| MAGIC (luces, multimedia) | Amarillo | `FN` derecho |
+| HERDR | Turquesa | `Ctrl` (pulgar derecho exterior) |
+| THEME (temas) | Rosa | Los dos `FN` |
+
+- **Para cambiar los colores:** editá la lista `layer_colors` en `keymap.c`. Usá colores con poco verde, porque en estos LEDs el verde domina.
+- **Si cambiás teclas en VIA:** VIA solo guarda los cambios en la mitad conectada por USB, así que la otra mitad va a seguir iluminando las teclas del layout original.
 
 ---
 
@@ -274,7 +488,7 @@ qmk compile -kb bastardkb/dilemma/4x6_4_procyon -km mac
 |---|---|---|---|
 | El cursor arranca muy lento o muy rápido | `MAC_CURSOR_CPI_DEFAULT` | `100` (25%) | `400` = 100%. Usá un valor de la lista: 50, 75, 100, 150, 200, 300, 400, 600 u 800. |
 
-Si cambiás `MAC_CURSOR_CPI_DEFAULT`, el valor nuevo solo se aplica después de borrar la memoria con RAISE + `EE_CLR`, o subiendo el número `USER_CONFIG_MAGIC` en `keymap.c`. Para el uso diario es más simple usar las teclas de velocidad.
+Si cambiás `MAC_CURSOR_CPI_DEFAULT`, el valor nuevo solo se aplica después de borrar la memoria con `EE_CLR` (MAGIC + la tecla donde está `Esc`), o subiendo el número `USER_CONFIG_MAGIC` en `keymap.c`. Para el uso diario es más simple usar las teclas de velocidad.
 
 #### Click y scroll
 
@@ -319,6 +533,14 @@ Si cambiás `MAC_CURSOR_CPI_DEFAULT`, el valor nuevo solo se aplica después de 
 | Hay que deslizar mucho | `DIGITIZER_MOUSE_SWIPE_DISTANCE` | `500` (5 mm) | Bajalo a `350` |
 | El swipe sale torcido y no se activa | `DIGITIZER_MOUSE_SWIPE_THRESHOLD` | `300` (3 mm) | Subilo a `400` |
 
+#### Home-row mods y Herdr
+
+| Problema | Parámetro | Actual | Qué hacer |
+|---|---|---|---|
+| Al escribir rápido salen modificadores en vez de letras | `get_tapping_term` en `keymap.c` | `Cmd` 180, `Shift` 120, `Alt`/`Ctrl` 200 ms | Subí el tiempo de esa tecla de a 20 ms |
+| Cuesta activar el modificador | `get_tapping_term` en `keymap.c` | Igual | Bajá el tiempo de esa tecla de a 20 ms |
+| Cambiaste el prefijo de Herdr | `HERDR_PREFIX` en `config.h` | `C(KC_Q)` (`Ctrl+Q`) | Poné el mismo prefijo que en `~/.config/herdr/config.toml` (sección 6.7) |
+
 #### Luces
 
 El brillo por defecto está en `config.h`.
@@ -354,7 +576,7 @@ Ejemplos:
 - `G(KC_TAB)` = `Cmd+Tab`.
 - `C(A(G(KC_N)))` = `Ctrl+Opt+Cmd+N`.
 
-### 8.4 Respaldar y agregar capas
+### 8.4 Respaldar y cambiar capas
 
 Tu configuración vive en dos lugares, y cada uno se respalda distinto:
 
@@ -363,14 +585,9 @@ Tu configuración vive en dos lugares, y cada uno se respalda distinto:
 | Gestos, tema, velocidades y layout de fábrica | El firmware (`.uf2`) | Hay copias en `~/Downloads/dilemma/respaldo/`. Flasheá la versión que quieras recuperar. |
 | Lo que cambies en VIA (teclas, capas, color, brillo) | La memoria del teclado | VIA → pestaña **SAVE + LOAD** → **Save** baja un `.json`; **Load** lo vuelve a cargar. |
 
-- **Capas:** VIA tiene **8 capas**:
-  - las 3 primeras son las de fábrica (base, LOWER y RAISE);
-  - de la 4 a la 7 arrancan vacías (transparentes);
-  - la 8 tiene los temas y las luces, y se activa con LOWER + RAISE.
-
-  Para usar una capa libre, asigná en VIA una tecla `MO(3)` … `MO(6)` (la capa funciona mientras la mantenés apretada) o `TG(n)` (prende o apaga la capa).
-- **Volver al tema después de cambiar colores:** LOWER + **T**. No borra nada más.
-- **Volver a todo lo de fábrica:** LOWER + **V** (`EE_CLR`). Después cargá tu `.json` de VIA si tenías un layout propio.
+- **Capas:** VIA tiene **8 capas** (numeradas del 0 al 7) y **todas están en uso**: `BASE` (0), `MAGIC` (1), `PROG` (2), `NUMBERS` (3), `NAV` (4), `POINTER` (5), `HERDR` (6) y `THEME` (7), que se activa con NUMBS + MAGIC (sección 6). Ya no quedan capas libres: para una capa propia, reemplazá una que no uses (por ejemplo `HERDR`) y cambiá en VIA la tecla que la activa. Para tener más de 8 hay que subir `DYNAMIC_KEYMAP_LAYER_COUNT` en `config.h`, y eso mueve los datos de VIA (hay que subir también `USER_CONFIG_MAGIC` en `keymap.c`).
+- **Volver al tema después de cambiar colores:** NUMBS + MAGIC + **Y** (`RGB_THEME_RESTORE`). No borra nada más.
+- **Volver a todo lo de fábrica:** MAGIC + la tecla donde está `Esc` (`EE_CLR`). Después cargá tu `.json` de VIA si tenías un layout propio (guardado con el layout de Gentleman: uno anterior trae las capas viejas).
 - **Si cambiás el código:** guardá cada `.uf2` nuevo con fecha en `respaldo/` antes de flashearlo.
 
 ---
@@ -381,10 +598,14 @@ Tu configuración vive en dos lugares, y cada uno se respalda distinto:
 |---|---|---|
 | Solo funciona la mitad que tiene el USB | Problema con el TRRS o con el cable puente | Revisá con un multímetro la continuidad del cable puente (pad `S` ↔ pad del IO) en ambas mitades |
 | Los gestos y el zoom no hacen nada, pero el cursor sí | El USB está en la mitad sin trackpad | Conectá el USB a la mitad derecha |
-| Las teclas de velocidad no hacen nada | VIA conserva un layout viejo | RAISE + `EE_CLR`, o reasignalas en VIA con `0x7E40`/`0x7E41` |
+| Las teclas de velocidad no hacen nada | VIA conserva un layout viejo | `EE_CLR` (MAGIC + la tecla donde está `Esc`), o reasignalas en VIA con `0x7E40`/`0x7E41` |
 | El trackpad deja de responder y las luces se ven rojas o naranjas | Caída de voltaje por exceso de brillo | Bajá el brillo en VIA. El firmware reconfigura el trackpad solo; si no vuelve, desenchufá y volvé a enchufar el USB |
 | VIA no detecta el teclado | El navegador no es compatible | Usá Chrome o Edge (Safari no soporta WebHID) |
 | El teclado no entra en modo de carga | — | Usá el botón interno con el USB conectado (método de recuperación) |
+| `QK_BOOT` no hace nada en la mitad izquierda | Con el TRRS desconectado, `MAGIC` (en la mitad derecha) no llega | Usá el doble toque en el botón de reset (sección 3) |
+| Los símbolos salen cambiados (`@`, `{`, `[`, `'`…) | macOS usa la distribución en español | Cambiá la fuente de entrada a ABC o U.S. (sección 4.1) |
+| Al escribir rápido salen `Cmd`, `Ctrl` o `Shift` en vez de letras, o al revés | Tiempos de los home-row mods | Ver consejos en la sección 6.1 y ajustá `get_tapping_term` (sección 8.2) |
+| La capa HERDR no hace nada en Herdr | El prefijo del teclado no coincide con el de Herdr | Revisá que `HERDR_PREFIX` en `config.h` y `[keys] prefix` en `~/.config/herdr/config.toml` sean iguales (sección 6.7) |
 
 ---
 
@@ -437,6 +658,10 @@ Por eso el tema se atenúa (`CATPPUCCIN_POWER_SCALE`) y el brillo por defecto es
 | `5fdf859c` | Temas Kanagawa Dragon (O) y Horizon (P) en la capa 8; el tono pasa a 9/0 |
 | `7131d727` | Tema Alegra: Índigo solo en los bordes y Teal predominante |
 | `da45894c` | Tema Desierto reemplaza a Kanagawa Dragon (tecla O) |
+| `14d946a0` | Desierto más saturado y ajustado para LED, con más brillo al mismo consumo |
+| `7698c460` | Desierto con menos verde: bordes amarillo anaranjado en vez de verdosos |
 | `126f13ad` | Catppuccin atenuado para consumir menos, brillo por defecto 64, se quita el gesto de notificaciones, atrás/adelante más rápido (100 ms), scroll horizontal más rápido |
+| `b1dd10c7` | Layout de Gentleman (home-row mods, capas PROG/NUM/NAV/POINTER/MAGIC) y capa Herdr; temas en NUM + MAGIC |
+| `34e0389e` | Colores por capa: al mantener una capa se iluminan solo sus teclas activas |
 
 Los cambios están solo en tu computadora: no se subieron a ningún repositorio remoto.

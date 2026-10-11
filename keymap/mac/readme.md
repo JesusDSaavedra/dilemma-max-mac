@@ -78,9 +78,32 @@ The tap, scroll, swipe and pinch thresholds are in `config.h`:
 
 ## Keys
 
-The speed and pinch keys are on the `RAISE` layer, top letter row of the right half (the `Y`,
-`U` and `I` positions); both settings are saved and survive a power cycle. The theme key is on
-the `LOWER` layer at the `T` position.
+The layout follows Gentleman's `vendor` keymap
+([Alan-TheGentleman/qmk_userspace](https://github.com/Alan-TheGentleman/qmk_userspace),
+`keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/vendor`). It assumes a **US** macOS input
+source, so the symbol keys produce the symbols printed in the keymap.
+
+The base layer has home-row mods: `A` `S` `D` `F` hold for `Cmd` `Alt` `Ctrl` `Shift`, and
+`J` `K` `L` `;` for `Shift` `Ctrl` `Alt` `Cmd`. The tapping term is 120 ms (`TAPPING_TERM`), with
+per-key terms in `get_tapping_term()`: 180 ms for `Cmd`, 120 ms for `Shift` and 200 ms for `Alt`
+and `Ctrl`. The thumbs are, from left to right: left click, `Space`, `PROG`, `NUMBS` | `MAGIC`,
+`Enter`, `Backspace` (`NAV` on hold), `HERDR`.
+
+| # | Layer | How to reach it | Contents |
+| --- | --- | --- | --- |
+| 0 | `BASE` | Default | Letters, digits, home-row mods |
+| 1 | `MAGIC` | Hold `MAGIC` (right inner thumb) | RGB controls, media keys, `QK_BOOT`, `EE_CLR` |
+| 2 | `PROG` | Hold `PROG` (left thumb, third from the left) | Programming symbols |
+| 3 | `NUMBERS` | Hold `NUMBS` (left inner thumb) | Number pad on the right, `F1`–`F9` on the left |
+| 4 | `NAV` | Hold `Backspace` (right thumb, third from the left) | Arrows, `Home`/`End`, `PgUp`/`PgDn`, `Insert`, `Caps Lock` |
+| 5 | `POINTER` | Hold `Z` or `/` | Mouse buttons on the thumbs, cursor speed, pinch modifier |
+| 6 | `HERDR` | Hold `HERDR` (right outer thumb) | Herdr shortcuts, see below |
+| 7 | `THEME` | Hold `NUMBS` + `MAGIC` together | Lighting and theme controls on the right half |
+
+VIA has 8 layers (`DYNAMIC_KEYMAP_LAYER_COUNT`), all defined in `keymap.c`. Use VIA's
+**Save + Load** tab to back up your layout as a `.json` file.
+
+### Custom keys
 
 | Key                 | Hex      | Action                                                                   |
 | ------------------- | -------- | ------------------------------------------------------------------------ |
@@ -93,12 +116,47 @@ the `LOWER` layer at the `T` position.
 | `RGB_THEME_DESERT`  | `0x7E46` | Turns the RGB on and switches to the Desert effect, keeping the brightness |
 | `RGB_THEME_HORIZON` | `0x7E47` | Turns the RGB on and switches to the Horizon effect, keeping the brightness |
 
-VIA has 8 layers (`DYNAMIC_KEYMAP_LAYER_COUNT`). Layers 4 to 7 start transparent; use
-`MO(3)`…`MO(6)` (or `TG`, `TO`, …) in VIA to reach them, and VIA's **Save + Load** tab to back up
-your layout as a `.json` file.
+The cursor speed and pinch keys are on the `POINTER` layer, on the number row (both settings are
+saved and survive a power cycle):
 
-Layer 8 (`LAYER_THEME`) holds the lighting controls on the right half and turns on while
-`LOWER` and `RAISE` are both held (`update_tri_layer_state`). The left half is transparent.
+| Position | Key |
+| --- | --- |
+| `2` / `3` | `CURSOR_SPEED_DOWN` / `CURSOR_SPEED_UP` |
+| `5` | `PINCH_MOD_CYCLE` |
+| `8` / `9` | `CURSOR_SPEED_UP` / `CURSOR_SPEED_DOWN` (mirrored, as in Gentleman's keymap) |
+
+Hold `Z` with the left hand while the right hand is on the trackpad to reach them. Gentleman's
+DPI, sniping and drag-scroll keys do not exist in this firmware; those positions are empty.
+
+The cursor starts at 25% of the trackpad's 1:1 speed. The steps are 12.5%, 19%, 25%, 37.5%,
+50%, 75%, 100%, 150% and 200%, so each press is easy to feel. Cursor speed only changes the
+pointer; scroll and swipes feel the same at every speed.
+
+### Herdr layer
+
+Herdr uses a tmux-style prefix key. Hold `HERDR` (right
+outer thumb): every key on this layer sends the prefix first and then itself, so `HERDR` + `C`
+is `prefix c` (new tab) and `HERDR` + `-` is `prefix -` (split horizontal). The letters, digits
+and punctuation sit where they are on the base layer, without home-row mods. Also on the layer:
+`[` (copy mode) on the `Esc` position, `Tab` where it is on the base layer, and `?` (help) on the
+right of `/`.
+
+Hold `Shift` (left thumb, on `Space`) or `Alt` (left thumb, on `PROG`) for the shifted and Alt
+bindings: `HERDR` + `Shift` + `X` is `prefix shift+x` (close tab), `HERDR` + `Shift` + `Tab` is
+`prefix shift+tab` (previous pane), and `HERDR` + `Alt` + `J` / `K` is `prefix alt+j` /
+`prefix alt+k`. The prefix itself is sent without any modifier, then the held modifiers come
+back for the key.
+
+The prefix is `HERDR_PREFIX` in `config.h`, `C(KC_Q)` by default, which matches
+`[keys] prefix = "ctrl+q"` in `~/.config/herdr/config.toml`. To use another prefix, change both,
+for example `#define HERDR_PREFIX C(KC_B)` for `ctrl+b`, and rebuild. Modifiers, layer keys and
+the custom keys above never send the prefix.
+
+### Theme layer
+
+Layer 7 (`LAYER_THEME`) holds the lighting controls on the right half and turns on while `NUMBS`
+and `MAGIC` (the two inner thumbs) are both held (`update_tri_layer_state`). The left half is
+transparent.
 
 | Position (right half) | Key | Action |
 | --- | --- | --- |
@@ -117,10 +175,6 @@ Layer 8 (`LAYER_THEME`) holds the lighting controls on the right half and turns 
 `RGB_MATRIX_MAXIMUM_BRIGHTNESS` is capped at 128 (the keyboard allows 176), so the brightness keys
 and VIA cannot bring the brownout back.
 
-The cursor starts at 25% of the trackpad's 1:1 speed. The steps are 12.5%, 19%, 25%, 37.5%,
-50%, 75%, 100%, 150% and 200%, so each press is easy to feel. Cursor speed only changes the
-pointer; scroll and swipes feel the same at every speed.
-
 To place a key anywhere with [VIA](https://usevia.app), pick the "Any" key and type the hex
 value. VIA keeps its own copy of the layout in EEPROM and only reloads it when the build date
 changes. To make sure the keys above show up, this keymap stores a settings version: when a
@@ -130,8 +184,8 @@ VIA layout to the defaults (your VIA key changes are lost once). `EE_CLR` does t
 ## Lighting
 
 A second palette theme, **Gruvbox Dark** (bright accents Red, Orange, Yellow, Green, Aqua, Blue and
-Purple), comes right after Catppuccin in the effect list: `RM_NEXT` (`LOWER` + `Tab`) from
-Catppuccin switches to it, and `RGB_THEME_RESTORE` (`LOWER` + `T`) goes back. It shares the same
+Purple), comes right after Catppuccin in the effect list: `RM_NEXT` (theme layer `M`) from
+Catppuccin switches to it, and `RGB_THEME_RESTORE` (theme layer `Y`) goes back. It shares the same
 gradient layout and ripple, with `GRUVBOX_POWER_SCALE` `221` (its accents load each LED at about
 58%).
 
@@ -141,10 +195,17 @@ reads as a strong blue on the LEDs. The palette loads each LED at about 49%, so 
 dimming: `ALEGRA_POWER_SCALE` is `255`.
 
 **Desert** is a custom palette laid out like Horizon: a red-rock canyon at sunset. From the
-outer edge to the center it runs pale sand `#F6D69A`, golden sand `#F2C14E`, dune orange
-`#F4A259`, amber `#E07A3F`, terracotta `#C8553D` and canyon rust `#A33A2A`. Its power scale is
-`DESERT_POWER_SCALE` `222` (about 58% load). It replaced Kanagawa Dragon in the same effect slot
-and on the same key.
+outer edge to the center it runs golden sand `#FF5A00`, amber `#FF4600`, dune orange `#FF3600`,
+burnt orange `#F22800`, terracotta `#DA1A00` and canyon red `#B00C00`. Green stays at about a
+third of red or less, which reads warm yellow-orange rather than green on these LEDs.
+
+The values are tuned for the WS2812 LEDs, whose green is much brighter than their red. They are
+red-heavy and have no blue, so they look like sand, orange and red on the keyboard; a lighter,
+"screen-accurate" sand looked greenish white on the keys. On a screen they look more orange.
+
+The palette loads each LED at about 37%, so `DESERT_POWER_SCALE` is `346`: it brightens the
+theme to the same power as the others. `palette_effect` accepts scales above 255 for this. The
+theme replaced Kanagawa Dragon in the same effect slot and on the same key.
 
 **Horizon** comes from
 [jolaleye/horizon-theme-vscode](https://github.com/jolaleye/horizon-theme-vscode)
@@ -170,12 +231,35 @@ The default effect is a [Catppuccin](https://catppuccin.com) Mocha theme (`rgb_m
   saturated effect at the same brightness. All channels are scaled equally, so the hues stay the
   same; set it to `255` for the exact palette values.
 - The default brightness is 64 (of the keyboard's maximum 176). `RM_NEXT` / `RM_PREV` /
-  `RM_TOGG` on `LOWER` and VIA still change the effect and brightness. Keep the brightness low
+  `RM_TOGG` on the `MAGIC` and theme layers and VIA still change the effect and brightness. Keep the brightness low
   if the colors drift to red or the trackpad stops; the firmware now reconfigures the trackpad
   when its chip resets, but a sagging supply is still best avoided.
 
 After flashing a firmware with a new settings version (see above), the first boot selects this
 effect and the default brightness again.
+
+### Layer indicators
+
+While a layer is held, `rgb_matrix_indicators_advanced_user` draws over the theme:
+
+- **Keys that do something on that layer** light up in the layer's color.
+- **The keys held to reach the layer** light up white.
+- **Everything else** turns off.
+- **Base layer:** the theme shows as usual.
+
+Colors are tuned for the LEDs and scaled by the current brightness:
+
+| Layer | Color |
+| --- | --- |
+| MAGIC | Yellow |
+| PROG | Purple |
+| NUMBERS | Orange |
+| NAV | Green |
+| POINTER | Blue |
+| HERDR | Teal |
+| THEME | Pink |
+
+Edit `layer_colors[]` in `keymap.c` to change them. Each half reads keycodes from its own dynamic keymap. VIA writes only to the half connected over USB, so after VIA edits the other half keeps showing the default layout.
 
 ## Build
 

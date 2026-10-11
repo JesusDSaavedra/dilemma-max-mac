@@ -1,7 +1,7 @@
 From e140aa68277290f45a644463fb57df1da39c5b6f Mon Sep 17 00:00:00 2001
 From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
 Date: Sat, 10 Oct 2026 01:59:22 -0500
-Subject: [PATCH 18/26] feat(dilemma): make the Catppuccin ripple a dimming
+Subject: [PATCH 18/30] feat(dilemma): make the Catppuccin ripple a dimming
  wave across both halves
 
 ---

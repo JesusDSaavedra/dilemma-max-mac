@@ -16,6 +16,12 @@ The full user guide (Spanish) is in [`docs/GUIA-CONFIGURACION.md`](docs/GUIA-CON
 ## Features
 
 - **Split serial on `GP16`**, a bodge-wire repair after `GP1` was damaged.
+- **Layout based on Gentleman's** [`vendor` keymap](https://github.com/Alan-TheGentleman/qmk_userspace/tree/main/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/vendor). It assumes a US macOS input source.
+  - **Base layer:** QWERTY with GACS home-row mods.
+  - **Layers:** MAGIC, PROG, NUMBERS, NAV (hold Backspace) and POINTER (hold Z or /).
+  - **Thumbs:** `Click Space PROG NUMBS | MAGIC Enter NAV HERDR`.
+- **Herdr layer:** hold the right outer thumb and every key sends the Herdr prefix `Ctrl+Q` followed by that key.
+- **Layer colors:** while a layer is held, only its active keys light up in the layer's color, and the held keys light up white.
 - **macOS trackpad gestures** in mouse-fallback mode:
   - pinch-to-zoom;
   - two-finger flick and left-edge swipe for back/forward, sent as mouse buttons 4/5 so they work regardless of keyboard layout;
@@ -29,7 +35,7 @@ The full user guide (Spanish) is in [`docs/GUIA-CONFIGURACION.md`](docs/GUIA-CON
   - Horizon
 
   Each one is power-normalized to avoid supply brownouts with both halves connected, and brightness is capped at 128.
-- **Theme layer:** hold LOWER + RAISE, then use the right half:
+- **Theme layer:** hold NUMBS + MAGIC (the two innermost thumbs), then use the right half:
 
   | Keys | Action |
   |---|---|

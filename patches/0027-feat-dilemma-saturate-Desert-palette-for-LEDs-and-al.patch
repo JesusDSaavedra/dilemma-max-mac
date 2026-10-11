@@ -1,0 +1,99 @@
+From 14d946a0493afd8522692ba8cf3623ee949b8f02 Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Sat, 10 Oct 2026 03:19:04 -0500
+Subject: [PATCH 27/30] feat(dilemma): saturate Desert palette for LEDs and
+ allow brightening power scales
+
+---
+ .../4x6_4_procyon/keymaps/mac/readme.md       | 14 ++++++---
+ .../keymaps/mac/rgb_matrix_user.inc           | 30 +++++++++++--------
+ 2 files changed, 27 insertions(+), 17 deletions(-)
+
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+index 9f4cb370..5e8dd421 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+@@ -141,10 +141,16 @@ reads as a strong blue on the LEDs. The palette loads each LED at about 49%, so
+ dimming: `ALEGRA_POWER_SCALE` is `255`.
+ 
+ **Desert** is a custom palette laid out like Horizon: a red-rock canyon at sunset. From the
+-outer edge to the center it runs pale sand `#F6D69A`, golden sand `#F2C14E`, dune orange
+-`#F4A259`, amber `#E07A3F`, terracotta `#C8553D` and canyon rust `#A33A2A`. Its power scale is
+-`DESERT_POWER_SCALE` `222` (about 58% load). It replaced Kanagawa Dragon in the same effect slot
+-and on the same key.
++outer edge to the center it runs golden sand `#FF9A10`, amber `#FF7A00`, dune orange `#FF5A00`,
++burnt orange `#F03C00`, terracotta `#D82800` and canyon red `#B01400`.
++
++The values are tuned for the WS2812 LEDs, whose green is much brighter than their red. They are
++red-heavy and have no blue, so they look like sand, orange and red on the keyboard; a lighter,
++"screen-accurate" sand looked greenish white on the keys. On a screen they look more orange.
++
++The palette loads each LED at about 41%, so `DESERT_POWER_SCALE` is `308`: it brightens the
++theme to the same power as the others. `palette_effect` accepts scales above 255 for this. The
++theme replaced Kanagawa Dragon in the same effect slot and on the same key.
+ 
+ **Horizon** comes from
+ [jolaleye/horizon-theme-vscode](https://github.com/jolaleye/horizon-theme-vscode)
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
+index 55eb6dca..f58007d4 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
+@@ -56,10 +56,10 @@ RGB_MATRIX_EFFECT(horizon)
+ #        define ALEGRA_POWER_SCALE 255
+ #    endif
+ 
+-// Desert loads each LED at about 58% on average and Horizon at about 69%, so 222 and 185 match
+-// a saturated effect.
++// Desert loads each LED at about 41% on average, so 308 brightens it to the same power as the
++// other themes. Horizon loads at about 69%, so 185 dims it.
+ #    ifndef DESERT_POWER_SCALE
+-#        define DESERT_POWER_SCALE 222
++#        define DESERT_POWER_SCALE 308
+ #    endif
+ #    ifndef HORIZON_POWER_SCALE
+ #        define HORIZON_POWER_SCALE 185
+@@ -111,15 +111,17 @@ static const rgb_t alegra_palette[] = {
+     CATPPUCCIN_HEX(0x30ABA9), // Teal (primary)
+ };
+ 
+-// Desert: a red-rock canyon at sunset, laid out like Horizon. Pale sand on the outer edge,
+-// through golden sand, dune orange, amber and terracotta, to canyon rust at the center.
++// Desert: a red-rock canyon at sunset, laid out like Horizon, from golden sand on the outer
++// edge through amber and orange to canyon red at the center. The values are tuned for the
++// WS2812 LEDs, whose green is much brighter than their red: they are red-heavy with no blue,
++// so they look sand, orange and red on the keyboard (they look more orange on a screen).
+ static const rgb_t desert_palette[] = {
+-    CATPPUCCIN_HEX(0xF6D69A), // Pale sand
+-    CATPPUCCIN_HEX(0xF2C14E), // Golden sand
+-    CATPPUCCIN_HEX(0xF4A259), // Dune orange
+-    CATPPUCCIN_HEX(0xE07A3F), // Amber
+-    CATPPUCCIN_HEX(0xC8553D), // Terracotta
+-    CATPPUCCIN_HEX(0xA33A2A), // Canyon rust
++    CATPPUCCIN_HEX(0xFF9A10), // Golden sand
++    CATPPUCCIN_HEX(0xFF7A00), // Amber
++    CATPPUCCIN_HEX(0xFF5A00), // Dune orange
++    CATPPUCCIN_HEX(0xF03C00), // Burnt orange
++    CATPPUCCIN_HEX(0xD82800), // Terracotta
++    CATPPUCCIN_HEX(0xB01400), // Canyon red
+ };
+ 
+ // Horizon (jolaleye/horizon-theme-vscode, src/dark/globals.json): a sunset, from the warm
+@@ -171,11 +173,13 @@ static uint8_t catppuccin_ripple(uint8_t led) {
+     return strength;
+ }
+ 
+-static bool palette_effect(effect_params_t *params, const rgb_t *palette, uint8_t count, uint8_t power_scale) {
++// power_scale is out of 255. Below 255 it dims a light palette; above 255 it brightens a
++// saturated one, so every theme draws about the same power at the same brightness setting.
++static bool palette_effect(effect_params_t *params, const rgb_t *palette, uint8_t count, uint16_t power_scale) {
+     RGB_MATRIX_USE_LIMITS(led_min, led_max);
+ 
+     // The power scale folds into the brightness, so each channel is scaled once.
+-    const uint8_t val = scale8(rgb_matrix_get_val(), power_scale);
++    const uint8_t val = MIN(255, (uint16_t)rgb_matrix_get_val() * power_scale / 255);
+     for (uint8_t i = led_min; i < led_max; i++) {
+         RGB_MATRIX_TEST_LED_FLAGS();
+         const rgb_t   rgb     = palette_gradient(palette, count, g_led_config.point[i].x);
+-- 
+2.56.0
+

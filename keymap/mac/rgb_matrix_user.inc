@@ -56,10 +56,10 @@ RGB_MATRIX_EFFECT(horizon)
 #        define ALEGRA_POWER_SCALE 255
 #    endif
 
-// Desert loads each LED at about 58% on average and Horizon at about 69%, so 222 and 185 match
-// a saturated effect.
+// Desert loads each LED at about 37% on average, so 346 brightens it to the same power as the
+// other themes. Horizon loads at about 69%, so 185 dims it.
 #    ifndef DESERT_POWER_SCALE
-#        define DESERT_POWER_SCALE 222
+#        define DESERT_POWER_SCALE 346
 #    endif
 #    ifndef HORIZON_POWER_SCALE
 #        define HORIZON_POWER_SCALE 185
@@ -111,15 +111,17 @@ static const rgb_t alegra_palette[] = {
     CATPPUCCIN_HEX(0x30ABA9), // Teal (primary)
 };
 
-// Desert: a red-rock canyon at sunset, laid out like Horizon. Pale sand on the outer edge,
-// through golden sand, dune orange, amber and terracotta, to canyon rust at the center.
+// Desert: a red-rock canyon at sunset, laid out like Horizon, from golden sand on the outer
+// edge through amber and orange to canyon red at the center. The values are tuned for the
+// WS2812 LEDs, whose green is much brighter than their red: they are red-heavy with no blue,
+// so they look sand, orange and red on the keyboard (they look more orange on a screen).
 static const rgb_t desert_palette[] = {
-    CATPPUCCIN_HEX(0xF6D69A), // Pale sand
-    CATPPUCCIN_HEX(0xF2C14E), // Golden sand
-    CATPPUCCIN_HEX(0xF4A259), // Dune orange
-    CATPPUCCIN_HEX(0xE07A3F), // Amber
-    CATPPUCCIN_HEX(0xC8553D), // Terracotta
-    CATPPUCCIN_HEX(0xA33A2A), // Canyon rust
+    CATPPUCCIN_HEX(0xFF5A00), // Golden sand (green at about a third of red reads warm yellow)
+    CATPPUCCIN_HEX(0xFF4600), // Amber
+    CATPPUCCIN_HEX(0xFF3600), // Dune orange
+    CATPPUCCIN_HEX(0xF22800), // Burnt orange
+    CATPPUCCIN_HEX(0xDA1A00), // Terracotta
+    CATPPUCCIN_HEX(0xB00C00), // Canyon red
 };
 
 // Horizon (jolaleye/horizon-theme-vscode, src/dark/globals.json): a sunset, from the warm
@@ -171,11 +173,13 @@ static uint8_t catppuccin_ripple(uint8_t led) {
     return strength;
 }
 
-static bool palette_effect(effect_params_t *params, const rgb_t *palette, uint8_t count, uint8_t power_scale) {
+// power_scale is out of 255. Below 255 it dims a light palette; above 255 it brightens a
+// saturated one, so every theme draws about the same power at the same brightness setting.
+static bool palette_effect(effect_params_t *params, const rgb_t *palette, uint8_t count, uint16_t power_scale) {
     RGB_MATRIX_USE_LIMITS(led_min, led_max);
 
     // The power scale folds into the brightness, so each channel is scaled once.
-    const uint8_t val = scale8(rgb_matrix_get_val(), power_scale);
+    const uint8_t val = MIN(255, (uint16_t)rgb_matrix_get_val() * power_scale / 255);
     for (uint8_t i = led_min; i < led_max; i++) {
         RGB_MATRIX_TEST_LED_FLAGS();
         const rgb_t   rgb     = palette_gradient(palette, count, g_led_config.point[i].x);

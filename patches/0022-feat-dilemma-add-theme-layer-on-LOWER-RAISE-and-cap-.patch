@@ -1,7 +1,7 @@
 From e1e84081a990c64663c1a991d1686052f7ee60c6 Mon Sep 17 00:00:00 2001
 From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
 Date: Sat, 10 Oct 2026 02:42:34 -0500
-Subject: [PATCH 22/26] feat(dilemma): add theme layer on LOWER+RAISE and cap
+Subject: [PATCH 22/30] feat(dilemma): add theme layer on LOWER+RAISE and cap
  RGB brightness
 
 ---

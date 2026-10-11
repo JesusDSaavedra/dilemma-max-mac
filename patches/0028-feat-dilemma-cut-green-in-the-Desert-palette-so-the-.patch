@@ -1,0 +1,73 @@
+From 7698c4605506a1596fb90d7548d41cc1a03e4588 Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Sat, 10 Oct 2026 03:21:56 -0500
+Subject: [PATCH 28/30] feat(dilemma): cut green in the Desert palette so the
+ edges read warm yellow
+
+---
+ .../dilemma/4x6_4_procyon/keymaps/mac/readme.md  |  7 ++++---
+ .../keymaps/mac/rgb_matrix_user.inc              | 16 ++++++++--------
+ 2 files changed, 12 insertions(+), 11 deletions(-)
+
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+index 5e8dd421..cc6cfa6c 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+@@ -141,14 +141,15 @@ reads as a strong blue on the LEDs. The palette loads each LED at about 49%, so
+ dimming: `ALEGRA_POWER_SCALE` is `255`.
+ 
+ **Desert** is a custom palette laid out like Horizon: a red-rock canyon at sunset. From the
+-outer edge to the center it runs golden sand `#FF9A10`, amber `#FF7A00`, dune orange `#FF5A00`,
+-burnt orange `#F03C00`, terracotta `#D82800` and canyon red `#B01400`.
++outer edge to the center it runs golden sand `#FF5A00`, amber `#FF4600`, dune orange `#FF3600`,
++burnt orange `#F22800`, terracotta `#DA1A00` and canyon red `#B00C00`. Green stays at about a
++third of red or less, which reads warm yellow-orange rather than green on these LEDs.
+ 
+ The values are tuned for the WS2812 LEDs, whose green is much brighter than their red. They are
+ red-heavy and have no blue, so they look like sand, orange and red on the keyboard; a lighter,
+ "screen-accurate" sand looked greenish white on the keys. On a screen they look more orange.
+ 
+-The palette loads each LED at about 41%, so `DESERT_POWER_SCALE` is `308`: it brightens the
++The palette loads each LED at about 37%, so `DESERT_POWER_SCALE` is `346`: it brightens the
+ theme to the same power as the others. `palette_effect` accepts scales above 255 for this. The
+ theme replaced Kanagawa Dragon in the same effect slot and on the same key.
+ 
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
+index f58007d4..6c2ff66d 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/rgb_matrix_user.inc
+@@ -56,10 +56,10 @@ RGB_MATRIX_EFFECT(horizon)
+ #        define ALEGRA_POWER_SCALE 255
+ #    endif
+ 
+-// Desert loads each LED at about 41% on average, so 308 brightens it to the same power as the
++// Desert loads each LED at about 37% on average, so 346 brightens it to the same power as the
+ // other themes. Horizon loads at about 69%, so 185 dims it.
+ #    ifndef DESERT_POWER_SCALE
+-#        define DESERT_POWER_SCALE 308
++#        define DESERT_POWER_SCALE 346
+ #    endif
+ #    ifndef HORIZON_POWER_SCALE
+ #        define HORIZON_POWER_SCALE 185
+@@ -116,12 +116,12 @@ static const rgb_t alegra_palette[] = {
+ // WS2812 LEDs, whose green is much brighter than their red: they are red-heavy with no blue,
+ // so they look sand, orange and red on the keyboard (they look more orange on a screen).
+ static const rgb_t desert_palette[] = {
+-    CATPPUCCIN_HEX(0xFF9A10), // Golden sand
+-    CATPPUCCIN_HEX(0xFF7A00), // Amber
+-    CATPPUCCIN_HEX(0xFF5A00), // Dune orange
+-    CATPPUCCIN_HEX(0xF03C00), // Burnt orange
+-    CATPPUCCIN_HEX(0xD82800), // Terracotta
+-    CATPPUCCIN_HEX(0xB01400), // Canyon red
++    CATPPUCCIN_HEX(0xFF5A00), // Golden sand (green at about a third of red reads warm yellow)
++    CATPPUCCIN_HEX(0xFF4600), // Amber
++    CATPPUCCIN_HEX(0xFF3600), // Dune orange
++    CATPPUCCIN_HEX(0xF22800), // Burnt orange
++    CATPPUCCIN_HEX(0xDA1A00), // Terracotta
++    CATPPUCCIN_HEX(0xB00C00), // Canyon red
+ };
+ 
+ // Horizon (jolaleye/horizon-theme-vscode, src/dark/globals.json): a sunset, from the warm
+-- 
+2.56.0
+

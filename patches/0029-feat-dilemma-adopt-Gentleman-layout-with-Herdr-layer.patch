@@ -1,0 +1,433 @@
+From b1dd10c75c22194c0507b4749abe59c937f28479 Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Sat, 10 Oct 2026 04:00:56 -0500
+Subject: [PATCH 29/30] feat(dilemma): adopt Gentleman layout with Herdr layer
+ in mac keymap
+
+---
+ .../4x6_4_procyon/keymaps/mac/config.h        |  25 ++-
+ .../4x6_4_procyon/keymaps/mac/keymap.c        | 179 +++++++++++++-----
+ .../4x6_4_procyon/keymaps/mac/readme.md       |  84 ++++++--
+ 3 files changed, 225 insertions(+), 63 deletions(-)
+
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+index c510fedc..dc915121 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+@@ -115,8 +115,27 @@
+ #define CATPPUCCIN_POWER_SCALE 160 // Of 255: about 50/79, the load of a saturated effect.
+ 
+ /*
+- * VIA: 8 layers instead of the default 4, so there is room to add layers from
+- * VIA. Layers past the ones in keymap.c start as transparent keys. Changing this
+- * moves the VIA data in EEPROM, so USER_CONFIG_MAGIC must change with it.
++ * VIA: 8 layers instead of the default 4, all of them defined in keymap.c.
++ * Changing this moves the VIA data in EEPROM, so USER_CONFIG_MAGIC must change
++ * with it.
+  */
+ #define DYNAMIC_KEYMAP_LAYER_COUNT 8
++
++/*
++ * Home-row mods, from Gentleman's `vendor` keymap: 120 ms by default, with
++ * per-key terms in get_tapping_term() (GUI 180, Shift 120, Alt and Ctrl 200).
++ */
++#define TAPPING_TERM 120
++#define TAPPING_TERM_PER_KEY
++
++/* Sync the layer and LED state to both halves. */
++#define SPLIT_LAYER_STATE_ENABLE
++#define SPLIT_LED_STATE_ENABLE
++
++/*
++ * Herdr layer: every key sends this prefix first, then itself. It matches
++ * `[keys] prefix = "ctrl+q"` in ~/.config/herdr/config.toml.
++ */
++#ifndef HERDR_PREFIX
++#    define HERDR_PREFIX C(KC_Q)
++#endif
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+index 5d4cf904..a26e0971 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+@@ -23,17 +23,23 @@
+ 
+ enum dilemma_keymap_layers {
+     LAYER_BASE = 0,
+-    LAYER_LOWER,
+-    LAYER_RAISE,
+-    LAYER_FREE_1, // Layers 4 to 7 in VIA: empty (transparent), free to fill from VIA.
+-    LAYER_FREE_2,
+-    LAYER_FREE_3,
+-    LAYER_FREE_4,
+-    LAYER_THEME, // Layer 8 in VIA: lighting and theme controls, on LOWER + RAISE.
++    LAYER_MAGIC,   // Hold MAGIC: RGB, media, QK_BOOT / EE_CLR.
++    LAYER_PROG,    // Hold PROG: programming symbols.
++    LAYER_NUMBERS, // Hold NUMBS: number pad and F keys.
++    LAYER_NAV,     // Hold Backspace: arrows and paging.
++    LAYER_POINTER, // Hold Z or /: mouse buttons, cursor speed, pinch modifier.
++    LAYER_HERDR,   // Hold HERDR: every key sends HERDR_PREFIX first (see process_record_user).
++    LAYER_THEME,   // NUMBS + MAGIC: lighting and theme controls.
+ };
+ 
+-#define LOWER MO(LAYER_LOWER)
+-#define RAISE MO(LAYER_RAISE)
++// Layout from Alan-TheGentleman/qmk_userspace (the `vendor` keymap), on a US macOS input source.
++#define MAGIC MO(LAYER_MAGIC)
++#define PROG MO(LAYER_PROG)
++#define NUMBS MO(LAYER_NUMBERS)
++#define NAV LT(LAYER_NAV, KC_BSPC)
++#define PT_Z LT(LAYER_POINTER, KC_Z)
++#define PT_SLSH LT(LAYER_POINTER, KC_SLSH)
++#define HERDR MO(LAYER_HERDR)
+ 
+ // Custom keycodes start at SAFE_RANGE (QK_USER_0). Type the hex values into
+ // VIA's "Any" key to place them (see readme.md).
+@@ -51,73 +57,118 @@ enum mac_keycodes {
+ #define CSPD_DN CURSOR_SPEED_DOWN
+ #define CSPD_UP CURSOR_SPEED_UP
+ #define PINCH_M PINCH_MOD_CYCLE
+-#define RGB_RST RGB_THEME_RESTORE
+ #define THM_CAT RGB_THEME_RESTORE
+ #define THM_GRV RGB_THEME_GRUVBOX
+ #define THM_ALG RGB_THEME_ALEGRA
+ #define THM_DES RGB_THEME_DESERT
+ #define THM_HOR RGB_THEME_HORIZON
+ 
+-// clang-format off
+-#define LAYOUT_TRANSPARENT LAYOUT( \
+-    _______, _______, _______, _______, _______, _______,    _______, _______, _______, _______, _______, _______, \
+-    _______, _______, _______, _______, _______, _______,    _______, _______, _______, _______, _______, _______, \
+-    _______, _______, _______, _______, _______, _______,    _______, _______, _______, _______, _______, _______, \
+-    _______, _______, _______, _______, _______, _______,    _______, _______, _______, _______, _______, _______, \
+-                      _______, _______, _______, _______,    _______, _______, _______, _______)
+-// clang-format on
+-
+ // clang-format off
+ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+   [LAYER_BASE] = LAYOUT(
+   // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
+-        KC_ESC,    KC_1,    KC_2,    KC_3,    KC_4,    KC_5,       KC_6,    KC_7,    KC_8,    KC_9,    KC_0, KC_MINS,
++      XXXXXXX,    KC_1,    KC_2,    KC_3,    KC_4,    KC_5,       KC_6,    KC_7,    KC_8,    KC_9,    KC_0, KC_MINS,
++  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
++       KC_TAB,    KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,       KC_Y,    KC_U,    KC_I,    KC_O,    KC_P, KC_BSLS,
++  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
++      KC_ESC, LGUI_T(KC_A), LALT_T(KC_S), LCTL_T(KC_D), LSFT_T(KC_F), KC_G,       KC_H, RSFT_T(KC_J), RCTL_T(KC_K), LALT_T(KC_L), RGUI_T(KC_SCLN), KC_QUOT,
++  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
++      KC_GRV,    PT_Z,    KC_X,    KC_C,    KC_V,    KC_B,       KC_N,    KC_M, KC_COMM,  KC_DOT, PT_SLSH, KC_LALT,
++  // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
++                      MS_BTN1,  KC_SPC,    PROG,   NUMBS,       MAGIC,  KC_ENT,     NAV,    HERDR
++  //                    ╰───────────────────────────────────╯ ╰───────────────────────────────────╯
++  ),
++
++  // NUMBS (left) and MAGIC (right) inner thumbs are _______ so holding both reaches LAYER_THEME.
++  [LAYER_MAGIC] = LAYOUT(
++  // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
++      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
++  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
++      QK_BOOT, RM_SPDU, RM_SATU, RM_HUEU, RM_VALU, RM_TOGG,    RM_TOGG, RM_VALU, RM_HUEU, RM_SATU, RM_SPDU, QK_BOOT,
++  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
++       EE_CLR, RM_SPDD, RM_SATD, RM_HUED, RM_VALD, RM_NEXT,    RM_NEXT, RM_VALD, RM_HUED, RM_SATD, RM_SPDD,  EE_CLR,
++  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
++      KC_VOLU, KC_MUTE, KC_VOLD, KC_MPRV, KC_MNXT, XXXXXXX,    XXXXXXX, KC_MNXT, KC_MPRV, KC_VOLD, KC_MUTE, KC_VOLU,
++  // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
++                       XXXXXXX, KC_MPLY, KC_MSTP, _______,    _______, KC_MSTP, KC_MPLY, XXXXXXX
++  //                    ╰───────────────────────────────────╯ ╰───────────────────────────────────╯
++  ),
++
++  [LAYER_PROG] = LAYOUT(
++  // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
++      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
++  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
++      XXXXXXX, XXXXXXX,  KC_GRV, XXXXXXX,  KC_DLR, XXXXXXX,    KC_CIRC, KC_LPRN, KC_RPRN, KC_MINS, XXXXXXX, XXXXXXX,
++  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
++      XXXXXXX, KC_LSFT,   KC_AT, KC_HASH, KC_PERC, XXXXXXX,    KC_AMPR, KC_LCBR, KC_RCBR,  KC_EQL, KC_QUOT, XXXXXXX,
++  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
++      XXXXXXX,  KC_GRV, XXXXXXX, XXXXXXX, KC_QUES, XXXXXXX,    KC_ASTR, KC_LBRC, KC_RBRC, KC_EXLM, KC_BSLS, XXXXXXX,
++  // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
++                       _______, _______, _______, _______,    XXXXXXX,  KC_ENT,   KC_LT,   KC_GT
++  //                    ╰───────────────────────────────────╯ ╰───────────────────────────────────╯
++  ),
++
++  [LAYER_NUMBERS] = LAYOUT(
++  // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
++      _______, _______, _______, _______, _______, _______,    _______, _______, _______, _______, _______, _______,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+-        KC_TAB,    KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,       KC_Y,    KC_U,    KC_I,    KC_O,    KC_P, KC_BSLS,
++      _______, _______, _______,   KC_F7,   KC_F8,   KC_F9,    _______,    KC_7,    KC_8,    KC_9, _______, _______,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+-       KC_LSFT,    KC_A,    KC_S,    KC_D,    KC_F,    KC_G,       KC_H,    KC_J,    KC_K,    KC_L, KC_SCLN, KC_QUOT,
++      _______, KC_LSFT, KC_LALT,   KC_F4,   KC_F5,   KC_F6,    _______,    KC_4,    KC_5,    KC_6,    KC_0, _______,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+-       KC_LCTL,    KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,       KC_N,    KC_M, KC_COMM,  KC_DOT, KC_SLSH, KC_LALT,
++      _______, KC_LGUI, KC_LCTL,   KC_F1,   KC_F2,   KC_F3,    _______,    KC_1,    KC_2,    KC_3, _______, _______,
+   // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
+-                         KC_LALT, KC_BSPC,  KC_SPC,   LOWER,      RAISE,  KC_ENT,  KC_DEL, KC_LGUI
++                       _______, _______, _______, _______,    _______, _______, _______, _______
+   //                    ╰───────────────────────────────────╯ ╰───────────────────────────────────╯
+   ),
+ 
+-  [LAYER_LOWER] = LAYOUT(
++  [LAYER_NAV] = LAYOUT(
+   // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
+-       KC_TILD, KC_EXLM,   KC_AT, KC_HASH,  KC_DLR, KC_PERC,    KC_CIRC, KC_AMPR, KC_ASTR, KC_LPRN, KC_RPRN, KC_UNDS,
++      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+-       RM_NEXT, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, RGB_RST,    KC_LBRC,   KC_P7,   KC_P8,   KC_P9, KC_RBRC, XXXXXXX,
++      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+-       RM_TOGG, KC_LGUI, KC_LALT, KC_LCTL, KC_LSFT, XXXXXXX,    KC_PPLS,   KC_P4,   KC_P5,   KC_P6, KC_PMNS, KC_PEQL,
++      XXXXXXX, KC_LGUI, KC_LALT, KC_LCTL, KC_LSFT, XXXXXXX,    KC_LEFT, KC_DOWN,   KC_UP, KC_RGHT, KC_CAPS, XXXXXXX,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+-       RM_PREV, XXXXXXX, XXXXXXX, XXXXXXX,  EE_CLR, QK_BOOT,    KC_PAST,   KC_P1,   KC_P2,   KC_P3, KC_PSLS, KC_PDOT,
++      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,     KC_INS, KC_HOME, KC_PGDN, KC_PGUP,  KC_END, XXXXXXX,
+   // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
+-                         XXXXXXX, XXXXXXX, XXXXXXX, _______,    _______, _______, _______, _______
++                       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX,  KC_ENT, _______, XXXXXXX
+   //                    ╰───────────────────────────────────╯ ╰───────────────────────────────────╯
+   ),
+ 
+-  [LAYER_RAISE] = LAYOUT(
++  // Gentleman's DPI / sniping / drag-scroll keys do not exist here: cursor speed
++  // replaces the DPI keys, the pinch modifier replaces one sniping-DPI key.
++  [LAYER_POINTER] = LAYOUT(
+   // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
+-        KC_F12,   KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,      KC_F6,   KC_F7,   KC_F8,   KC_F9,  KC_F10,  KC_F11,
++      XXXXXXX, XXXXXXX, CSPD_DN, CSPD_UP, XXXXXXX, PINCH_M,    XXXXXXX, XXXXXXX, CSPD_UP, CSPD_DN, XXXXXXX, XXXXXXX,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+-       KC_MNXT, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    CSPD_DN, CSPD_UP, PINCH_M, XXXXXXX, XXXXXXX, KC_VOLU,
++      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+-       KC_MPLY, KC_LEFT,   KC_UP, KC_DOWN, KC_RGHT, XXXXXXX,    XXXXXXX, KC_RSFT, KC_RCTL, KC_RALT, KC_RGUI, KC_MUTE,
++      XXXXXXX, KC_LGUI, KC_LALT, KC_LCTL, KC_LSFT, XXXXXXX,    XXXXXXX, KC_RSFT, KC_RCTL, KC_RALT, KC_RGUI, XXXXXXX,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+-       KC_MPRV, KC_HOME, KC_PGUP, KC_PGDN,  KC_END, XXXXXXX,    QK_BOOT,  EE_CLR, XXXXXXX, XXXXXXX, XXXXXXX, KC_VOLD,
++      XXXXXXX, _______, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, _______, XXXXXXX,
+   // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
+-                         _______, _______, _______, _______,    _______, XXXXXXX, XXXXXXX, XXXXXXX
++                       MS_BTN2, MS_BTN1, MS_BTN3, XXXXXXX,    XXXXXXX, MS_BTN3, MS_BTN1, MS_BTN2
+   //                    ╰───────────────────────────────────╯ ╰───────────────────────────────────╯
+   ),
+ 
+-  // Explicitly transparent, so VIA's reset fills them with _______ instead of KC_NO.
+-  [LAYER_FREE_1] = LAYOUT_TRANSPARENT,
+-  [LAYER_FREE_2] = LAYOUT_TRANSPARENT,
+-  [LAYER_FREE_3] = LAYOUT_TRANSPARENT,
+-  [LAYER_FREE_4] = LAYOUT_TRANSPARENT,
++  // Hold HERDR (right outer thumb): each key sends HERDR_PREFIX, then itself.
++  // Hold Shift / Alt on the left thumbs for the prefix+shift / prefix+alt bindings.
++  [LAYER_HERDR] = LAYOUT(
++  // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
++      XXXXXXX,    KC_1,    KC_2,    KC_3,    KC_4,    KC_5,       KC_6,    KC_7,    KC_8,    KC_9,    KC_0, KC_MINS,
++  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
++       KC_TAB,    KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,       KC_Y,    KC_U,    KC_I,    KC_O,    KC_P, KC_BSLS,
++  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
++      KC_LBRC,    KC_A,    KC_S,    KC_D,    KC_F,    KC_G,       KC_H,    KC_J,    KC_K,    KC_L, KC_SCLN, KC_QUOT,
++  // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
++      XXXXXXX,    KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,       KC_N,    KC_M, KC_COMM,  KC_DOT, KC_SLSH, KC_QUES,
++  // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
++                       XXXXXXX, KC_LSFT, KC_LALT, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX, _______
++  //                    ╰───────────────────────────────────╯ ╰───────────────────────────────────╯
++  ),
+ 
+-  // Hold LOWER + RAISE. Theme and lighting controls on the right half.
++  // Hold NUMBS + MAGIC. Theme and lighting controls on the right half.
+   [LAYER_THEME] = LAYOUT(
+   // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
+        _______, _______, _______, _______, _______, _______,    XXXXXXX, XXXXXXX, XXXXXXX, RM_HUED, RM_HUEU, XXXXXXX,
+@@ -134,9 +185,28 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+ };
+ // clang-format on
+ 
+-// LOWER + RAISE together turn on the theme layer.
++// NUMBS + MAGIC together turn on the theme layer.
+ layer_state_t layer_state_set_user(layer_state_t state) {
+-    return update_tri_layer_state(state, LAYER_LOWER, LAYER_RAISE, LAYER_THEME);
++    return update_tri_layer_state(state, LAYER_NUMBERS, LAYER_MAGIC, LAYER_THEME);
++}
++
++// Home-row mod tapping terms, from Gentleman's keymap.
++uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
++    switch (keycode) {
++        case LGUI_T(KC_A):
++        case RGUI_T(KC_SCLN):
++            return 180;
++        case LSFT_T(KC_F):
++        case RSFT_T(KC_J):
++            return 120;
++        case LALT_T(KC_S):
++        case LCTL_T(KC_D):
++        case RCTL_T(KC_K):
++        case LALT_T(KC_L):
++            return 200;
++        default:
++            return TAPPING_TERM;
++    }
+ }
+ 
+ // Modifier held while pinching.
+@@ -161,7 +231,7 @@ _Static_assert(sizeof(user_config_t) == sizeof(uint32_t), "user_config_t must fi
+ 
+ // Bump this whenever the defaults or the keymap change, so devices that were
+ // flashed before reset to the new defaults on the next boot.
+-#define USER_CONFIG_MAGIC 0xDB
++#define USER_CONFIG_MAGIC 0xDC
+ 
+ static user_config_t user_config;
+ 
+@@ -265,10 +335,29 @@ uint8_t digitizer_pinch_mods_user(void) {
+     }
+ }
+ 
++// True for keys that get the Herdr prefix: plain keys (letters, digits,
++// punctuation, Tab, ...) and shifted ones like KC_QUES. Modifiers, layer keys,
++// mod-taps, mouse and media keys, KC_NO and the custom keycodes are left alone.
++static bool herdr_prefixed(uint16_t keycode) {
++    if (IS_QK_MODS(keycode)) {
++        keycode = QK_MODS_GET_BASIC_KEYCODE(keycode);
++    }
++    return IS_BASIC_KEYCODE(keycode);
++}
++
+ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+     if (!record->event.pressed) {
+         return true;
+     }
++    if (IS_LAYER_ON(LAYER_HERDR) && herdr_prefixed(keycode)) {
++        // Send the prefix alone, then let the key go out with the held Shift / Alt.
++        const uint8_t mods = get_mods();
++        clear_mods();
++        clear_weak_mods();
++        tap_code16(HERDR_PREFIX);
++        set_mods(mods);
++        return true;
++    }
+     switch (keycode) {
+         case CURSOR_SPEED_DOWN:
+             cursor_speed_step(false);
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+index cc6cfa6c..6491f77f 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+@@ -78,9 +78,32 @@ The tap, scroll, swipe and pinch thresholds are in `config.h`:
+ 
+ ## Keys
+ 
+-The speed and pinch keys are on the `RAISE` layer, top letter row of the right half (the `Y`,
+-`U` and `I` positions); both settings are saved and survive a power cycle. The theme key is on
+-the `LOWER` layer at the `T` position.
++The layout follows Gentleman's `vendor` keymap
++([Alan-TheGentleman/qmk_userspace](https://github.com/Alan-TheGentleman/qmk_userspace),
++`keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/vendor`). It assumes a **US** macOS input
++source, so the symbol keys produce the symbols printed in the keymap.
++
++The base layer has home-row mods: `A` `S` `D` `F` hold for `Cmd` `Alt` `Ctrl` `Shift`, and
++`J` `K` `L` `;` for `Shift` `Ctrl` `Alt` `Cmd`. The tapping term is 120 ms (`TAPPING_TERM`), with
++per-key terms in `get_tapping_term()`: 180 ms for `Cmd`, 120 ms for `Shift` and 200 ms for `Alt`
++and `Ctrl`. The thumbs are, from left to right: left click, `Space`, `PROG`, `NUMBS` | `MAGIC`,
++`Enter`, `Backspace` (`NAV` on hold), `HERDR`.
++
++| # | Layer | How to reach it | Contents |
++| --- | --- | --- | --- |
++| 0 | `BASE` | Default | Letters, digits, home-row mods |
++| 1 | `MAGIC` | Hold `MAGIC` (right inner thumb) | RGB controls, media keys, `QK_BOOT`, `EE_CLR` |
++| 2 | `PROG` | Hold `PROG` (left thumb, third from the left) | Programming symbols |
++| 3 | `NUMBERS` | Hold `NUMBS` (left inner thumb) | Number pad on the right, `F1`–`F9` on the left |
++| 4 | `NAV` | Hold `Backspace` (right thumb, third from the left) | Arrows, `Home`/`End`, `PgUp`/`PgDn`, `Insert`, `Caps Lock` |
++| 5 | `POINTER` | Hold `Z` or `/` | Mouse buttons on the thumbs, cursor speed, pinch modifier |
++| 6 | `HERDR` | Hold `HERDR` (right outer thumb) | Herdr shortcuts, see below |
++| 7 | `THEME` | Hold `NUMBS` + `MAGIC` together | Lighting and theme controls on the right half |
++
++VIA has 8 layers (`DYNAMIC_KEYMAP_LAYER_COUNT`), all defined in `keymap.c`. Use VIA's
++**Save + Load** tab to back up your layout as a `.json` file.
++
++### Custom keys
+ 
+ | Key                 | Hex      | Action                                                                   |
+ | ------------------- | -------- | ------------------------------------------------------------------------ |
+@@ -93,12 +116,47 @@ the `LOWER` layer at the `T` position.
+ | `RGB_THEME_DESERT`  | `0x7E46` | Turns the RGB on and switches to the Desert effect, keeping the brightness |
+ | `RGB_THEME_HORIZON` | `0x7E47` | Turns the RGB on and switches to the Horizon effect, keeping the brightness |
+ 
+-VIA has 8 layers (`DYNAMIC_KEYMAP_LAYER_COUNT`). Layers 4 to 7 start transparent; use
+-`MO(3)`…`MO(6)` (or `TG`, `TO`, …) in VIA to reach them, and VIA's **Save + Load** tab to back up
+-your layout as a `.json` file.
++The cursor speed and pinch keys are on the `POINTER` layer, on the number row (both settings are
++saved and survive a power cycle):
+ 
+-Layer 8 (`LAYER_THEME`) holds the lighting controls on the right half and turns on while
+-`LOWER` and `RAISE` are both held (`update_tri_layer_state`). The left half is transparent.
++| Position | Key |
++| --- | --- |
++| `2` / `3` | `CURSOR_SPEED_DOWN` / `CURSOR_SPEED_UP` |
++| `5` | `PINCH_MOD_CYCLE` |
++| `8` / `9` | `CURSOR_SPEED_UP` / `CURSOR_SPEED_DOWN` (mirrored, as in Gentleman's keymap) |
++
++Hold `Z` with the left hand while the right hand is on the trackpad to reach them. Gentleman's
++DPI, sniping and drag-scroll keys do not exist in this firmware; those positions are empty.
++
++The cursor starts at 25% of the trackpad's 1:1 speed. The steps are 12.5%, 19%, 25%, 37.5%,
++50%, 75%, 100%, 150% and 200%, so each press is easy to feel. Cursor speed only changes the
++pointer; scroll and swipes feel the same at every speed.
++
++### Herdr layer
++
++Herdr uses a tmux-style prefix key. Hold `HERDR` (right
++outer thumb): every key on this layer sends the prefix first and then itself, so `HERDR` + `C`
++is `prefix c` (new tab) and `HERDR` + `-` is `prefix -` (split horizontal). The letters, digits
++and punctuation sit where they are on the base layer, without home-row mods. Also on the layer:
++`[` (copy mode) on the `Esc` position, `Tab` where it is on the base layer, and `?` (help) on the
++right of `/`.
++
++Hold `Shift` (left thumb, on `Space`) or `Alt` (left thumb, on `PROG`) for the shifted and Alt
++bindings: `HERDR` + `Shift` + `X` is `prefix shift+x` (close tab), `HERDR` + `Shift` + `Tab` is
++`prefix shift+tab` (previous pane), and `HERDR` + `Alt` + `J` / `K` is `prefix alt+j` /
++`prefix alt+k`. The prefix itself is sent without any modifier, then the held modifiers come
++back for the key.
++
++The prefix is `HERDR_PREFIX` in `config.h`, `C(KC_Q)` by default, which matches
++`[keys] prefix = "ctrl+q"` in `~/.config/herdr/config.toml`. To use another prefix, change both,
++for example `#define HERDR_PREFIX C(KC_B)` for `ctrl+b`, and rebuild. Modifiers, layer keys and
++the custom keys above never send the prefix.
++
++### Theme layer
++
++Layer 7 (`LAYER_THEME`) holds the lighting controls on the right half and turns on while `NUMBS`
++and `MAGIC` (the two inner thumbs) are both held (`update_tri_layer_state`). The left half is
++transparent.
+ 
+ | Position (right half) | Key | Action |
+ | --- | --- | --- |
+@@ -117,10 +175,6 @@ Layer 8 (`LAYER_THEME`) holds the lighting controls on the right half and turns
+ `RGB_MATRIX_MAXIMUM_BRIGHTNESS` is capped at 128 (the keyboard allows 176), so the brightness keys
+ and VIA cannot bring the brownout back.
+ 
+-The cursor starts at 25% of the trackpad's 1:1 speed. The steps are 12.5%, 19%, 25%, 37.5%,
+-50%, 75%, 100%, 150% and 200%, so each press is easy to feel. Cursor speed only changes the
+-pointer; scroll and swipes feel the same at every speed.
+-
+ To place a key anywhere with [VIA](https://usevia.app), pick the "Any" key and type the hex
+ value. VIA keeps its own copy of the layout in EEPROM and only reloads it when the build date
+ changes. To make sure the keys above show up, this keymap stores a settings version: when a
+@@ -130,8 +184,8 @@ VIA layout to the defaults (your VIA key changes are lost once). `EE_CLR` does t
+ ## Lighting
+ 
+ A second palette theme, **Gruvbox Dark** (bright accents Red, Orange, Yellow, Green, Aqua, Blue and
+-Purple), comes right after Catppuccin in the effect list: `RM_NEXT` (`LOWER` + `Tab`) from
+-Catppuccin switches to it, and `RGB_THEME_RESTORE` (`LOWER` + `T`) goes back. It shares the same
++Purple), comes right after Catppuccin in the effect list: `RM_NEXT` (theme layer `M`) from
++Catppuccin switches to it, and `RGB_THEME_RESTORE` (theme layer `Y`) goes back. It shares the same
+ gradient layout and ripple, with `GRUVBOX_POWER_SCALE` `221` (its accents load each LED at about
+ 58%).
+ 
+@@ -177,7 +231,7 @@ The default effect is a [Catppuccin](https://catppuccin.com) Mocha theme (`rgb_m
+   saturated effect at the same brightness. All channels are scaled equally, so the hues stay the
+   same; set it to `255` for the exact palette values.
+ - The default brightness is 64 (of the keyboard's maximum 176). `RM_NEXT` / `RM_PREV` /
+-  `RM_TOGG` on `LOWER` and VIA still change the effect and brightness. Keep the brightness low
++  `RM_TOGG` on the `MAGIC` and theme layers and VIA still change the effect and brightness. Keep the brightness low
+   if the colors drift to red or the trackpad stops; the firmware now reconfigures the trackpad
+   when its chip resets, but a sagging supply is still best avoided.
+ 
+-- 
+2.56.0
+

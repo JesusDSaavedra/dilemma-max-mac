@@ -1,7 +1,7 @@
 From 59599229adb77a5c3e9a015ec77fbccf3d91f9ac Mon Sep 17 00:00:00 2001
 From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
 Date: Fri, 9 Oct 2026 21:37:22 -0500
-Subject: [PATCH 02/26] feat(digitizer): send 16-bit swipe keycodes and add mac
+Subject: [PATCH 02/30] feat(digitizer): send 16-bit swipe keycodes and add mac
  keymap
 
 Swipe gestures used tap_code(), which truncates modded keycodes such as

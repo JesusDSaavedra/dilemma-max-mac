@@ -1,7 +1,7 @@
 From 8e29651b21ad1e112a3b1e733d9726f51591b11d Mon Sep 17 00:00:00 2001
 From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
 Date: Fri, 9 Oct 2026 21:42:31 -0500
-Subject: [PATCH 04/26] feat(digitizer): add pinch to zoom in mouse fallback
+Subject: [PATCH 04/30] feat(digitizer): add pinch to zoom in mouse fallback
 
 With DIGITIZER_MOUSE_PINCH_ENABLE, two finger gestures scroll with the
 finger midpoint. When the finger distance change passes

@@ -1,0 +1,119 @@
+From 34e0389e16a5027522f4d0ac076d6afe3b8ea785 Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Sat, 10 Oct 2026 20:42:13 -0500
+Subject: [PATCH 30/30] feat(dilemma): light active keys in a per-layer color
+ while a layer is held
+
+---
+ .../4x6_4_procyon/keymaps/mac/keymap.c        | 60 +++++++++++++++++++
+ .../4x6_4_procyon/keymaps/mac/readme.md       | 23 +++++++
+ 2 files changed, 83 insertions(+)
+
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+index a26e0971..54ee298b 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+@@ -190,6 +190,66 @@ layer_state_t layer_state_set_user(layer_state_t state) {
+     return update_tri_layer_state(state, LAYER_NUMBERS, LAYER_MAGIC, LAYER_THEME);
+ }
+ 
++#ifdef RGB_MATRIX_ENABLE
++// Layer indicators: while a layer is held, only the keys that do something on it
++// light up in the layer's color, the keys held to reach it light up white, and
++// everything else turns off. Colors are tuned for the WS2812 LEDs, whose green
++// is much brighter than their red, and scaled by the current brightness.
++static const rgb_t layer_colors[] = {
++    [LAYER_MAGIC]   = {.r = 0xFF, .g = 0x70, .b = 0x00}, // Yellow
++    [LAYER_PROG]    = {.r = 0x90, .g = 0x00, .b = 0xFF}, // Purple
++    [LAYER_NUMBERS] = {.r = 0xFF, .g = 0x20, .b = 0x00}, // Orange
++    [LAYER_NAV]     = {.r = 0x00, .g = 0xC0, .b = 0x20}, // Green
++    [LAYER_POINTER] = {.r = 0x00, .g = 0x60, .b = 0xFF}, // Blue
++    [LAYER_HERDR]   = {.r = 0x00, .g = 0xB0, .b = 0x90}, // Teal
++    [LAYER_THEME]   = {.r = 0xFF, .g = 0x00, .b = 0x80}, // Pink
++};
++
++// Whether the base-layer keycode is one of the keys held to reach the layer.
++static bool is_layer_trigger(uint16_t keycode, uint8_t layer) {
++    uint8_t target = 0xFF;
++    if (IS_QK_MOMENTARY(keycode)) {
++        target = QK_MOMENTARY_GET_LAYER(keycode);
++    } else if (IS_QK_LAYER_TAP(keycode)) {
++        target = QK_LAYER_TAP_GET_LAYER(keycode);
++    }
++    if (layer == LAYER_THEME) {
++        return target == LAYER_NUMBERS || target == LAYER_MAGIC;
++    }
++    return target == layer;
++}
++
++bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
++    const uint8_t layer = get_highest_layer(layer_state);
++    if (layer == LAYER_BASE || layer >= ARRAY_SIZE(layer_colors)) {
++        return false;
++    }
++    const uint8_t val   = rgb_matrix_get_val();
++    const rgb_t   color = layer_colors[layer];
++
++    // Turn everything off first, including LEDs that are not under a key.
++    for (uint8_t i = led_min; i < led_max; i++) {
++        rgb_matrix_set_color(i, 0, 0, 0);
++    }
++    for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
++        for (uint8_t col = 0; col < MATRIX_COLS; col++) {
++            const uint8_t led = g_led_config.matrix_co[row][col];
++            if (led == NO_LED || led < led_min || led >= led_max) {
++                continue;
++            }
++            const keypos_t pos     = {.row = row, .col = col};
++            const uint16_t keycode = keymap_key_to_keycode(layer, pos);
++            if (is_layer_trigger(keymap_key_to_keycode(LAYER_BASE, pos), layer)) {
++                rgb_matrix_set_color(led, val, val, val);
++            } else if (keycode != KC_NO && keycode != KC_TRNS) {
++                rgb_matrix_set_color(led, color.r * val / 255, color.g * val / 255, color.b * val / 255);
++            }
++        }
++    }
++    return false;
++}
++#endif
++
+ // Home-row mod tapping terms, from Gentleman's keymap.
+ uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
+     switch (keycode) {
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+index 6491f77f..2a39648d 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+@@ -238,6 +238,29 @@ The default effect is a [Catppuccin](https://catppuccin.com) Mocha theme (`rgb_m
+ After flashing a firmware with a new settings version (see above), the first boot selects this
+ effect and the default brightness again.
+ 
++### Layer indicators
++
++While a layer is held, `rgb_matrix_indicators_advanced_user` draws over the theme:
++
++- **Keys that do something on that layer** light up in the layer's color.
++- **The keys held to reach the layer** light up white.
++- **Everything else** turns off.
++- **Base layer:** the theme shows as usual.
++
++Colors are tuned for the LEDs and scaled by the current brightness:
++
++| Layer | Color |
++| --- | --- |
++| MAGIC | Yellow |
++| PROG | Purple |
++| NUMBERS | Orange |
++| NAV | Green |
++| POINTER | Blue |
++| HERDR | Teal |
++| THEME | Pink |
++
++Edit `layer_colors[]` in `keymap.c` to change them. Each half reads keycodes from its own dynamic keymap. VIA writes only to the half connected over USB, so after VIA edits the other half keeps showing the default layout.
++
+ ## Build
+ 
+     qmk compile -kb bastardkb/dilemma/4x6_4_procyon -km mac
+-- 
+2.56.0
+
