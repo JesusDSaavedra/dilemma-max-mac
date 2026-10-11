@@ -93,7 +93,7 @@ been on for `LAYER_INDICATOR_DELAY` (250 ms). The thumbs are, from left to right
 
 | # | Layer | How to reach it | Contents |
 | --- | --- | --- | --- |
-| 0 | `BASE` | Default | Letters, digits, home-row mods |
+| 0 | `BASE` | Default | Letters, digits, home-row mods; the top-left key (`LOCK_MAC`, `Ctrl+Cmd+Q`) locks the Mac |
 | 1 | `MAGIC` | Hold `MAGIC` (right inner thumb) | RGB controls, media keys, `QK_BOOT`, `EE_CLR` (both must be held for `DANGER_KEY_HOLD_MS`, 2 s; the key turns red on the USB half while held, and releasing early cancels) |
 | 2 | `PROG` | Hold `PROG` (left thumb, third from the left) | Programming symbols |
 | 3 | `NUMBERS` | Hold `NUMBS` (left inner thumb) | Number pad on the right, `F1`–`F9` on the left |
@@ -239,6 +239,10 @@ The default effect is a [Catppuccin](https://catppuccin.com) Mocha theme (`rgb_m
 
 After flashing a firmware with a new settings version (see above), the first boot selects this
 effect and the default brightness again.
+
+### Idle timeout
+
+The RGB turns off after 15 minutes without key or trackpad input (`RGB_MATRIX_TIMEOUT` 900000 ms) and comes back on the next input. `SPLIT_ACTIVITY_ENABLE` keeps both halves in sync.
 
 ### Layer indicators
 

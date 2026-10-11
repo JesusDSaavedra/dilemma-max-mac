@@ -1,0 +1,86 @@
+From 34394860a7c6c7250c35b1d922ad6bd13dc99465 Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Sun, 11 Oct 2026 01:59:40 -0500
+Subject: [PATCH 33/33] feat(dilemma): lock the Mac from the top-left key and
+ turn RGB off after 15 min idle
+
+---
+ .../bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h    | 5 +++++
+ .../bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c    | 6 ++++--
+ .../bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md   | 6 +++++-
+ 3 files changed, 14 insertions(+), 3 deletions(-)
+
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+index 1f5c6493..8a143b5f 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h
+@@ -136,6 +136,11 @@
+ #define LAYER_INDICATOR_DELAY 250
+ // QK_BOOT and EE_CLR fire only after being held this long (2 s).
+ #define DANGER_KEY_HOLD_MS 2000
++// Turn the RGB off after 15 minutes without keys or trackpad; any key turns it
++// back on. SPLIT_ACTIVITY_ENABLE syncs activity so both halves switch together.
++#undef RGB_MATRIX_TIMEOUT
++#define RGB_MATRIX_TIMEOUT 900000
++#define SPLIT_ACTIVITY_ENABLE
+ #define TAPPING_TERM_PER_KEY
+ 
+ /* Sync the layer and LED state to both halves. */
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+index aa11d6bf..de21bbae 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+@@ -40,6 +40,8 @@ enum dilemma_keymap_layers {
+ #define PT_Z LT(LAYER_POINTER, KC_Z)
+ #define PT_SLSH LT(LAYER_POINTER, KC_SLSH)
+ #define HERDR MO(LAYER_HERDR)
++// Ctrl+Cmd+Q: macOS "Lock Screen". Letters only, so it works with any input source.
++#define LOCK_MAC C(G(KC_Q))
+ 
+ // Custom keycodes start at SAFE_RANGE (QK_USER_0). Type the hex values into
+ // VIA's "Any" key to place them (see readme.md).
+@@ -67,7 +69,7 @@ enum mac_keycodes {
+ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+   [LAYER_BASE] = LAYOUT(
+   // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
+-      XXXXXXX,    KC_1,    KC_2,    KC_3,    KC_4,    KC_5,       KC_6,    KC_7,    KC_8,    KC_9,    KC_0, KC_MINS,
++     LOCK_MAC,    KC_1,    KC_2,    KC_3,    KC_4,    KC_5,       KC_6,    KC_7,    KC_8,    KC_9,    KC_0, KC_MINS,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+        KC_TAB,    KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,       KC_Y,    KC_U,    KC_I,    KC_O,    KC_P, KC_BSLS,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+@@ -328,7 +330,7 @@ _Static_assert(sizeof(user_config_t) == sizeof(uint32_t), "user_config_t must fi
+ 
+ // Bump this whenever the defaults or the keymap change, so devices that were
+ // flashed before reset to the new defaults on the next boot.
+-#define USER_CONFIG_MAGIC 0xDC
++#define USER_CONFIG_MAGIC 0xDD
+ 
+ static user_config_t user_config;
+ 
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+index cd129a2c..e1c60225 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+@@ -93,7 +93,7 @@ been on for `LAYER_INDICATOR_DELAY` (250 ms). The thumbs are, from left to right
+ 
+ | # | Layer | How to reach it | Contents |
+ | --- | --- | --- | --- |
+-| 0 | `BASE` | Default | Letters, digits, home-row mods |
++| 0 | `BASE` | Default | Letters, digits, home-row mods; the top-left key (`LOCK_MAC`, `Ctrl+Cmd+Q`) locks the Mac |
+ | 1 | `MAGIC` | Hold `MAGIC` (right inner thumb) | RGB controls, media keys, `QK_BOOT`, `EE_CLR` (both must be held for `DANGER_KEY_HOLD_MS`, 2 s; the key turns red on the USB half while held, and releasing early cancels) |
+ | 2 | `PROG` | Hold `PROG` (left thumb, third from the left) | Programming symbols |
+ | 3 | `NUMBERS` | Hold `NUMBS` (left inner thumb) | Number pad on the right, `F1`–`F9` on the left |
+@@ -240,6 +240,10 @@ The default effect is a [Catppuccin](https://catppuccin.com) Mocha theme (`rgb_m
+ After flashing a firmware with a new settings version (see above), the first boot selects this
+ effect and the default brightness again.
+ 
++### Idle timeout
++
++The RGB turns off after 15 minutes without key or trackpad input (`RGB_MATRIX_TIMEOUT` 900000 ms) and comes back on the next input. `SPLIT_ACTIVITY_ENABLE` keeps both halves in sync.
++
+ ### Layer indicators
+ 
+ While a layer is held, `rgb_matrix_indicators_advanced_user` draws over the theme:
+-- 
+2.56.0
+

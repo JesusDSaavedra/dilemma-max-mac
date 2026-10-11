@@ -40,6 +40,8 @@ enum dilemma_keymap_layers {
 #define PT_Z LT(LAYER_POINTER, KC_Z)
 #define PT_SLSH LT(LAYER_POINTER, KC_SLSH)
 #define HERDR MO(LAYER_HERDR)
+// Ctrl+Cmd+Q: macOS "Lock Screen". Letters only, so it works with any input source.
+#define LOCK_MAC C(G(KC_Q))
 
 // Custom keycodes start at SAFE_RANGE (QK_USER_0). Type the hex values into
 // VIA's "Any" key to place them (see readme.md).
@@ -67,7 +69,7 @@ enum mac_keycodes {
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   [LAYER_BASE] = LAYOUT(
   // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
-      XXXXXXX,    KC_1,    KC_2,    KC_3,    KC_4,    KC_5,       KC_6,    KC_7,    KC_8,    KC_9,    KC_0, KC_MINS,
+     LOCK_MAC,    KC_1,    KC_2,    KC_3,    KC_4,    KC_5,       KC_6,    KC_7,    KC_8,    KC_9,    KC_0, KC_MINS,
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
        KC_TAB,    KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,       KC_Y,    KC_U,    KC_I,    KC_O,    KC_P, KC_BSLS,
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
@@ -328,7 +330,7 @@ _Static_assert(sizeof(user_config_t) == sizeof(uint32_t), "user_config_t must fi
 
 // Bump this whenever the defaults or the keymap change, so devices that were
 // flashed before reset to the new defaults on the next boot.
-#define USER_CONFIG_MAGIC 0xDC
+#define USER_CONFIG_MAGIC 0xDD
 
 static user_config_t user_config;
 

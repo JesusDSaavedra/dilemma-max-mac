@@ -1,7 +1,7 @@
 From a5fe9e818e4f9b28e4c0a4773d11608bca40970e Mon Sep 17 00:00:00 2001
 From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
 Date: Fri, 9 Oct 2026 22:14:13 -0500
-Subject: [PATCH 05/32] fix(dilemma): default mac cursor speed to 25% and
+Subject: [PATCH 05/33] fix(dilemma): default mac cursor speed to 25% and
  reload stale VIA keymap
 
 CURSOR_SPEED_DOWN never reached process_record_user on a device flashed

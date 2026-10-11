@@ -68,7 +68,7 @@ Si una mitad no responde (por ejemplo, porque tiene un firmware roto), `QK_BOOT`
 
 ### Primer arranque
 
-La primera vez que arranques este firmware (versión de ajustes `0xDC`, la del layout de Gentleman) se **resetea una sola vez**:
+La primera vez que arranques un firmware con una versión de ajustes nueva (la actual es `0xDD`) se **resetea una sola vez**:
 - el layout de VIA,
 - la velocidad del cursor,
 - el modo de zoom,
@@ -186,7 +186,8 @@ El layout sigue el keymap `vendor` de Gentleman ([Alan-TheGentleman/qmk_userspac
 
 Es QWERTY, con estas particularidades:
 
-- Fila de números: `1`…`0`, y `-` en la columna exterior derecha. La columna exterior izquierda de esa fila no hace nada.
+- Fila de números: `1`…`0`, y `-` en la columna exterior derecha.
+- **Tecla de arriba a la izquierda** (la del artisan Tai-Hao): **bloquea la Mac** (manda `Ctrl+Cmd+Q`). Un toque basta, así que cuidado de no rozarla sin querer: no borra nada, solo te pide la contraseña.
 - Columna exterior izquierda: `Tab`, `Esc` y `` ` ``. Columna exterior derecha: `\`, `'` y `Alt`.
 - **Z** y **/**, si las mantenés, activan `POINTER` (sección 6.6).
 
@@ -440,6 +441,10 @@ El brillo máximo quedó limitado a **128** (el teclado permitía 176), así ni 
 - **Cómo activarlo:** NUMBS + MAGIC + **P**.
 - **Consumo:** 69% de carga (es el más claro después de Catppuccin), atenuado al ~73% (`HORIZON_POWER_SCALE` `185`).
 
+### Apagado automático
+
+Si no tocás el teclado ni el trackpad durante **15 minutos**, las luces se apagan solas. Se prenden de nuevo apenas apretás cualquier tecla o movés el trackpad. Las dos mitades se apagan y se prenden juntas (`SPLIT_ACTIVITY_ENABLE`). El tiempo está en `RGB_MATRIX_TIMEOUT` (`config.h`, en milisegundos: `900000` = 15 min).
+
 ### Colores por capa
 
 Mientras mantenés una capa, las luces te muestran qué teclas usar:
@@ -667,5 +672,6 @@ Por eso el tema se atenúa (`CATPPUCCIN_POWER_SCALE`) y el brillo por defecto es
 | `34e0389e` | Colores por capa: al mantener una capa se iluminan solo sus teclas activas |
 | `04892854` | Teclas de doble función más tolerantes (Shift 200 ms; Cmd, Alt y Ctrl 260 ms; resto 200 ms) con Flow Tap; los colores de capa aparecen a los 250 ms |
 | `16177ff1` | `QK_BOOT` y `EE_CLR` protegidas: hay que mantenerlas 2 segundos (se ponen rojas) |
+| `34394860` | Tecla de arriba a la izquierda bloquea la Mac; luces se apagan tras 15 min sin uso |
 
 Los cambios están solo en tu computadora: no se subieron a ningún repositorio remoto.

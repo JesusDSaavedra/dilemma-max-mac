@@ -1,7 +1,7 @@
 From 2a6ac9a583bcddf1429bf946eb18a8a3f9ebcb28 Mon Sep 17 00:00:00 2001
 From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
 Date: Sat, 10 Oct 2026 01:51:20 -0500
-Subject: [PATCH 17/32] feat(dilemma): restore Catppuccin key press ripple
+Subject: [PATCH 17/33] feat(dilemma): restore Catppuccin key press ripple
 
 ---
  .../bastardkb/dilemma/4x6_4_procyon/keymaps/mac/config.h   | 7 ++++++-
