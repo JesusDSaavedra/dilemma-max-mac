@@ -114,7 +114,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
       _______, _______, _______, _______, _______, _______,    _______, _______, _______, _______, _______, _______,
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
-      _______, _______, _______,   KC_F7,   KC_F8,   KC_F9,    _______,    KC_7,    KC_8,    KC_9, _______, _______,
+  // QK_BOOT on Tab, as on MAGIC: NUMBS + Tab are both on the left half, so the
+  // left half can enter the bootloader on its own, even when the halves run
+  // different firmware and the right-half MAGIC thumb cannot reach it.
+      QK_BOOT, _______, _______,   KC_F7,   KC_F8,   KC_F9,    _______,    KC_7,    KC_8,    KC_9, _______, _______,
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
       _______, KC_LSFT, KC_LALT,   KC_F4,   KC_F5,   KC_F6,    _______,    KC_4,    KC_5,    KC_6,    KC_0, _______,
   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
@@ -330,7 +333,7 @@ _Static_assert(sizeof(user_config_t) == sizeof(uint32_t), "user_config_t must fi
 
 // Bump this whenever the defaults or the keymap change, so devices that were
 // flashed before reset to the new defaults on the next boot.
-#define USER_CONFIG_MAGIC 0xDD
+#define USER_CONFIG_MAGIC 0xDF
 
 static user_config_t user_config;
 

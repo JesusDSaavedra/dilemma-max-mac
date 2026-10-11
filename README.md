@@ -27,7 +27,7 @@ The full user guide (Spanish) is in [`docs/GUIA-CONFIGURACION.md`](docs/GUIA-CON
 - **Layer colors:** while a layer is held, only its active keys light up in the layer's color, and the held keys light up white. The colors appear once the layer has been on for 250 ms.
 - **Mac lock key:** the top-left key sends `Ctrl+Cmd+Q` (Lock Screen).
 - **Idle RGB off:** the LEDs turn off after 15 minutes without input and come back on the next input; both halves stay in sync.
-- **Protected firmware keys:** `QK_BOOT` and `EE_CLR` only fire after being held for 2 s, and the key turns red while held.
+- **Protected firmware keys:** `QK_BOOT` and `EE_CLR` only fire after being held for 2 s, and the key turns red while held. `QK_BOOT` is on `Tab` with either `FN` thumb: `MAGIC` (right) or `NUMBS` (left). The left-only combo lets the left half enter the bootloader on its own.
 - **macOS trackpad gestures** in mouse-fallback mode:
   - pinch-to-zoom;
   - two-finger flick and left-edge swipe for back/forward, sent as mouse buttons 4/5 so they work regardless of keyboard layout;

@@ -1,0 +1,58 @@
+From cb1f14557abd2c5de7456a5170fc144b825bff56 Mon Sep 17 00:00:00 2001
+From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
+Date: Sun, 11 Oct 2026 02:17:52 -0500
+Subject: [PATCH 35/35] feat(dilemma): move the left-half QK_BOOT to Tab on the
+ NUMBERS layer
+
+---
+ .../dilemma/4x6_4_procyon/keymaps/mac/keymap.c       | 12 ++++++------
+ .../dilemma/4x6_4_procyon/keymaps/mac/readme.md      |  2 +-
+ 2 files changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+index cf1664c1..954b400c 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/keymap.c
+@@ -112,12 +112,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+ 
+   [LAYER_NUMBERS] = LAYOUT(
+   // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
+-  // QK_BOOT here (NUMBS + top-left, both on the left half) lets the left half
+-  // enter the bootloader on its own, even when the halves run different
+-  // firmware and the right-half MAGIC thumb cannot reach it.
+-      QK_BOOT, _______, _______, _______, _______, _______,    _______, _______, _______, _______, _______, _______,
++      _______, _______, _______, _______, _______, _______,    _______, _______, _______, _______, _______, _______,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+-      _______, _______, _______,   KC_F7,   KC_F8,   KC_F9,    _______,    KC_7,    KC_8,    KC_9, _______, _______,
++  // QK_BOOT on Tab, as on MAGIC: NUMBS + Tab are both on the left half, so the
++  // left half can enter the bootloader on its own, even when the halves run
++  // different firmware and the right-half MAGIC thumb cannot reach it.
++      QK_BOOT, _______, _______,   KC_F7,   KC_F8,   KC_F9,    _______,    KC_7,    KC_8,    KC_9, _______, _______,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+       _______, KC_LSFT, KC_LALT,   KC_F4,   KC_F5,   KC_F6,    _______,    KC_4,    KC_5,    KC_6,    KC_0, _______,
+   // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+@@ -333,7 +333,7 @@ _Static_assert(sizeof(user_config_t) == sizeof(uint32_t), "user_config_t must fi
+ 
+ // Bump this whenever the defaults or the keymap change, so devices that were
+ // flashed before reset to the new defaults on the next boot.
+-#define USER_CONFIG_MAGIC 0xDE
++#define USER_CONFIG_MAGIC 0xDF
+ 
+ static user_config_t user_config;
+ 
+diff --git a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+index feed7092..17df66b0 100644
+--- a/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
++++ b/keyboards/bastardkb/dilemma/4x6_4_procyon/keymaps/mac/readme.md
+@@ -96,7 +96,7 @@ been on for `LAYER_INDICATOR_DELAY` (250 ms). The thumbs are, from left to right
+ | 0 | `BASE` | Default | Letters, digits, home-row mods; the top-left key (`LOCK_MAC`, `Ctrl+Cmd+Q`) locks the Mac |
+ | 1 | `MAGIC` | Hold `MAGIC` (right inner thumb) | RGB controls, media keys, `QK_BOOT`, `EE_CLR` (both must be held for `DANGER_KEY_HOLD_MS`, 2 s; the key turns red on the USB half while held, and releasing early cancels) |
+ 
+-`NUMBERS` also has `QK_BOOT` on its top-left key. `NUMBS` and that key are both on the left half, so the left half can enter the bootloader on its own, even when the halves run different firmware. It needs the same 2 s hold.
++`NUMBERS` also has `QK_BOOT` on `Tab`, the same key as on `MAGIC`. `NUMBS` and `Tab` are both on the left half, so the left half can enter the bootloader on its own, even when the halves run different firmware. It needs the same 2 s hold.
+ | 2 | `PROG` | Hold `PROG` (left thumb, third from the left) | Programming symbols |
+ | 3 | `NUMBERS` | Hold `NUMBS` (left inner thumb) | Number pad on the right, `F1`–`F9` on the left |
+ | 4 | `NAV` | Hold `Backspace` (right thumb, third from the left) | Arrows, `Home`/`End`, `PgUp`/`PgDn`, `Insert`, `Caps Lock` |
+-- 
+2.56.0
+

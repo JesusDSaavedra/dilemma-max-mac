@@ -1,7 +1,7 @@
 From 34394860a7c6c7250c35b1d922ad6bd13dc99465 Mon Sep 17 00:00:00 2001
 From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
 Date: Sun, 11 Oct 2026 01:59:40 -0500
-Subject: [PATCH 33/33] feat(dilemma): lock the Mac from the top-left key and
+Subject: [PATCH 33/35] feat(dilemma): lock the Mac from the top-left key and
  turn RGB off after 15 min idle
 
 ---

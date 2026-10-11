@@ -95,6 +95,8 @@ been on for `LAYER_INDICATOR_DELAY` (250 ms). The thumbs are, from left to right
 | --- | --- | --- | --- |
 | 0 | `BASE` | Default | Letters, digits, home-row mods; the top-left key (`LOCK_MAC`, `Ctrl+Cmd+Q`) locks the Mac |
 | 1 | `MAGIC` | Hold `MAGIC` (right inner thumb) | RGB controls, media keys, `QK_BOOT`, `EE_CLR` (both must be held for `DANGER_KEY_HOLD_MS`, 2 s; the key turns red on the USB half while held, and releasing early cancels) |
+
+`NUMBERS` also has `QK_BOOT` on `Tab`, the same key as on `MAGIC`. `NUMBS` and `Tab` are both on the left half, so the left half can enter the bootloader on its own, even when the halves run different firmware. It needs the same 2 s hold.
 | 2 | `PROG` | Hold `PROG` (left thumb, third from the left) | Programming symbols |
 | 3 | `NUMBERS` | Hold `NUMBS` (left inner thumb) | Number pad on the right, `F1`–`F9` on the left |
 | 4 | `NAV` | Hold `Backspace` (right thumb, third from the left) | Arrows, `Home`/`End`, `PgUp`/`PgDn`, `Insert`, `Caps Lock` |

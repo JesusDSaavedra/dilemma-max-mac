@@ -1,7 +1,7 @@
 From 67e21a56d00e908fc9072dacfa089fb75ffba018 Mon Sep 17 00:00:00 2001
 From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
 Date: Sat, 10 Oct 2026 02:52:27 -0500
-Subject: [PATCH 23/33] feat(dilemma): add Alegra palette theme on the theme
+Subject: [PATCH 23/35] feat(dilemma): add Alegra palette theme on the theme
  layer
 
 ---

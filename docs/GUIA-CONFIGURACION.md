@@ -51,7 +51,7 @@ El TRRS **se queda conectado todo el tiempo**: solo movés el cable USB. Flashea
 1. **USB en la mitad derecha.** Mantené **`FN` derecho** (`MAGIC`, el pulgar derecho más cercano al centro) y **mantené 2 segundos** la tecla de **`\`** (columna exterior derecha, fila de la Q). Mientras la mantenés se pone **roja**; a los 2 segundos entra en modo de carga. Si la soltás antes, no pasa nada. También sirve `Tab`, pero esa no se pone roja porque está en la otra mitad.
 2. Aparece la unidad **`RPI-RP2`**. Arrastrá el `.uf2` a esa unidad. La mitad se reinicia sola.
 3. **Desenchufá el USB de la derecha y enchufalo en la izquierda.** El TRRS sigue conectado.
-4. Mantené otra vez **`FN` derecho** y **mantené 2 segundos `Tab`** (ahora es la mitad del USB, así que se pone roja). Entra en modo de carga la izquierda. Arrastrá el `.uf2`.
+4. Mantené **`FN` izquierdo** (`NUMBS`, el pulgar izquierdo más cercano al centro) y **mantené 2 segundos `Tab`**. Se pone roja y la izquierda entra en modo de carga. Arrastrá el `.uf2`. Esta combinación usa solo teclas de la mitad izquierda, así que funciona aunque las dos mitades tengan firmwares distintos. `FN` derecho + `Tab` también sirve, pero solo si las dos mitades tienen el mismo firmware.
 5. Volvé a pasar el USB a la **mitad derecha**, la del trackpad.
 
 > **Si una mitad todavía tiene el firmware anterior al layout de Gentleman**, `QK_BOOT` está en LOWER + **B** (izquierda) o RAISE + **N** (derecha).
@@ -251,7 +251,7 @@ Z    X    C    V    B        N    M    ,    .    /
 
 ### 6.4 NUMBERS: números y teclas F
 
-Mantené **NUMBS** (el pulgar izquierdo más cercano al centro). `·` funciona igual que en la base. La fila de números, las columnas exteriores y los pulgares también quedan como en la base.
+Mantené **NUMBS** (el pulgar izquierdo más cercano al centro). `·` funciona igual que en la base. La fila de números, las columnas exteriores y los pulgares también quedan como en la base, salvo **`Tab`, que acá es `QK_BOOT`** (modo de carga de la mitad izquierda, mantenida 2 segundos; sección 3). Así `QK_BOOT` está siempre en `Tab`: con `FN` derecho o con `FN` izquierdo.
 
 ```
 Q    W    E    R    T        Y    U    I    O    P
@@ -609,7 +609,7 @@ Tu configuración vive en dos lugares, y cada uno se respalda distinto:
 | El trackpad deja de responder y las luces se ven rojas o naranjas | Caída de voltaje por exceso de brillo | Bajá el brillo en VIA. El firmware reconfigura el trackpad solo; si no vuelve, desenchufá y volvé a enchufar el USB |
 | VIA no detecta el teclado | El navegador no es compatible | Usá Chrome o Edge (Safari no soporta WebHID) |
 | El teclado no entra en modo de carga | — | Usá el botón interno con el USB conectado (método de recuperación) |
-| `QK_BOOT` no hace nada en la mitad izquierda | Con el TRRS desconectado, `MAGIC` (en la mitad derecha) no llega | Usá el doble toque en el botón de reset (sección 3) |
+| `QK_BOOT` no hace nada en la mitad izquierda | Las mitades tienen firmwares distintos o el TRRS no comunica, y `MAGIC` (en la mitad derecha) no llega | Usá `FN` izquierdo + `Tab`, mantenida 2 s (solo teclas de la izquierda). Si esa mitad tiene un firmware anterior a este cambio, usá el doble toque en el botón de reset |
 | Los símbolos salen cambiados (`@`, `{`, `[`, `'`…) | macOS usa la distribución en español | Cambiá la fuente de entrada a ABC o U.S. (sección 4.1) |
 | Al escribir rápido salen `Cmd`, `Ctrl` o `Shift` en vez de letras, o al revés | Tiempos de los home-row mods | Ver consejos en la sección 6.1 y ajustá `get_tapping_term` (sección 8.2) |
 | La capa HERDR no hace nada en Herdr | El prefijo del teclado no coincide con el de Herdr | Revisá que `HERDR_PREFIX` en `config.h` y `[keys] prefix` en `~/.config/herdr/config.toml` sean iguales (sección 6.7) |
@@ -673,5 +673,7 @@ Por eso el tema se atenúa (`CATPPUCCIN_POWER_SCALE`) y el brillo por defecto es
 | `04892854` | Teclas de doble función más tolerantes (Shift 200 ms; Cmd, Alt y Ctrl 260 ms; resto 200 ms) con Flow Tap; los colores de capa aparecen a los 250 ms |
 | `16177ff1` | `QK_BOOT` y `EE_CLR` protegidas: hay que mantenerlas 2 segundos (se ponen rojas) |
 | `34394860` | Tecla de arriba a la izquierda bloquea la Mac; luces se apagan tras 15 min sin uso |
+| `3a2f06bb` | `QK_BOOT` solo con la mitad izquierda: `FN` izquierdo + tecla de arriba a la izquierda (2 s) |
+| `cb1f1455` | Ese `QK_BOOT` pasa a `FN` izquierdo + `Tab`, igual que con `FN` derecho |
 
 Los cambios están solo en tu computadora: no se subieron a ningún repositorio remoto.

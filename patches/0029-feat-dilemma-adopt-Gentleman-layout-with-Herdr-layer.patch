@@ -1,7 +1,7 @@
 From b1dd10c75c22194c0507b4749abe59c937f28479 Mon Sep 17 00:00:00 2001
 From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
 Date: Sat, 10 Oct 2026 04:00:56 -0500
-Subject: [PATCH 29/33] feat(dilemma): adopt Gentleman layout with Herdr layer
+Subject: [PATCH 29/35] feat(dilemma): adopt Gentleman layout with Herdr layer
  in mac keymap
 
 ---

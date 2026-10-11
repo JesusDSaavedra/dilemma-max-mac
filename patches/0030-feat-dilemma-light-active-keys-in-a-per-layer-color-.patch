@@ -1,7 +1,7 @@
 From 34e0389e16a5027522f4d0ac076d6afe3b8ea785 Mon Sep 17 00:00:00 2001
 From: Jesus David Saavedra Latorre <iam.jesusd88@gmail.com>
 Date: Sat, 10 Oct 2026 20:42:13 -0500
-Subject: [PATCH 30/33] feat(dilemma): light active keys in a per-layer color
+Subject: [PATCH 30/35] feat(dilemma): light active keys in a per-layer color
  while a layer is held
 
 ---
