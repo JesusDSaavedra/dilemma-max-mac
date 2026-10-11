@@ -1,0 +1,1579 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light}html,body{margin:0}body{font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Dilemma Dojo</title>
+<style>
+/* Layout: a dojo mat. A left-aligned reading column; each keyboard sits on its own crust "tatami" panel that scrolls sideways on phones. */
+:root{
+  /* Catppuccin Latte */
+  --base:#eff1f5; --mantle:#e6e9ef; --crust:#dce0e8;
+  --surface0:#ccd0da; --surface1:#bcc0cc; --surface2:#acb0be;
+  --overlay0:#9ca0b0; --overlay1:#8c8fa1; --subtext0:#6c6f85; --subtext1:#5c5f77; --text:#4c4f69;
+  --keycap:#f8f9fb;
+  --mauve:#8839ef; --blue:#1e66f5; --green:#40a02b; --peach:#fe640b; --teal:#179299;
+  --red:#d20f39; --yellow:#df8e1d; --rosewater:#dc8a78; --flamingo:#dd7878; --sky:#04a5e5;
+  /* finger roles */
+  --f-pinky:var(--mauve); --f-ring:var(--blue); --f-middle:var(--green); --f-index:var(--peach); --f-thumb:var(--teal);
+  --ok:var(--green); --bad:var(--red); --warn:var(--yellow);
+  /* type */
+  --font-display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-body:"Atkinson Hyperlegible", "Verdana", system-ui, sans-serif;
+  --font-mono:"JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    /* Catppuccin Mocha */
+    --base:#1e1e2e; --mantle:#181825; --crust:#11111b;
+    --surface0:#313244; --surface1:#45475a; --surface2:#585b70;
+    --overlay0:#6c7086; --overlay1:#7f849c; --subtext0:#a6adc8; --subtext1:#bac2de; --text:#cdd6f4;
+    --keycap:#262637;
+    --mauve:#cba6f7; --blue:#89b4fa; --green:#a6e3a1; --peach:#fab387; --teal:#94e2d5;
+    --red:#f38ba8; --yellow:#f9e2af; --rosewater:#f5e0dc; --flamingo:#f2cdcd; --sky:#89dceb;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --base:#1e1e2e; --mantle:#181825; --crust:#11111b;
+  --surface0:#313244; --surface1:#45475a; --surface2:#585b70;
+  --overlay0:#6c7086; --overlay1:#7f849c; --subtext0:#a6adc8; --subtext1:#bac2de; --text:#cdd6f4;
+  --keycap:#262637;
+  --mauve:#cba6f7; --blue:#89b4fa; --green:#a6e3a1; --peach:#fab387; --teal:#94e2d5;
+  --red:#f38ba8; --yellow:#f9e2af; --rosewater:#f5e0dc; --flamingo:#f2cdcd; --sky:#89dceb;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+body{background:var(--base);color:var(--text);font-family:var(--font-body);font-size:1rem;line-height:1.55}
+.wrap{max-width:1180px;margin-inline:auto;padding-inline:max(16px,4vw);padding-block:0 4rem}
+h1,h2,h3{font-family:var(--font-display);line-height:1.1;text-wrap:balance;margin:0}
+h2{font-size:clamp(1.6rem,3.4vw,2.3rem);font-weight:800;letter-spacing:-.01em}
+h3{font-size:1.15rem;font-weight:700}
+p{margin:0}
+a{color:inherit}
+code,kbd{font-family:var(--font-mono);font-size:.9em}
+kbd{display:inline-block;padding:.05em .45em;border:1px solid var(--surface1);border-bottom-width:2px;border-radius:5px;background:var(--keycap);white-space:nowrap}
+:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+button{font:inherit;color:inherit;cursor:pointer}
+.muted{color:var(--subtext0)}
+.eyebrow{font-family:var(--font-mono);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--subtext0)}
+
+/* header */
+.hero{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:2rem;align-items:end;padding-block:2.5rem 1.5rem;border-bottom:1px solid var(--surface0)}
+.hero h1{font-size:clamp(2.8rem,8vw,5.4rem);font-weight:800;letter-spacing:-.035em}
+.hero h1 span{color:var(--f-thumb)}
+.hero .lead{margin-top:1rem;max-width:60ch;font-size:1.1rem;color:var(--subtext1)}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:1rem}
+.chip{font-family:var(--font-mono);font-size:.75rem;padding:.2rem .55rem;border-radius:999px;background:var(--mantle);border:1px solid var(--surface0);color:var(--subtext1)}
+.plan{background:var(--mantle);border:1px solid var(--surface0);border-radius:var(--radius);padding:1rem 1.2rem}
+.plan ol{margin:.5rem 0 0;padding-left:1.2rem;display:grid;gap:.35rem}
+
+.topnav{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--base);border-bottom:1px solid var(--surface0);margin-inline:calc(-1 * max(16px,4vw));padding-inline:max(16px,4vw);overflow-x:auto}
+.topnav ul{display:flex;gap:.25rem;list-style:none;margin:0;padding:.5rem 0;white-space:nowrap}
+.topnav a{display:block;text-decoration:none;font-weight:700;font-size:.9rem;padding:.35rem .7rem;border-radius:999px;color:var(--subtext1)}
+.topnav a:hover{background:var(--mantle);color:var(--text)}
+
+section.block{padding-block:2.5rem 1rem;scroll-margin-top:3.5rem}
+.block-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:.5rem 1.5rem;margin-bottom:1rem}
+.block-head p{max-width:62ch;color:var(--subtext1)}
+
+/* tabs */
+.tabs{display:flex;flex-wrap:wrap;gap:.35rem}
+.tab{border:1px solid var(--surface1);background:var(--keycap);border-radius:8px;padding:.35rem .75rem;font-family:var(--font-mono);font-size:.85rem;font-weight:600}
+.tab[aria-selected="true"]{background:var(--text);color:var(--base);border-color:var(--text)}
+.reach{margin-top:.75rem;display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;font-size:.95rem}
+.reach strong{font-family:var(--font-display)}
+
+/* board */
+.mat{margin-top:1rem;background:var(--crust);border-radius:14px;padding:1rem;overflow-x:auto;
+  background-image:radial-gradient(var(--surface0) 1px, transparent 1px);background-size:18px 18px}
+.board{--u:clamp(36px,6.1vw,60px);position:relative;width:calc(var(--u) * 14);height:calc(var(--u) * 6.75);margin-inline:auto}
+.board--compact{--u:clamp(30px,4.4vw,46px)}
+.key{position:absolute;left:calc(var(--x) * var(--u) + 2px);top:calc(var(--y) * var(--u) + 2px);width:calc(var(--u) - 4px);height:calc(var(--u) - 4px);
+  transform:rotate(calc(var(--r) * 1deg));border-radius:calc(var(--u) * .16);
+  --fc:var(--f-index);
+  background:color-mix(in srgb, var(--fc) 13%, var(--keycap));
+  border:1px solid color-mix(in srgb, var(--fc) 45%, transparent);
+  box-shadow:inset 0 calc(var(--u) * -.06) 0 color-mix(in srgb, var(--fc) 55%, transparent);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px;
+  font-family:var(--font-mono);color:var(--text);line-height:1;text-align:center;overflow:visible}
+button.key:hover{background:color-mix(in srgb, var(--fc) 26%, var(--keycap))}
+.key.f-pinky{--fc:var(--f-pinky)} .key.f-ring{--fc:var(--f-ring)} .key.f-middle{--fc:var(--f-middle)}
+.key.f-index{--fc:var(--f-index)} .key.f-thumb{--fc:var(--f-thumb)}
+.k-main{font-size:calc(var(--u) * .3);font-weight:700;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:clip}
+.key.k-long .k-main{font-size:calc(var(--u) * .2)}
+.key.k-xlong .k-main{font-size:calc(var(--u) * .155);white-space:normal;line-height:1.05}
+.k-sub{font-size:calc(var(--u) * .16);color:var(--subtext0);white-space:nowrap;max-width:100%;overflow:hidden}
+.k-sub:empty{display:none}
+.key.is-anchor::before{content:"";position:absolute;bottom:calc(var(--u) * .14);left:35%;width:30%;height:2px;border-radius:2px;background:var(--text);opacity:.65}
+.key.is-home .k-main{text-decoration:none}
+.key.k-blank{background:transparent;border:1px dashed var(--surface1);box-shadow:none}
+.key.k-blank .k-main,.key.k-blank .k-sub{display:none}
+.key.k-trans{opacity:.42;border-style:dashed;box-shadow:none}
+.key.k-trans .k-sub{font-style:italic}
+.key.k-danger{background:repeating-linear-gradient(135deg, color-mix(in srgb, var(--red) 22%, var(--keycap)) 0 5px, var(--keycap) 5px 10px);border:1.5px solid var(--red);box-shadow:none}
+.key.k-danger .k-main{color:var(--red)}
+.key.is-held{outline:3px solid var(--text);outline-offset:1px;background:color-mix(in srgb, var(--fc) 40%, var(--keycap))}
+.key.is-held .k-sub::after{content:" · mantén"}
+.key.is-selected{outline:3px solid var(--fc);outline-offset:2px}
+.key.is-next{outline:3px solid var(--fc);outline-offset:2px;background:color-mix(in srgb, var(--fc) 55%, var(--keycap));z-index:3}
+.key.is-hint-hold{outline:3px dashed var(--fc);outline-offset:2px;background:color-mix(in srgb, var(--fc) 35%, var(--keycap));z-index:3}
+.key.is-dim{opacity:.32}
+.key::after{content:"";position:absolute;inset:0;border-radius:inherit;background:var(--red);opacity:calc(var(--heat, 0) * .6);pointer-events:none}
+.key .k-heat{position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;padding:0 3px;border-radius:8px;background:var(--red);color:var(--base);font-size:10px;line-height:16px;font-weight:700;z-index:4}
+.key .k-heat:empty{display:none}
+@media (prefers-reduced-motion: no-preference){
+  .key.is-next{animation:pulse 1.1s ease-in-out infinite}
+  @keyframes pulse{50%{outline-offset:5px}}
+}
+.trackpad{position:absolute;left:calc(var(--u) * 6.25);top:calc(var(--u) * 2.55);width:calc(var(--u) * 1.5);height:calc(var(--u) * 1.5);border-radius:50%;
+  border:1.5px solid var(--surface2);background:radial-gradient(circle at 40% 35%, var(--keycap), var(--mantle));display:grid;place-items:center;
+  font-family:var(--font-mono);font-size:calc(var(--u) * .14);color:var(--subtext0);text-align:center}
+
+/* map detail + legend */
+.map-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:1.25rem;margin-top:1.25rem}
+.panel{background:var(--mantle);border:1px solid var(--surface0);border-radius:var(--radius);padding:1.1rem 1.2rem;min-width:0}
+.detail h3{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.detail .big{font-family:var(--font-mono);font-size:1.6rem}
+.detail.is-danger{border-color:var(--red)}
+.detail dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:.45rem 1rem;margin:.9rem 0 0}
+.detail dt{color:var(--subtext0);font-size:.85rem;padding-top:.1rem}
+.detail dd{margin:0}
+.warn-box{margin-top:.8rem;padding:.6rem .8rem;border-radius:8px;border:1px solid var(--red);background:color-mix(in srgb, var(--red) 10%, var(--mantle));color:var(--text);font-size:.92rem}
+.dot{display:inline-block;width:.8em;height:.8em;border-radius:50%;background:var(--fc);vertical-align:-.05em;margin-right:.35em}
+.legend ul{list-style:none;margin:.6rem 0 0;padding:0;display:grid;gap:.4rem}
+.legend li{display:flex;gap:.5rem;align-items:baseline}
+.legend .sw{flex:none;width:1.6rem;height:1rem;border-radius:4px;background:color-mix(in srgb, var(--fc) 30%, var(--keycap));border:1px solid var(--fc);align-self:center}
+.legend .marks{margin-top:.9rem;display:grid;gap:.35rem;font-size:.9rem;color:var(--subtext1)}
+.fc-pinky{--fc:var(--f-pinky)} .fc-ring{--fc:var(--f-ring)} .fc-middle{--fc:var(--f-middle)} .fc-index{--fc:var(--f-index)} .fc-thumb{--fc:var(--f-thumb)}
+
+/* lessons */
+.lesson-list{display:flex;flex-wrap:wrap;gap:.4rem;list-style:none;margin:0;padding:0}
+.lesson-btn{display:flex;align-items:center;gap:.45rem;border:1px solid var(--surface1);background:var(--keycap);border-radius:8px;padding:.35rem .6rem;font-size:.88rem;text-align:left}
+.lesson-btn .n{font-family:var(--font-mono);font-size:.75rem;color:var(--subtext0)}
+.lesson-btn .ok{font-family:var(--font-mono);font-size:.75rem;color:var(--ok);font-weight:700}
+.lesson-btn[aria-current="true"]{border-color:var(--text);box-shadow:inset 0 0 0 1px var(--text)}
+.practice{margin-top:1rem;display:grid;gap:1rem}
+.practice-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.75rem 2rem;align-items:flex-start}
+.practice-head h3{font-size:1.5rem}
+.goal{font-family:var(--font-mono);font-size:.85rem;padding:.25rem .6rem;border-radius:6px;background:var(--mantle);border:1px solid var(--surface0)}
+.stats{display:flex;flex-wrap:wrap;gap:.5rem 1.75rem;font-variant-numeric:tabular-nums}
+.stat{display:flex;flex-direction:column}
+.stat b{font-family:var(--font-mono);font-size:1.5rem;line-height:1.1}
+.stat span{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--subtext0)}
+.pad{position:relative;border:2px solid var(--surface1);border-radius:var(--radius);background:var(--keycap);padding:1.1rem 1.2rem;min-height:6.5rem;cursor:text}
+.pad.is-active{border-color:var(--text)}
+.pad:focus{outline:none}
+.pad:focus-visible{outline:2px solid var(--text);outline-offset:3px}
+.pad-overlay{position:absolute;inset:0;border-radius:inherit;display:flex;align-items:center;justify-content:center;gap:.75rem;flex-wrap:wrap;
+  background:color-mix(in srgb, var(--keycap) 78%, transparent);backdrop-filter:blur(1.5px);padding:1rem;text-align:center}
+.pad.is-active .pad-overlay{display:none}
+.btn{border:1px solid var(--text);background:var(--text);color:var(--base);border-radius:8px;padding:.5rem 1rem;font-weight:700}
+.btn:hover{opacity:.9}
+.btn.ghost{background:transparent;color:var(--text);border-color:var(--surface2)}
+.btn.danger{background:var(--red);border-color:var(--red);color:var(--base)}
+.typing-text{font-family:var(--font-mono);font-size:clamp(1.1rem,2.6vw,1.5rem);line-height:2;word-break:break-word;letter-spacing:.02em}
+.ch{border-radius:3px;padding:.05em 0}
+.ch.ok{color:var(--overlay1)}
+.ch.err{color:var(--red);background:color-mix(in srgb, var(--red) 16%, transparent);text-decoration:underline wavy var(--red)}
+.ch.cur{background:color-mix(in srgb, var(--fc, var(--text)) 28%, transparent);box-shadow:inset 0 -3px 0 var(--fc, var(--text))}
+.ch.sp.cur::before{content:"·";position:absolute;opacity:.55}
+.ch.sp{position:relative;display:inline-block;min-width:.6em}
+.hint{display:flex;flex-wrap:wrap;gap:.5rem 1rem;align-items:center;font-size:1rem;min-height:1.8rem}
+.hint .finger{font-weight:700;color:var(--text)}
+.tip{font-size:.92rem;padding:.55rem .8rem;border-radius:8px;background:color-mix(in srgb, var(--yellow) 16%, var(--mantle));border:1px solid color-mix(in srgb, var(--yellow) 55%, transparent)}
+.result{border:1px solid var(--surface1);border-radius:var(--radius);padding:1rem 1.2rem;display:grid;gap:.6rem;background:var(--mantle)}
+.result.pass{border-color:var(--ok)}
+.result .verdict{font-family:var(--font-display);font-size:1.3rem;font-weight:700}
+.row{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+.heat-list{font-size:.9rem;color:var(--subtext1)}
+.progress-foot{display:flex;flex-wrap:wrap;gap:.75rem 1.5rem;align-items:center;justify-content:space-between;border-top:1px solid var(--surface0);padding-top:1rem}
+.confirm{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;padding:.6rem .8rem;border:1px solid var(--red);border-radius:8px;background:color-mix(in srgb, var(--red) 8%, var(--mantle))}
+
+/* technique */
+.tech-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
+.tech-card{border-top:3px solid var(--fc, var(--surface2));padding-top:.75rem;display:grid;gap:.4rem;align-content:start}
+.tech-card p{color:var(--subtext1);max-width:60ch}
+.homerow{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.25rem;font-family:var(--font-mono)}
+.homerow .cap{width:2.2rem;height:2.2rem;display:grid;place-items:center;border-radius:6px;font-weight:700;
+  background:color-mix(in srgb, var(--fc) 20%, var(--keycap));border:1px solid var(--fc);position:relative}
+.homerow .cap.anchor::after{content:"";position:absolute;bottom:4px;width:40%;height:2px;background:var(--text);border-radius:2px}
+.homerow .gap{width:1rem}
+.cols{width:100%;border-collapse:collapse;font-size:.85rem;margin-top:.25rem}
+.cols td{padding:.25rem .3rem;text-align:center;border:1px solid var(--surface0)}
+.cols td.c{background:color-mix(in srgb, var(--fc) 18%, var(--keycap));font-family:var(--font-mono);font-weight:700}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.25rem;margin-top:1.5rem}
+.timeline{position:relative;height:4.6rem;margin:1rem .5rem .5rem}
+.timeline .bar{position:absolute;left:0;right:0;top:1.6rem;height:.7rem;border-radius:4px;background:linear-gradient(90deg, color-mix(in srgb, var(--green) 35%, var(--mantle)), color-mix(in srgb, var(--peach) 35%, var(--mantle)))}
+.timeline .tick{position:absolute;top:1.1rem;height:1.7rem;width:2px;background:var(--text)}
+.timeline .tick span{position:absolute;top:1.9rem;left:50%;transform:translateX(-50%);font-family:var(--font-mono);font-size:.72rem;white-space:nowrap;color:var(--subtext1)}
+.timeline .lab{position:absolute;top:0;font-size:.8rem;font-weight:700}
+.timeline .lab.r{right:0}
+.terms{width:100%;border-collapse:collapse;font-size:.92rem;font-variant-numeric:tabular-nums;margin-top:.5rem}
+.terms th,.terms td{text-align:left;padding:.35rem .4rem;border-bottom:1px solid var(--surface0)}
+.terms th{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--subtext0);font-weight:700}
+.layer-list{list-style:none;margin:.5rem 0 0;padding:0;display:grid;gap:.35rem}
+.layer-list li{display:grid;grid-template-columns:7.5rem minmax(0,1fr);gap:.5rem}
+.layer-list b{font-family:var(--font-mono)}
+
+/* drills */
+.drill{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:1.25rem;align-items:start}
+.prompt{display:grid;gap:.5rem}
+.prompt .glyph{font-family:var(--font-mono);font-size:clamp(2.6rem,7vw,4rem);font-weight:700;line-height:1}
+.prompt .name{font-family:var(--font-display);font-size:1.25rem;font-weight:700}
+.combo{font-size:1rem}
+.feedback{min-height:1.6rem;font-weight:700}
+.feedback.good{color:var(--ok)} .feedback.bad{color:var(--red)}
+.score{display:flex;gap:1.5rem;font-variant-numeric:tabular-nums;font-family:var(--font-mono);font-size:.9rem;color:var(--subtext1)}
+label.inline{display:flex;gap:.5rem;align-items:center;font-size:.9rem}
+select{font:inherit;padding:.3rem .5rem;border-radius:6px;border:1px solid var(--surface1);background:var(--keycap);color:var(--text)}
+.sc-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(15rem,1fr));gap:.6rem;list-style:none;margin:1rem 0 0;padding:0}
+.sc-list li{border:1px solid var(--surface0);border-radius:8px;padding:.6rem .75rem;background:var(--mantle);display:grid;gap:.2rem}
+.sc-list li.done{border-color:var(--ok)}
+.sc-list .k{font-family:var(--font-mono);font-weight:700}
+.sc-list small{color:var(--subtext0)}
+.note{font-size:.9rem;color:var(--subtext1);max-width:70ch}
+.herdr-tables{display:grid;grid-template-columns:repeat(auto-fit,minmax(16rem,1fr));gap:1rem;margin-top:1rem}
+.herdr-tables table{width:100%;border-collapse:collapse;font-size:.9rem}
+.herdr-tables caption{text-align:left;font-family:var(--font-display);font-weight:700;padding-bottom:.3rem}
+.herdr-tables td{padding:.28rem .35rem;border-bottom:1px solid var(--surface0)}
+.herdr-tables td:first-child{font-family:var(--font-mono);white-space:nowrap;width:1%}
+.herdr-tables tr.hit td{background:color-mix(in srgb, var(--f-thumb) 22%, transparent)}
+.prefix{display:flex;align-items:center;gap:.75rem;font-family:var(--font-mono);font-size:.85rem}
+.prefix .meter{width:8rem;height:.45rem;border-radius:4px;background:var(--surface0);overflow:hidden}
+.prefix .meter i{display:block;height:100%;width:0;background:var(--f-thumb)}
+.prefix.on .meter i{width:100%}
+@media (prefers-reduced-motion: no-preference){
+  .prefix.on .meter i{animation:drain 1.5s linear forwards}
+  @keyframes drain{from{width:100%}to{width:0}}
+}
+.log{font-family:var(--font-mono);font-size:.95rem;min-height:1.5rem}
+.storage-note{font-size:.85rem;color:var(--subtext0)}
+footer{border-top:1px solid var(--surface0);margin-top:2rem;padding-top:1rem;font-size:.85rem;color:var(--subtext0)}
+
+@media (max-width: 860px){
+  .hero,.map-grid,.two,.drill{grid-template-columns:minmax(0,1fr)}
+  .tech-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+}
+@media (max-width: 560px){
+  .tech-grid{grid-template-columns:minmax(0,1fr)}
+  .layer-list li{grid-template-columns:minmax(0,1fr)}
+  .mat{padding:.6rem}
+}
+@media (prefers-reduced-motion: reduce){ *{scroll-behavior:auto!important;transition:none!important;animation:none!important} }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@400;600;700&display=swap">
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div>
+      <p class="eyebrow">Bastard Keyboards · Dilemma Max V3</p>
+      <h1>Dilemma <span>Dojo</span></h1>
+      <p class="lead">Aprende a escribir con los diez dedos en tu teclado partido y domina la configuración de Gentleman: QWERTY con home-row mods y 8 capas, sobre la entrada de teclado Inglés (EE. UU.) del Mac.</p>
+      <div class="chips">
+        <span class="chip">4 × 6 por mitad</span><span class="chip">4 pulgares por mano</span><span class="chip">trackpad a la derecha</span><span class="chip">home-row mods</span><span class="chip">8 capas</span>
+      </div>
+    </div>
+    <aside class="plan" aria-label="Plan diario">
+      <h3>Tu sesión de hoy (15–20 min)</h3>
+      <ol>
+        <li>Repasa el mapa: busca F y J sin mirar.</li>
+        <li>Haz una lección hasta llegar a 95 % de precisión.</li>
+        <li>Cierra con un drill de capas, atajos o Herdr.</li>
+      </ol>
+    </aside>
+  </header>
+
+  <nav class="topnav" aria-label="Secciones">
+    <ul>
+      <li><a href="#mapa">Mapa</a></li>
+      <li><a href="#lecciones">Lecciones</a></li>
+      <li><a href="#tecnica">Técnica</a></li>
+      <li><a href="#capas">Capas</a></li>
+      <li><a href="#atajos">Atajos</a></li>
+      <li><a href="#herdr">Herdr</a></li>
+    </ul>
+  </nav>
+
+  <!-- 1. MAP -->
+  <section class="block" id="mapa" aria-labelledby="mapa-h">
+    <div class="block-head">
+      <h2 id="mapa-h">Mapa del teclado</h2>
+      <p>Elige una capa y toca cualquier tecla para ver qué hace, con qué dedo se pulsa y cómo se comporta al tocarla o mantenerla.</p>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Capas" id="layer-tabs"></div>
+    <p class="reach" id="layer-reach" aria-live="polite"></p>
+    <div class="mat"><div id="map-board" aria-label="Diagrama del teclado"></div></div>
+    <div class="map-grid">
+      <div class="panel detail" id="key-detail" aria-live="polite"></div>
+      <div class="panel legend">
+        <h3>Colores por dedo</h3>
+        <ul id="finger-legend"></ul>
+        <div class="marks">
+          <span><b>Rayita bajo F y J:</b> las anclas. Tus índices siempre vuelven ahí.</span>
+          <span><b>Contorno grueso:</b> la tecla que mantienes para entrar a la capa.</span>
+          <span><b>Tecla tenue y punteada:</b> transparente, deja pasar la tecla de la capa de abajo.</span>
+          <span><b>Hueco punteado vacío:</b> sin función en esa capa.</span>
+          <span><b>Rayas rojas:</b> teclas de firmware. Úsalas con cuidado.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. LESSONS -->
+  <section class="block" id="lecciones" aria-labelledby="lecciones-h">
+    <div class="block-head">
+      <h2 id="lecciones-h">Lecciones de mecanografía</h2>
+      <p>Cada lección añade pocas teclas. Supera la meta de precisión y velocidad para marcarla como completada. Si es tu primera vez, lee antes la sección de técnica.</p>
+    </div>
+    <ul class="lesson-list" id="lesson-list" aria-label="Lecciones"></ul>
+    <div class="practice">
+      <div class="practice-head">
+        <div style="display:grid;gap:.35rem;min-width:0">
+          <h3 id="lesson-title"></h3>
+          <p class="muted" id="lesson-tip"></p>
+        </div>
+        <span class="goal" id="lesson-goal"></span>
+      </div>
+      <div class="stats" aria-live="off">
+        <div class="stat"><b id="stat-wpm">0</b><span>PPM</span></div>
+        <div class="stat"><b id="stat-acc">100 %</b><span>Precisión</span></div>
+        <div class="stat"><b id="stat-err">0</b><span>Errores</span></div>
+        <div class="stat"><b id="stat-prog">0/0</b><span>Avance</span></div>
+        <div class="stat"><b id="stat-best">—</b><span>Mejor PPM</span></div>
+      </div>
+      <div class="pad" id="typing-pad" tabindex="0" role="application" aria-label="Área de práctica. Escribe el texto mostrado.">
+        <div class="typing-text" id="typing-text" aria-hidden="true"></div>
+        <div class="pad-overlay">
+          <button type="button" class="btn" id="typing-start">Empezar</button>
+          <span class="muted">Haz clic aquí y escribe. Las teclas solo se capturan dentro de este recuadro.</span>
+        </div>
+      </div>
+      <p class="hint" id="next-hint" aria-live="polite"></p>
+      <p class="tip" id="hrm-tip" hidden></p>
+      <div class="result" id="lesson-result" hidden>
+        <p class="verdict" id="result-verdict"></p>
+        <p id="result-detail"></p>
+        <div class="row">
+          <button type="button" class="btn" id="btn-retry">Otra ronda</button>
+          <button type="button" class="btn ghost" id="btn-next">Siguiente lección</button>
+          <span class="muted">También puedes pulsar Enter para otra ronda.</span>
+        </div>
+      </div>
+      <div class="mat"><div id="lesson-board" aria-hidden="true"></div></div>
+      <p class="heat-list" id="heat-list"></p>
+      <div class="progress-foot">
+        <p class="storage-note" id="storage-note"></p>
+        <div class="row">
+          <button type="button" class="btn ghost" id="btn-reset">Reiniciar progreso</button>
+        </div>
+      </div>
+      <div class="confirm" id="reset-confirm" hidden role="group" aria-label="Confirmar reinicio">
+        <span>Se borrarán tus récords, lecciones completadas y el mapa de errores. ¿Continuar?</span>
+        <button type="button" class="btn danger" id="btn-reset-yes">Sí, borrar todo</button>
+        <button type="button" class="btn ghost" id="btn-reset-no">Cancelar</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. TECHNIQUE -->
+  <section class="block" id="tecnica" aria-labelledby="tecnica-h">
+    <div class="block-head">
+      <h2 id="tecnica-h">Postura y técnica</h2>
+      <p>Seis reglas que valen más que cualquier truco. Aplícalas desde la primera lección.</p>
+    </div>
+    <div class="tech-grid">
+      <article class="tech-card fc-index">
+        <h3>Posición base</h3>
+        <p>Los índices descansan en F y J, las anclas. El resto de dedos cae solo en la fila guía. Pulgar izquierdo sobre Espacio, derecho sobre Enter.</p>
+        <div class="homerow" aria-label="Fila guía: A S D F, J K L punto y coma">
+          <span class="cap fc-pinky">A</span><span class="cap fc-ring">S</span><span class="cap fc-middle">D</span><span class="cap fc-index anchor">F</span>
+          <span class="gap"></span>
+          <span class="cap fc-index anchor">J</span><span class="cap fc-middle">K</span><span class="cap fc-ring">L</span><span class="cap fc-pinky">;</span>
+        </div>
+      </article>
+      <article class="tech-card fc-ring">
+        <h3>Un dedo por columna</h3>
+        <p>En un teclado de columnas cada dedo sube y baja en línea recta. Nunca cruces a la columna de otro dedo.</p>
+        <table class="cols" aria-label="Dedo por columna, mano izquierda">
+          <tr><td class="c fc-pinky">1</td><td class="c fc-pinky">2</td><td class="c fc-ring">3</td><td class="c fc-middle">4</td><td class="c fc-index">5</td><td class="c fc-index">6</td></tr>
+          <tr><td colspan="2">meñique</td><td>anular</td><td>medio</td><td colspan="2">índice</td></tr>
+        </table>
+        <p class="muted" style="font-size:.85rem">Columnas de fuera hacia dentro. La mano derecha es el espejo.</p>
+      </article>
+      <article class="tech-card fc-middle">
+        <h3>Vuelve a casa</h3>
+        <p>Después de cada tecla, el dedo regresa a la fila guía. Así siempre sabes dónde está todo sin mirar.</p>
+      </article>
+      <article class="tech-card fc-pinky">
+        <h3>No mires el teclado</h3>
+        <p>Mira la pantalla. Si dudas, mira el diagrama de esta página, no tus manos. Al principio irás lento y es normal.</p>
+      </article>
+      <article class="tech-card fc-thumb">
+        <h3>Precisión antes que velocidad</h3>
+        <p>Primero llega a 95 % de precisión. La velocidad aparece sola cuando dejas de corregir.</p>
+      </article>
+      <article class="tech-card" style="--fc:var(--yellow)">
+        <h3>Sesiones cortas y diarias</h3>
+        <p>15 a 20 minutos cada día valen más que dos horas el domingo. Para cuando notes tensión en las manos.</p>
+      </article>
+    </div>
+
+    <div class="two">
+      <div class="panel">
+        <h3>Home-row mods: tocar es letra, mantener es modificador</h3>
+        <p class="muted" style="margin-top:.4rem">A, S, D, F y J, K, L, ; hacen doble trabajo. Si tocas y sueltas rápido, escriben su letra. Si la mantienes más que su tiempo límite y pulsas otra tecla, actúa como modificador.</p>
+        <div class="timeline" aria-label="Tiempo límite de cada modificador, escala de 0 a 300 milisegundos">
+          <span class="lab" style="color:var(--green)">toque = letra</span>
+          <span class="lab r" style="color:var(--peach)">mantener = modificador</span>
+          <div class="bar"></div>
+          <div class="tick" style="left:0%"><span>0</span></div>
+          <div class="tick" style="left:66.7%"><span>Shift 200</span></div>
+          <div class="tick" style="left:86.7%"><span>Cmd Ctrl/Opt 260</span></div>
+        </div>
+        <table class="terms">
+          <thead><tr><th>Tecla</th><th>Mantener</th><th>Límite</th></tr></thead>
+          <tbody>
+            <tr><td><kbd>A</kbd> <kbd>;</kbd></td><td>Cmd (Command)</td><td>260 ms</td></tr>
+            <tr><td><kbd>S</kbd> <kbd>L</kbd></td><td>Opt (Option)</td><td>260 ms</td></tr>
+            <tr><td><kbd>D</kbd> <kbd>K</kbd></td><td>Ctrl (Control)</td><td>260 ms</td></tr>
+            <tr><td><kbd>F</kbd> <kbd>J</kbd></td><td>Shift</td><td>200 ms</td></tr>
+          </tbody>
+        </table>
+        <p class="note" style="margin-top:.75rem">Usa el modificador de la mano contraria: para una mayúscula con la mano izquierda, mantén J; con la derecha, mantén F. No dejes los dedos apretando la fila guía mientras piensas, o se activará el modificador. Si escribes seguido, <b>Flow Tap</b> te protege: una tecla de doble función pulsada menos de 150 ms después de la anterior siempre escribe la letra.</p>
+      </div>
+      <div class="panel">
+        <h3>Capas: mantén el pulgar, pulsa la tecla</h3>
+        <p class="muted" style="margin-top:.4rem">Funciona como Shift. Mantén la tecla de capa, pulsa la tecla que quieres y suelta las dos. Al soltar vuelves a la base.</p>
+        <ul class="layer-list">
+          <li><b>PROG</b><span>Símbolos de programación: { } ( ) [ ] = &amp; ! … (pulgar izquierdo).</span></li>
+          <li><b>NUMBS</b><span>Teclado numérico a la derecha y F1–F9 a la izquierda (pulgar izquierdo interior).</span></li>
+          <li><b>Borrar / Nav</b><span>Al tocarla borra; al mantenerla, flechas en H J K L, Inicio, Fin y páginas.</span></li>
+          <li><b>MAGIC</b><span>Iluminación RGB, multimedia y teclas de firmware (pulgar derecho interior).</span></li>
+          <li><b>HERDR</b><span>Cada tecla envía Ctrl+Q y luego esa tecla, para el multiplexor Herdr.</span></li>
+          <li><b>Z o /</b><span>Al mantenerlas: capa Puntero, con clics y ajustes del trackpad.</span></li>
+          <li><b>NUMBS + MAGIC</b><span>Las dos a la vez: capa de temas de color.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. LAYER DRILLS -->
+  <section class="block" id="capas" aria-labelledby="capas-h">
+    <div class="block-head">
+      <h2 id="capas-h">Drill de capas</h2>
+      <p>Te pedimos un símbolo, número o movimiento. Mantén la tecla de capa indicada y pulsa la tecla resaltada.</p>
+    </div>
+    <div class="drill">
+      <div class="prompt">
+        <label class="inline" for="drill-layer-filter">Capa
+          <select id="drill-layer-filter">
+            <option value="ALL">Todas</option>
+            <option value="PROG">PROG (símbolos)</option>
+            <option value="NUMBERS">NUMBS (números y F)</option>
+            <option value="NAV">Nav (flechas)</option>
+          </select>
+        </label>
+        <span class="eyebrow">Escribe</span>
+        <span class="glyph" id="ld-glyph"></span>
+        <span class="name" id="ld-name"></span>
+        <p class="combo" id="ld-combo"></p>
+        <div class="pad" id="ld-pad" tabindex="0" role="application" aria-label="Área del drill de capas">
+          <p class="log" id="ld-log">Esperando tu pulsación…</p>
+          <div class="pad-overlay"><button type="button" class="btn" id="ld-start">Empezar</button></div>
+        </div>
+        <p class="feedback" id="ld-feedback" aria-live="polite"></p>
+        <div class="score"><span>Aciertos <b id="ld-ok">0</b></span><span>Fallos <b id="ld-bad">0</b></span><span>Racha <b id="ld-streak">0</b></span></div>
+        <div class="row"><button type="button" class="btn ghost" id="ld-skip">Saltar</button></div>
+      </div>
+      <div class="mat" style="margin-top:0"><div id="ld-board" aria-hidden="true"></div></div>
+    </div>
+    <p class="note" style="margin-top:.75rem">Si macOS intercepta alguna tecla F (brillo, Mission Control), activa en Ajustes del Sistema › Teclado la opción de usar F1, F2, etc. como teclas de función estándar.</p>
+  </section>
+
+  <!-- 5. SHORTCUTS -->
+  <section class="block" id="atajos" aria-labelledby="atajos-h">
+    <div class="block-head">
+      <h2 id="atajos-h">Atajos con home-row mods</h2>
+      <p>Practica atajos seguros sin soltar la fila guía. Esta página los intercepta, así que no se copia, guarda ni busca nada de verdad.</p>
+    </div>
+    <div class="drill">
+      <div class="prompt">
+        <span class="eyebrow">Haz el atajo</span>
+        <span class="glyph" id="sc-glyph"></span>
+        <span class="name" id="sc-name"></span>
+        <p class="combo" id="sc-how"></p>
+        <p class="muted" id="sc-alt"></p>
+        <div class="pad" id="sc-pad" tabindex="0" role="application" aria-label="Área del drill de atajos">
+          <p class="log" id="sc-log">Esperando tu atajo…</p>
+          <div class="pad-overlay"><button type="button" class="btn" id="sc-start">Empezar</button></div>
+        </div>
+        <p class="feedback" id="sc-feedback" aria-live="polite"></p>
+        <div class="score"><span>Aciertos <b id="sc-ok">0</b></span><span>Fallos <b id="sc-bad">0</b></span></div>
+        <div class="row"><button type="button" class="btn ghost" id="sc-skip">Saltar</button></div>
+      </div>
+      <div class="mat" style="margin-top:0"><div id="sc-board" aria-hidden="true"></div></div>
+    </div>
+    <ul class="sc-list" id="sc-list" aria-label="Atajos del drill"></ul>
+    <p class="note" style="margin-top:.75rem">Solo usamos atajos que la página puede bloquear. Nunca practiques aquí Cmd + W, Q, T, N, R, H, M ni Cmd + Tab: cierran, recargan u ocultan la ventana.</p>
+  </section>
+
+  <!-- 6. HERDR -->
+  <section class="block" id="herdr" aria-labelledby="herdr-h">
+    <div class="block-head">
+      <h2 id="herdr-h">Simulador de Herdr</h2>
+      <p>Tu prefijo de Herdr es <kbd>Ctrl</kbd>+<kbd>Q</kbd>. Al mantener el pulgar HERDR (derecho, exterior) y pulsar una tecla, el teclado envía Ctrl+Q y luego esa tecla. En esta capa, Shift está en el pulgar de Espacio y Option en el pulgar de PROG.</p>
+    </div>
+    <div class="drill">
+      <div class="prompt">
+        <div class="row">
+          <button type="button" class="btn ghost" id="herdr-mode" aria-pressed="false">Empezar reto</button>
+          <span class="muted" id="herdr-mode-label">Modo libre: prueba cualquier combinación.</span>
+        </div>
+        <span class="glyph" id="hd-glyph" style="font-size:clamp(1.8rem,5vw,2.6rem)"></span>
+        <span class="name" id="hd-name"></span>
+        <p class="combo" id="hd-how"></p>
+        <div class="pad" id="hd-pad" tabindex="0" role="application" aria-label="Área del simulador de Herdr">
+          <div class="prefix" id="hd-prefix"><span>Prefijo</span><span class="meter"><i></i></span><span id="hd-prefix-txt">inactivo</span></div>
+          <p class="log" id="hd-log" style="margin-top:.5rem">Mantén HERDR y pulsa una tecla, o escribe Ctrl+Q y luego la tecla en menos de 1,5 s.</p>
+          <div class="pad-overlay"><button type="button" class="btn" id="hd-start">Empezar</button></div>
+        </div>
+        <p class="feedback" id="hd-feedback" aria-live="polite"></p>
+        <div class="score"><span>Aciertos <b id="hd-ok">0</b></span><span>Fallos <b id="hd-bad">0</b></span></div>
+      </div>
+      <div class="mat" style="margin-top:0"><div id="hd-board" aria-hidden="true"></div></div>
+    </div>
+    <div class="herdr-tables" id="herdr-tables"></div>
+  </section>
+
+  <footer>Distribución basada en el keymap QMK de Alan «Gentleman» Buxton para Dilemma Max V3. Tiempos de pulsación: Shift 200 ms; Command, Option y Control 260 ms; Flow Tap 150 ms.</footer>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- Raw keymap, LAYOUT() order: 4 rows x 12, then 8 thumbs (L outer->inner, R inner->outer) ---------- */
+  var ORDER = ['BASE', 'MAGIC', 'PROG', 'NUMBERS', 'NAV', 'POINTER', 'HERDR', 'THEME'];
+  var RAW = {
+    BASE: `
+      XXXXXXX,    KC_1,    KC_2,    KC_3,    KC_4,    KC_5,       KC_6,    KC_7,    KC_8,    KC_9,    KC_0, KC_MINS,
+       KC_TAB,    KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,       KC_Y,    KC_U,    KC_I,    KC_O,    KC_P, KC_BSLS,
+      KC_ESC, LGUI_T(KC_A), LALT_T(KC_S), LCTL_T(KC_D), LSFT_T(KC_F), KC_G,       KC_H, RSFT_T(KC_J), RCTL_T(KC_K), LALT_T(KC_L), RGUI_T(KC_SCLN), KC_QUOT,
+      KC_GRV,    PT_Z,    KC_X,    KC_C,    KC_V,    KC_B,       KC_N,    KC_M, KC_COMM,  KC_DOT, PT_SLSH, KC_LALT,
+                      MS_BTN1,  KC_SPC,    PROG,   NUMBS,       MAGIC,  KC_ENT,     NAV,    HERDR`,
+    MAGIC: `
+      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+      QK_BOOT, RM_SPDU, RM_SATU, RM_HUEU, RM_VALU, RM_TOGG,    RM_TOGG, RM_VALU, RM_HUEU, RM_SATU, RM_SPDU, QK_BOOT,
+       EE_CLR, RM_SPDD, RM_SATD, RM_HUED, RM_VALD, RM_NEXT,    RM_NEXT, RM_VALD, RM_HUED, RM_SATD, RM_SPDD,  EE_CLR,
+      KC_VOLU, KC_MUTE, KC_VOLD, KC_MPRV, KC_MNXT, XXXXXXX,    XXXXXXX, KC_MNXT, KC_MPRV, KC_VOLD, KC_MUTE, KC_VOLU,
+                       XXXXXXX, KC_MPLY, KC_MSTP, _______,    _______, KC_MSTP, KC_MPLY, XXXXXXX`,
+    PROG: `
+      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+      XXXXXXX, XXXXXXX,  KC_GRV, XXXXXXX,  KC_DLR, XXXXXXX,    KC_CIRC, KC_LPRN, KC_RPRN, KC_MINS, XXXXXXX, XXXXXXX,
+      XXXXXXX, KC_LSFT,   KC_AT, KC_HASH, KC_PERC, XXXXXXX,    KC_AMPR, KC_LCBR, KC_RCBR,  KC_EQL, KC_QUOT, XXXXXXX,
+      XXXXXXX,  KC_GRV, XXXXXXX, XXXXXXX, KC_QUES, XXXXXXX,    KC_ASTR, KC_LBRC, KC_RBRC, KC_EXLM, KC_BSLS, XXXXXXX,
+                       _______, _______, _______, _______,    XXXXXXX,  KC_ENT,   KC_LT,   KC_GT`,
+    NUMBERS: `
+      _______, _______, _______, _______, _______, _______,    _______, _______, _______, _______, _______, _______,
+      _______, _______, _______,   KC_F7,   KC_F8,   KC_F9,    _______,    KC_7,    KC_8,    KC_9, _______, _______,
+      _______, KC_LSFT, KC_LALT,   KC_F4,   KC_F5,   KC_F6,    _______,    KC_4,    KC_5,    KC_6,    KC_0, _______,
+      _______, KC_LGUI, KC_LCTL,   KC_F1,   KC_F2,   KC_F3,    _______,    KC_1,    KC_2,    KC_3, _______, _______,
+                       _______, _______, _______, _______,    _______, _______, _______, _______`,
+    NAV: `
+      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+      XXXXXXX, KC_LGUI, KC_LALT, KC_LCTL, KC_LSFT, XXXXXXX,    KC_LEFT, KC_DOWN,   KC_UP, KC_RGHT, KC_CAPS, XXXXXXX,
+      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,     KC_INS, KC_HOME, KC_PGDN, KC_PGUP,  KC_END, XXXXXXX,
+                       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX,  KC_ENT, _______, XXXXXXX`,
+    POINTER: `
+      XXXXXXX, XXXXXXX, CSPD_DN, CSPD_UP, XXXXXXX, PINCH_M,    XXXXXXX, XXXXXXX, CSPD_UP, CSPD_DN, XXXXXXX, XXXXXXX,
+      XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+      XXXXXXX, KC_LGUI, KC_LALT, KC_LCTL, KC_LSFT, XXXXXXX,    XXXXXXX, KC_RSFT, KC_RCTL, KC_RALT, KC_RGUI, XXXXXXX,
+      XXXXXXX, _______, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, _______, XXXXXXX,
+                       MS_BTN2, MS_BTN1, MS_BTN3, XXXXXXX,    XXXXXXX, MS_BTN3, MS_BTN1, MS_BTN2`,
+    HERDR: `
+      XXXXXXX,    KC_1,    KC_2,    KC_3,    KC_4,    KC_5,       KC_6,    KC_7,    KC_8,    KC_9,    KC_0, KC_MINS,
+       KC_TAB,    KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,       KC_Y,    KC_U,    KC_I,    KC_O,    KC_P, KC_BSLS,
+      KC_LBRC,    KC_A,    KC_S,    KC_D,    KC_F,    KC_G,       KC_H,    KC_J,    KC_K,    KC_L, KC_SCLN, KC_QUOT,
+      XXXXXXX,    KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,       KC_N,    KC_M, KC_COMM,  KC_DOT, KC_SLSH, KC_QUES,
+                       XXXXXXX, KC_LSFT, KC_LALT, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX, _______`,
+    THEME: `
+       _______, _______, _______, _______, _______, _______,    XXXXXXX, XXXXXXX, XXXXXXX, RM_HUED, RM_HUEU, XXXXXXX,
+       _______, _______, _______, _______, _______, _______,    THM_CAT, THM_GRV, THM_ALG, THM_DES, THM_HOR, XXXXXXX,
+       _______, _______, _______, _______, _______, _______,    RM_VALD, RM_VALU, RM_TOGG, RM_SATD, RM_SATU, XXXXXXX,
+       _______, _______, _______, _______, _______, _______,    RM_PREV, RM_NEXT, RM_SPDD, RM_SPDU, XXXXXXX, XXXXXXX,
+                         _______, _______, _______, _______,    _______, _______, _______, _______`
+  };
+
+  var LAYERS = {};
+  ORDER.forEach(function (name) {
+    var toks = RAW[name].split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+    if (toks.length !== 56) { throw new Error('Layer ' + name + ' has ' + toks.length + ' keys'); }
+    LAYERS[name] = toks;
+  });
+
+  var ALL_IDS = [];
+  for (var i = 0; i < 48; i++) { ALL_IDS.push('r' + Math.floor(i / 12) + 'c' + (i % 12)); }
+  for (var t = 0; t < 8; t++) { ALL_IDS.push('t' + t); }
+  var IDX = {};
+  ALL_IDS.forEach(function (id, n) { IDX[id] = n; });
+
+  var LAYER_LABEL = { BASE: 'Base', MAGIC: 'Magic', PROG: 'Prog', NUMBERS: 'Números', NAV: 'Nav', POINTER: 'Puntero', HERDR: 'Herdr', THEME: 'Temas' };
+  var REACH = {
+    BASE: { hold: [], text: 'Capa por defecto. No mantienes nada: escribes letras, números y puntuación.' },
+    MAGIC: { hold: ['t4'], text: 'Mantén MAGIC (pulgar derecho, tecla interior). Luces RGB, multimedia y firmware.' },
+    PROG: { hold: ['t2'], text: 'Mantén PROG (pulgar izquierdo, tercera tecla desde fuera). Símbolos de programación.' },
+    NUMBERS: { hold: ['t3'], text: 'Mantén NUMBS (pulgar izquierdo, tecla interior). Números a la derecha, F1–F9 a la izquierda.' },
+    NAV: { hold: ['t6'], text: 'Mantén Borrar / Nav (pulgar derecho, tercera tecla desde dentro). Si solo la tocas, borra.' },
+    POINTER: { hold: ['r3c1', 'r3c10'], text: 'Mantén Z (meñique izquierdo) o / (meñique derecho). Si solo las tocas, escriben la letra.' },
+    HERDR: { hold: ['t7'], text: 'Mantén HERDR (pulgar derecho, tecla exterior). Cada tecla envía Ctrl+Q y luego esa tecla.' },
+    THEME: { hold: ['t3', 't4'], text: 'Mantén NUMBS y MAGIC a la vez (los dos pulgares interiores). Temas de color RGB.' }
+  };
+  var BELOW = { BASE: [], MAGIC: ['BASE'], PROG: ['BASE'], NUMBERS: ['BASE'], NAV: ['BASE'], POINTER: ['BASE'], HERDR: ['BASE'], THEME: ['NUMBERS', 'MAGIC', 'BASE'] };
+
+  /* ---------- Geometry ---------- */
+  var STAGGER = [0.5, 0.42, 0.14, 0, 0.12, 0.24];
+  var X0 = 8;
+  var THUMBS_L = [{ x: 1.95, y: 4.62, r: 6 }, { x: 3.05, y: 4.76, r: 12 }, { x: 4.13, y: 5.0, r: 19 }, { x: 5.18, y: 5.36, r: 27 }];
+  function geom(id) {
+    if (id.charAt(0) === 't') {
+      var n = +id.slice(1);
+      if (n < 4) { return THUMBS_L[n]; }
+      var m = THUMBS_L[7 - n];
+      return { x: X0 + 5 - m.x, y: m.y, r: -m.r };
+    }
+    var r = +id.charAt(1), c = +id.slice(3);
+    if (c < 6) { return { x: c, y: r + STAGGER[c], r: 0 }; }
+    return { x: X0 + (c - 6), y: r + STAGGER[11 - c], r: 0 };
+  }
+  var COL_FINGER = ['pinky', 'pinky', 'ring', 'middle', 'index', 'index'];
+  var FN = { pinky: 'meñique', ring: 'anular', middle: 'medio', index: 'índice', thumb: 'pulgar' };
+  function finger(id) {
+    if (id.charAt(0) === 't') { return { f: 'thumb', hand: +id.slice(1) < 4 ? 'izq' : 'der' }; }
+    var c = +id.slice(3);
+    return c < 6 ? { f: COL_FINGER[c], hand: 'izq' } : { f: COL_FINGER[11 - c], hand: 'der' };
+  }
+  function fingerName(id) {
+    var f = finger(id);
+    return FN[f.f] + ' ' + (f.hand === 'izq' ? 'izquierdo' : 'derecho');
+  }
+  var HOME = { r2c1: 1, r2c2: 1, r2c3: 1, r2c4: 1, r2c7: 1, r2c8: 1, r2c9: 1, r2c10: 1 };
+  var ANCHOR = { r2c4: 1, r2c7: 1 };
+
+  /* ---------- Keycode translation ---------- */
+  var RE_HRM = /^([LR])(GUI|ALT|CTL|SFT)_T\((KC_\w+)\)$/;
+  var MODS = { GUI: { sym: 'Cmd', name: 'Command' }, ALT: { sym: 'Opt', name: 'Option' }, CTL: { sym: 'Ctrl', name: 'Control' }, SFT: { sym: 'Shift', name: 'Shift' } };
+  var TERM = { GUI: 260, SFT: 200, ALT: 260, CTL: 260 };
+  var CHAR = {
+    KC_MINS: ['-', 'Guion'], KC_BSLS: ['\\', 'Barra invertida'], KC_QUOT: ["'", 'Comilla simple'], KC_GRV: ['`', 'Acento grave (backtick)'],
+    KC_COMM: [',', 'Coma'], KC_DOT: ['.', 'Punto'], KC_SLSH: ['/', 'Barra'], KC_SCLN: [';', 'Punto y coma'],
+    KC_DLR: ['$', 'Dólar'], KC_CIRC: ['^', 'Circunflejo'], KC_LPRN: ['(', 'Abre paréntesis'], KC_RPRN: [')', 'Cierra paréntesis'],
+    KC_AT: ['@', 'Arroba'], KC_HASH: ['#', 'Almohadilla'], KC_PERC: ['%', 'Porcentaje'], KC_AMPR: ['&', 'Ampersand'],
+    KC_LCBR: ['{', 'Abre llave'], KC_RCBR: ['}', 'Cierra llave'], KC_EQL: ['=', 'Igual'], KC_QUES: ['?', 'Interrogación'],
+    KC_ASTR: ['*', 'Asterisco'], KC_LBRC: ['[', 'Abre corchete'], KC_RBRC: [']', 'Cierra corchete'], KC_EXLM: ['!', 'Exclamación'],
+    KC_LT: ['<', 'Menor que'], KC_GT: ['>', 'Mayor que']
+  };
+  var SPECIAL = {
+    KC_TAB: ['Tab', 'Tab', 'Tabulador: siguiente campo o sangría.'],
+    KC_ESC: ['Esc', 'Escape', 'Escape: cancela o sale (clave en Vim y LazyVim).'],
+    KC_SPC: ['Espacio', ' ', 'Barra espaciadora.'],
+    KC_ENT: ['Enter', 'Enter', 'Enter: confirma o salta de línea.'],
+    KC_LEFT: ['←', 'ArrowLeft', 'Flecha izquierda.'], KC_DOWN: ['↓', 'ArrowDown', 'Flecha abajo.'],
+    KC_UP: ['↑', 'ArrowUp', 'Flecha arriba.'], KC_RGHT: ['→', 'ArrowRight', 'Flecha derecha.'],
+    KC_HOME: ['Inicio', 'Home', 'Inicio: principio de la línea o del documento.'], KC_END: ['Fin', 'End', 'Fin: final de la línea o del documento.'],
+    KC_PGUP: ['RePág', 'PageUp', 'Retrocede una página.'], KC_PGDN: ['AvPág', 'PageDown', 'Avanza una página.'],
+    KC_INS: ['Insert', 'Insert', 'Insertar. Casi no se usa en Mac.'], KC_CAPS: ['Bloq Mayús', 'CapsLock', 'Bloqueo de mayúsculas.']
+  };
+  var PLAIN_MODS = { KC_LSFT: ['SFT', 'izquierdo'], KC_RSFT: ['SFT', 'derecho'], KC_LCTL: ['CTL', 'izquierdo'], KC_RCTL: ['CTL', 'derecho'], KC_LALT: ['ALT', 'izquierdo'], KC_RALT: ['ALT', 'derecho'], KC_LGUI: ['GUI', 'izquierdo'], KC_RGUI: ['GUI', 'derecho'] };
+  var MEDIA = { KC_VOLU: ['Vol +', 'Sube el volumen.'], KC_VOLD: ['Vol −', 'Baja el volumen.'], KC_MUTE: ['Mute', 'Silencia el audio.'], KC_MPRV: ['Ant.', 'Pista anterior.'], KC_MNXT: ['Sig.', 'Pista siguiente.'], KC_MPLY: ['Play', 'Reproduce o pausa.'], KC_MSTP: ['Stop', 'Detiene la reproducción.'] };
+  var RGB = {
+    RM_TOGG: ['Luz', 'Enciende o apaga la iluminación RGB.'], RM_NEXT: ['Efecto +', 'Siguiente efecto de iluminación.'], RM_PREV: ['Efecto −', 'Efecto de iluminación anterior.'],
+    RM_HUEU: ['Tono +', 'Sube el tono (color) de la luz.'], RM_HUED: ['Tono −', 'Baja el tono (color) de la luz.'],
+    RM_SATU: ['Sat +', 'Sube la saturación del color.'], RM_SATD: ['Sat −', 'Baja la saturación del color.'],
+    RM_VALU: ['Brillo +', 'Sube el brillo.'], RM_VALD: ['Brillo −', 'Baja el brillo.'],
+    RM_SPDU: ['Vel +', 'Acelera la animación RGB.'], RM_SPDD: ['Vel −', 'Ralentiza la animación RGB.']
+  };
+  var CUSTOM = { CSPD_DN: ['Cursor −', 'Baja la velocidad del cursor del trackpad.'], CSPD_UP: ['Cursor +', 'Sube la velocidad del cursor del trackpad.'], PINCH_M: ['Modo zoom', 'Cambia el modo del gesto de pinza (zoom) del trackpad.'] };
+  var THEMES = { THM_CAT: ['Catppuccin', 'Tema RGB Catppuccin, el tema por defecto.'], THM_GRV: ['Gruvbox', 'Tema RGB Gruvbox.'], THM_ALG: ['Alegra', 'Tema RGB Alegra.'], THM_DES: ['Desierto', 'Tema RGB Desierto.'], THM_HOR: ['Horizon', 'Tema RGB Horizon.'] };
+  var DANGER = {
+    QK_BOOT: ['Modo carga', 'Reinicia el teclado en modo de carga (bootloader) para flashear firmware. Deja de escribir hasta que lo flashees o lo reconectes.'],
+    EE_CLR: ['Borrar ajustes', 'Borra la memoria EEPROM: los ajustes guardados (RGB, velocidades, etc.) vuelven a los valores por defecto.']
+  };
+  var MOUSE = { MS_BTN1: ['Clic', 'Clic izquierdo.'], MS_BTN2: ['Clic der.', 'Clic derecho.'], MS_BTN3: ['Clic central', 'Clic central (como la rueda del ratón).'] };
+  var LAYERKEYS = { PROG: ['PROG', 'PROG', 'símbolos'], NUMBS: ['NUMBERS', 'NUMBS', 'números'], MAGIC: ['MAGIC', 'MAGIC', 'luces'], HERDR: ['HERDR', 'HERDR', 'terminal'] };
+  var LTKEYS = {
+    PT_Z: { layer: 'POINTER', main: 'Z', sub: 'Puntero', emits: 'z', tap: 'Escribe z', what: 'la capa Puntero (clics y ajustes del trackpad)' },
+    PT_SLSH: { layer: 'POINTER', main: '/', sub: 'Puntero', emits: '/', tap: 'Escribe /', what: 'la capa Puntero (clics y ajustes del trackpad)' },
+    NAV: { layer: 'NAV', main: 'Borrar', sub: 'Nav', emits: 'Backspace', tap: 'Borra (Backspace)', what: 'la capa Nav: flechas, Inicio, Fin y páginas' }
+  };
+
+  function keyInfo(code) {
+    var m, v;
+    if (code === 'XXXXXXX') { return { kind: 'blank', main: '', sub: '', desc: 'Sin función en esta capa.', tap: '—', hold: '—' }; }
+    if (code === '_______') { return { kind: 'trans', main: '', sub: '' }; }
+    if ((m = code.match(RE_HRM))) {
+      var b = keyInfo(m[3]), md = MODS[m[2]];
+      return { kind: 'hrm', main: b.main, sub: md.sym, emits: b.emits, mod: m[2], term: TERM[m[2]], name: b.name,
+        desc: 'Home-row mod. Al tocarla escribe ' + b.main + '; al mantenerla es ' + md.sym + ' ' + md.name + '.',
+        tap: 'Escribe ' + b.emits, hold: md.sym + ' ' + md.name + ' (mantén más de ' + TERM[m[2]] + ' ms)' };
+    }
+    if (LTKEYS[code]) {
+      v = LTKEYS[code];
+      return { kind: 'lt', main: v.main, sub: v.sub, emits: v.emits, layer: v.layer, desc: 'Tecla de capa con doble función. Al tocarla: ' + v.tap.toLowerCase() + '. Al mantenerla: activa ' + v.what + '.', tap: v.tap, hold: 'Activa ' + v.what };
+    }
+    if (LAYERKEYS[code]) {
+      v = LAYERKEYS[code];
+      return { kind: 'layer', main: v[1], sub: v[2], layer: v[0], desc: 'Tecla de capa. Mientras la mantienes, el teclado usa la capa ' + LAYER_LABEL[v[0]] + '.', tap: 'Nada: solo funciona al mantenerla', hold: 'Activa la capa ' + LAYER_LABEL[v[0]] };
+    }
+    if ((m = code.match(/^KC_([A-Z])$/))) { return { kind: 'char', main: m[1], emits: m[1].toLowerCase(), name: 'Letra ' + m[1], desc: 'Letra ' + m[1] + '.', tap: 'Escribe ' + m[1].toLowerCase(), hold: '—' }; }
+    if ((m = code.match(/^KC_([0-9])$/))) { return { kind: 'char', main: m[1], emits: m[1], name: 'Número ' + m[1], desc: 'Número ' + m[1] + '.', tap: 'Escribe ' + m[1], hold: '—' }; }
+    if ((m = code.match(/^KC_F([0-9]{1,2})$/))) { return { kind: 'fn', main: 'F' + m[1], emits: 'F' + m[1], name: 'Tecla de función F' + m[1], desc: 'Tecla de función F' + m[1] + '.', tap: 'Envía F' + m[1], hold: '—' }; }
+    if (CHAR[code]) { v = CHAR[code]; return { kind: 'char', main: v[0], emits: v[0], name: v[1], desc: v[1] + ' (' + v[0] + ').', tap: 'Escribe ' + v[0], hold: '—' }; }
+    if (SPECIAL[code]) { v = SPECIAL[code]; return { kind: 'special', main: v[0], emits: v[1], name: v[2], desc: v[2], tap: v[2], hold: '—' }; }
+    if (PLAIN_MODS[code]) { v = PLAIN_MODS[code]; var mm = MODS[v[0]]; return { kind: 'mod', main: mm.sym, sub: mm.name, mod: v[0], desc: 'Modificador ' + mm.name + ' ' + v[1] + '. Mantenlo y pulsa otra tecla.', tap: 'Nada por sí solo', hold: mm.sym + ' ' + mm.name }; }
+    if (MEDIA[code]) { v = MEDIA[code]; return { kind: 'media', main: v[0], sub: 'media', desc: v[1], tap: v[1], hold: '—' }; }
+    if (RGB[code]) { v = RGB[code]; return { kind: 'rgb', main: v[0], sub: 'RGB', desc: v[1], tap: v[1], hold: '—' }; }
+    if (CUSTOM[code]) { v = CUSTOM[code]; return { kind: 'custom', main: v[0], sub: 'trackpad', desc: v[1], tap: v[1], hold: '—' }; }
+    if (THEMES[code]) { v = THEMES[code]; return { kind: 'theme', main: v[0], sub: 'tema', desc: v[1], tap: 'Aplica el tema ' + v[0], hold: '—' }; }
+    if (DANGER[code]) { v = DANGER[code]; return { kind: 'danger', main: v[0], sub: 'firmware', desc: v[1], tap: v[1], hold: '—' }; }
+    if (MOUSE[code]) { v = MOUSE[code]; return { kind: 'mouse', main: v[0], sub: 'ratón', desc: v[1], tap: v[1], hold: 'Mantiene el botón pulsado (para arrastrar)' }; }
+    return { kind: 'other', main: code.replace(/^KC_/, ''), sub: '', desc: code, tap: '—', hold: '—' };
+  }
+
+  function cellInfo(layer, i) {
+    var code = LAYERS[layer][i];
+    if (code !== '_______') { return { code: code, info: keyInfo(code), trans: false, from: layer }; }
+    var below = BELOW[layer];
+    for (var k = 0; k < below.length; k++) {
+      var c2 = LAYERS[below[k]][i];
+      if (c2 !== '_______') { return { code: code, info: keyInfo(c2), trans: true, from: below[k], fromCode: c2 }; }
+    }
+    return { code: code, info: keyInfo('XXXXXXX'), trans: true, from: 'BASE' };
+  }
+
+  /* ---------- Herdr defaults ---------- */
+  var HERDR_GROUPS = [
+    { g: 'Pestañas', items: [['c', 'Nueva pestaña', 'nueva'], ['n', 'Pestaña siguiente', 'tab +'], ['p', 'Pestaña anterior', 'tab −'], ['1..9', 'Ir a la pestaña 1–9', ''], ['shift+t', 'Renombrar pestaña', ''], ['shift+x', 'Cerrar pestaña', '']] },
+    { g: 'Paneles', items: [['h', 'Foco al panel izquierdo', 'foco ←'], ['j', 'Foco al panel de abajo', 'foco ↓'], ['k', 'Foco al panel de arriba', 'foco ↑'], ['l', 'Foco al panel derecho', 'foco →'],
+      ['shift+h', 'Intercambiar con el panel izquierdo', ''], ['shift+j', 'Intercambiar con el panel de abajo', ''], ['shift+k', 'Intercambiar con el panel de arriba', ''], ['shift+l', 'Intercambiar con el panel derecho', ''],
+      ['tab', 'Panel siguiente', 'panel +'], ['shift+tab', 'Panel anterior', ''], ['v', 'Dividir en vertical', 'split │'], ['-', 'Dividir en horizontal', 'split ─'],
+      ['x', 'Cerrar panel', 'cerrar'], ['z', 'Zoom del panel', 'zoom'], ['r', 'Redimensionar panel', 'tamaño'], ['[', 'Modo copia', 'copia']] },
+    { g: 'Espacios de trabajo', items: [['w', 'Selector de espacios', 'espacios'], ['shift+n', 'Nuevo espacio', ''], ['shift+w', 'Renombrar espacio', ''], ['shift+d', 'Cerrar espacio', ''], ['shift+g', 'Worktree de git', '']] },
+    { g: 'Otros', items: [['g', 'Ir a (goto)', 'goto'], ['b', 'Barra lateral', 'barra'], ['s', 'Ajustes', 'ajustes'], ['?', 'Ayuda', 'ayuda'], ['q', 'Desconectar (detach)', 'detach'], ['shift+r', 'Recargar', ''], ['o', 'Destino de notificaciones', 'notif.']] }
+  ];
+  var HERDR_MAP = {};
+  HERDR_GROUPS.forEach(function (grp) { grp.items.forEach(function (it) { HERDR_MAP[it[0]] = { combo: it[0], name: it[1], short: it[2], group: grp.g }; }); });
+  function herdrAction(combo) {
+    if (/^[1-9]$/.test(combo)) { return { combo: combo, name: 'Ir a la pestaña ' + combo, short: 'tab ' + combo, group: 'Pestañas', row: '1..9' }; }
+    var a = HERDR_MAP[combo];
+    return a ? { combo: a.combo, name: a.name, short: a.short, group: a.group, row: a.combo } : null;
+  }
+  function comboLabel(c) {
+    if (c === 'tab') { return 'Tab'; }
+    if (c === 'shift+tab') { return 'Shift+Tab'; }
+    if (c.indexOf('shift+') === 0) { return 'Shift+' + c.slice(6).toUpperCase(); }
+    if (c === '1..9') { return '1…9'; }
+    return /^[a-z]$/.test(c) ? c.toUpperCase() : c;
+  }
+
+  /* ---------- Helpers ---------- */
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]; }); }
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+  var MOD_KEYS = { Shift: 1, Control: 1, Alt: 1, Meta: 1, CapsLock: 1, Fn: 1, FnLock: 1, OS: 1, Hyper: 1, Super: 1, AltGraph: 1, Dead: 1, Unidentified: 1 };
+
+  /* ---------- Keyboard component ---------- */
+  function createBoard(host, opts) {
+    opts = opts || {};
+    host.classList.add('board');
+    if (opts.compact) { host.classList.add('board--compact'); }
+    var keys = {};
+    ALL_IDS.forEach(function (id) {
+      var g = geom(id);
+      var k = document.createElement(opts.interactive ? 'button' : 'div');
+      if (opts.interactive) { k.type = 'button'; }
+      k.className = 'key f-' + finger(id).f + (HOME[id] ? ' is-home' : '') + (ANCHOR[id] ? ' is-anchor' : '');
+      k.style.setProperty('--x', String(g.x));
+      k.style.setProperty('--y', String(g.y));
+      k.style.setProperty('--r', String(g.r));
+      k.dataset.id = id;
+      k.innerHTML = '<span class="k-main"></span><span class="k-sub"></span><span class="k-heat"></span>';
+      host.appendChild(k);
+      keys[id] = k;
+    });
+    var tp = document.createElement('div');
+    tp.className = 'trackpad';
+    tp.textContent = 'trackpad';
+    tp.setAttribute('aria-hidden', 'true');
+    host.appendChild(tp);
+    if (opts.interactive && opts.onSelect) {
+      host.addEventListener('click', function (e) {
+        var k = e.target.closest('.key');
+        if (k) { opts.onSelect(k.dataset.id); }
+      });
+    }
+    var state = { layer: 'BASE', marks: [], held: [] };
+    function paint(id, cell, layer) {
+      var k = keys[id], info = cell.info;
+      var main = info.main || '', sub = info.sub || '';
+      if (layer === 'HERDR' && !cell.trans && info.emits && info.kind !== 'mod') {
+        var a = herdrAction(herdrCombo(info.emits, false));
+        sub = a && a.short ? a.short : 'herdr';
+      }
+      if (cell.trans) { sub = 'pasa'; }
+      k.classList.toggle('k-blank', info.kind === 'blank');
+      k.classList.toggle('k-trans', cell.trans);
+      k.classList.toggle('k-danger', info.kind === 'danger' && !cell.trans);
+      k.classList.toggle('k-long', main.length > 2 && main.length <= 5);
+      k.classList.toggle('k-xlong', main.length > 5);
+      k.querySelector('.k-main').textContent = main;
+      k.querySelector('.k-sub').textContent = sub;
+      if (opts.interactive) {
+        var lbl = info.kind === 'blank' ? 'Vacía' : (main + (sub ? ', ' + sub : ''));
+        k.setAttribute('aria-label', lbl + '. ' + fingerName(id) + '.');
+      }
+    }
+    function setHeld(ids) {
+      state.held.forEach(function (id) { keys[id].classList.remove('is-held'); });
+      state.held = ids.slice();
+      state.held.forEach(function (id) { keys[id].classList.add('is-held'); });
+    }
+    return {
+      keys: keys,
+      setLayer: function (layer, showHeld) {
+        state.layer = layer;
+        ALL_IDS.forEach(function (id, n) { paint(id, cellInfo(layer, n), layer); });
+        setHeld(showHeld === false ? [] : REACH[layer].hold);
+      },
+      setHeld: setHeld,
+      mark: function (press, hold) {
+        state.marks.forEach(function (id) { keys[id].classList.remove('is-next', 'is-hint-hold'); });
+        state.marks = [];
+        (hold || []).forEach(function (id) { keys[id].classList.add('is-hint-hold'); state.marks.push(id); });
+        (press || []).forEach(function (id) { keys[id].classList.add('is-next'); state.marks.push(id); });
+      },
+      select: function (id) {
+        ALL_IDS.forEach(function (x) { keys[x].classList.toggle('is-selected', x === id); });
+      },
+      setDim: function (allowed) {
+        ALL_IDS.forEach(function (id) { keys[id].classList.toggle('is-dim', !!allowed && !allowed[id]); });
+      },
+      setHeat: function (heat) {
+        var max = 0;
+        Object.keys(heat || {}).forEach(function (id) { if (heat[id] > max) { max = heat[id]; } });
+        ALL_IDS.forEach(function (id) {
+          var v = heat && heat[id] ? heat[id] : 0;
+          keys[id].style.setProperty('--heat', max ? String(Math.min(1, v / max)) : '0');
+          keys[id].querySelector('.k-heat').textContent = v ? String(v) : '';
+        });
+      }
+    };
+  }
+
+  /* ---------- Section 1: map ---------- */
+  var mapBoard, mapLayer = 'BASE', mapSel = 'r2c4';
+  function initMap() {
+    var tabs = $('layer-tabs');
+    ORDER.forEach(function (name) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'tab';
+      b.id = 'layer-tab-' + name.toLowerCase();
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', name === 'BASE' ? 'true' : 'false');
+      b.setAttribute('aria-controls', 'map-board');
+      b.textContent = name;
+      b.addEventListener('click', function () { setMapLayer(name); });
+      tabs.appendChild(b);
+    });
+    tabs.addEventListener('keydown', function (e) {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') { return; }
+      var n = ORDER.indexOf(mapLayer) + (e.key === 'ArrowRight' ? 1 : -1);
+      n = (n + ORDER.length) % ORDER.length;
+      setMapLayer(ORDER[n]);
+      $('layer-tab-' + ORDER[n].toLowerCase()).focus();
+      e.preventDefault();
+    });
+    mapBoard = createBoard($('map-board'), { interactive: true, onSelect: function (id) { mapSel = id; renderDetail(); } });
+    var legend = $('finger-legend');
+    [['pinky', 'Meñique', 'columnas 1–2 de fuera'], ['ring', 'Anular', 'columna 3'], ['middle', 'Medio', 'columna 4'], ['index', 'Índice', 'columnas 5–6, las interiores'], ['thumb', 'Pulgar', 'las 4 teclas del arco']].forEach(function (r) {
+      var li = document.createElement('li');
+      li.className = 'fc-' + r[0];
+      li.innerHTML = '<span class="sw"></span><span><b>' + r[1] + '</b> <span class="muted">· ' + r[2] + '</span></span>';
+      legend.appendChild(li);
+    });
+    setMapLayer('BASE');
+  }
+  function setMapLayer(name) {
+    mapLayer = name;
+    ORDER.forEach(function (n) { $('layer-tab-' + n.toLowerCase()).setAttribute('aria-selected', n === name ? 'true' : 'false'); });
+    mapBoard.setLayer(name);
+    var r = REACH[name];
+    $('layer-reach').innerHTML = '<strong>' + esc(LAYER_LABEL[name]) + '</strong><span>' + esc(r.text) + '</span>';
+    renderDetail();
+  }
+  function renderDetail() {
+    mapBoard.select(mapSel);
+    var i = IDX[mapSel], cell = cellInfo(mapLayer, i), info = cell.info, f = finger(mapSel);
+    var box = $('key-detail');
+    box.classList.toggle('is-danger', info.kind === 'danger');
+    var title = info.kind === 'blank' ? 'Sin función' : (info.main || '');
+    var what = info.desc || '';
+    if (cell.trans) {
+      what = 'Transparente: aquí no hay tecla propia y pasa la tecla de la capa ' + LAYER_LABEL[cell.from] + ' (' + (info.main || 'vacía') + '). ' + (info.desc || '');
+    }
+    var rows = '';
+    rows += '<dt>Qué hace</dt><dd>' + esc(what) + '</dd>';
+    rows += '<dt>Dedo</dt><dd class="fc-' + f.f + '"><span class="dot"></span>' + esc(fingerName(mapSel)) + '</dd>';
+    rows += '<dt>Tocar</dt><dd>' + esc(info.tap || '—') + '</dd>';
+    rows += '<dt>Mantener</dt><dd>' + esc(info.hold || '—') + '</dd>';
+    if (mapLayer === 'HERDR' && !cell.trans && info.emits && info.kind !== 'mod') {
+      var plain = herdrAction(herdrCombo(info.emits, false));
+      var shifted = /^[a-z]$/.test(info.emits) ? herdrAction('shift+' + info.emits) : null;
+      var sendTxt = info.emits === 'Tab' ? 'Tab' : info.emits;
+      rows += '<dt>Envía</dt><dd><kbd>Ctrl</kbd>+<kbd>Q</kbd> y luego <kbd>' + esc(sendTxt) + '</kbd></dd>';
+      rows += '<dt>Herdr</dt><dd>' + esc(plain ? plain.name : 'Sin acción por defecto') + (shifted ? '. Con Shift (pulgar de Espacio): ' + esc(shifted.name) : '') + (info.emits === 'Tab' ? '. Con Shift: Panel anterior' : '') + '</dd>';
+    }
+    if (info.kind === 'hrm') { rows += '<dt>Tiempo límite</dt><dd>' + info.term + ' ms</dd>'; }
+    rows += '<dt>Keycode</dt><dd><code>' + esc(cell.code) + (cell.trans ? ' → ' + esc(cell.fromCode || 'XXXXXXX') : '') + '</code></dd>';
+    var warn = info.kind === 'danger' && !cell.trans ? '<p class="warn-box"><b>Atención:</b> ' + esc(info.desc) + '</p>' : '';
+    box.innerHTML = '<p class="eyebrow">Capa ' + esc(LAYER_LABEL[mapLayer]) + ' · ' + (HOME[mapSel] ? 'fila guía' : 'posición ' + esc(mapSel)) + '</p>' +
+      '<h3><span class="big">' + esc(title) + '</span>' + (ANCHOR[mapSel] ? '<span class="chip">ancla</span>' : '') + '</h3><dl>' + rows + '</dl>' + warn;
+  }
+  function herdrCombo(emits, shift) {
+    if (emits === 'Tab') { return shift ? 'shift+tab' : 'tab'; }
+    if (/^[a-z]$/.test(emits)) { return (shift ? 'shift+' : '') + emits; }
+    return emits;
+  }
+
+  /* ---------- Character -> key position (base layer) ---------- */
+  var CHARPOS = {};
+  LAYERS.BASE.forEach(function (code, n) {
+    var info = keyInfo(code);
+    if (info.emits && info.emits.length === 1 && !(info.emits in CHARPOS)) { CHARPOS[info.emits] = ALL_IDS[n]; }
+  });
+  function baseLabel(id) { var inf = keyInfo(LAYERS.BASE[IDX[id]]); return inf.main || id; }
+  function describeChar(ch) {
+    if (ch === ' ') { return { press: ['t1'], hold: [], html: 'Siguiente: <b>Espacio</b> · <span class="finger">pulgar izquierdo</span>', fc: 'thumb' }; }
+    var lower = ch.toLowerCase();
+    var id = CHARPOS[ch] || CHARPOS[lower];
+    if (!id) { return { press: [], hold: [], html: 'Siguiente: <b>' + esc(ch) + '</b>', fc: 'index' }; }
+    var f = finger(id);
+    if (ch !== lower && /[A-Z]/.test(ch)) {
+      var sh = f.hand === 'izq' ? 'r2c7' : 'r2c4';
+      return { press: [id], hold: [sh], fc: f.f,
+        html: 'Mayúscula: mantén <b>' + baseLabel(sh) + '</b> (<span class="finger">' + fingerName(sh) + '</span>, Shift) y toca <b>' + esc(lower.toUpperCase()) + '</b> (<span class="finger">' + fingerName(id) + '</span>)' };
+    }
+    return { press: [id], hold: [], fc: f.f, html: 'Siguiente: <b>' + esc(ch === ' ' ? 'Espacio' : ch) + '</b> · <span class="finger">' + fingerName(id) + '</span>' };
+  }
+
+  /* ---------- Lessons ---------- */
+  var ES_WORDS = ('casa para como todo hola mesa lado juego palabra dado sala falda ala asa sal las da das gala hada saga gas jala haga ' +
+    'dedo fase desde cada kilo salsa jefe hija deja lago hoja tela vela pelo pera rosa ropa sopa taza vaso agua perro gato luna sol mar tren ' +
+    'libro papel puerta silla cama fuego tierra cielo verde rojo azul blanco negro grande poco mucho bueno malo nuevo viejo hacer decir tener ' +
+    'poder saber llegar pasar poner quedar hablar llevar dejar seguir llamar venir pensar salir volver tomar vivir mirar buscar entrar trabajar ' +
+    'escribir leer abrir gente tiempo vida mundo hombre mujer ciudad noche parte forma caso punto grupo lugar persona momento cosa padre madre ' +
+    'nombre sistema programa teclado idea ahora siempre nunca hoy luego tarde pronto bien donde cuando porque pero hasta entre sobre bajo ' +
+    'una uno del que ser ver dar muy hay fiel fila seda dije dile dale lee sed sea fea jefa hielo regla rueda fresa jarra queso').split(' ');
+  var EN_WORDS = ('sad dad add fad as ask all fall hall glass flask salad lad lag has had half shall flash dash hash sash ' +
+    'the be to of and in that have it for not on with he you do at this but his by from they we say her she or an will my one would there ' +
+    'their what so up out if about who get which go me when make can like time no just him know take people into year your good some could ' +
+    'them see other than then now look only come its over think also back after use two how our work first well way even new want because ' +
+    'any these give day most us is was are been were said did made find where much too very still being going why before never here off ' +
+    'again kind fire hold idea great keyboard type side hide ideal field shield desk life sure rule fruit quiet write power river').split(' ');
+  var CODE_WORDS = ('const function return git commit export import let var if else true false null async await push pull merge rebase branch ' +
+    'status diff class new this type interface string number boolean array map filter reduce console log fetch node npm test describe expect ' +
+    'props state hook default switch case break throw try catch finally yield static public private void while for of in').split(' ');
+  var MIX_WORDS = ES_WORDS.concat(EN_WORDS);
+
+  var LESSONS = [
+    { id: 'l1', title: 'Fila guía izquierda', letters: 'asdf', newKeys: 'asdf', ngram: 'asdf', wpm: 8, tip: 'Meñique en A, anular en S, medio en D, índice en F. Toca y suelta rápido: si mantienes, se activa el modificador.' },
+    { id: 'l2', title: 'Fila guía derecha', letters: 'jkl;', newKeys: 'jkl;', ngram: 'jkl;', wpm: 8, tip: 'Índice en J, medio en K, anular en L, meñique en ;. El espacio va con el pulgar izquierdo.' },
+    { id: 'l3', title: 'Fila guía completa', letters: 'asdfjkl;', newKeys: '', ngram: 'asdfjkl;', wpm: 10, tip: 'Las dos manos juntas. Alterna con calma y vuelve siempre a F y J.' },
+    { id: 'l4', title: 'Añade G y H', letters: 'asdfghjkl;', newKeys: 'gh', ngram: 'asdfghjkl', wpm: 11, tip: 'G y H son de los índices: estira hacia dentro y regresa a F y J.' },
+    { id: 'l5', title: 'Fila superior: E e I', letters: 'asdfghjkl;ei', newKeys: 'ei', ngram: 'asdfghjklei', wpm: 12, tip: 'E con el medio izquierdo, I con el medio derecho. Sube en línea recta por la columna.' },
+    { id: 'l6', title: 'Fila superior: R y U', letters: 'asdfghjkl;eiru', newKeys: 'ru', ngram: 'asdfghjkleiru', wpm: 12, tip: 'R con el índice izquierdo, U con el índice derecho.' },
+    { id: 'l7', title: 'Fila superior completa', letters: 'asdfghjkl;qwertyuiop', newKeys: 'qwtyop', ngram: 'asdfghjklqwertyuiop', wpm: 13, tip: 'Q y P con meñiques, W y O con anulares, T e Y con los índices.' },
+    { id: 'l8', title: 'Fila inferior', letters: 'abcdefghijklmnopqrstuvwxyz;,./', newKeys: 'zxcvbnm', ngram: 'zxcvbnmasdfjkl', punct: true, wpm: 13, tip: 'Baja en línea recta. Z y / también activan Puntero si las mantienes: tócalas rápido.' },
+    { id: 'l9', title: 'Mayúsculas', mode: 'caps', letters: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', wpm: 12, tip: 'Shift está en F y J. Para una letra de la mano izquierda, mantén J; para la derecha, mantén F. Mantén más de 200 ms.' },
+    { id: 'l10', title: 'Números', mode: 'numbers', letters: '0123456789', wpm: 10, tip: 'La fila de números de la capa base. Cada número va con el dedo de su columna. Vuelve a la fila guía después de cada uno.' },
+    { id: 'l11', title: 'Palabras en español', mode: 'words', words: ['casa', 'para', 'como', 'todo', 'hola', 'mesa', 'lado', 'juego', 'palabra', 'gente', 'tiempo', 'mundo', 'noche', 'ciudad', 'trabajo', 'teclado', 'siempre', 'ahora', 'escribir', 'pronto', 'bueno', 'grande', 'verde', 'agua', 'libro', 'puerta', 'fuego', 'tierra', 'cielo', 'nombre'], wpm: 16, tip: 'Palabras reales sin tildes ni ñ: la entrada US no las tiene en teclas directas.' },
+    { id: 'l12', title: 'Palabras en inglés', mode: 'words', words: ['the', 'and', 'that', 'have', 'with', 'this', 'from', 'they', 'would', 'there', 'their', 'what', 'about', 'which', 'when', 'make', 'like', 'time', 'just', 'know', 'take', 'people', 'year', 'good', 'some', 'could', 'other', 'than', 'then', 'look', 'only', 'come', 'think', 'back', 'work', 'first', 'because'], wpm: 16, tip: 'Las palabras más frecuentes del inglés. Te servirán en código y documentación.' },
+    { id: 'l13', title: 'Palabras de código', mode: 'words', words: ['const', 'function', 'return', 'git', 'commit', 'export', 'import', 'let', 'if', 'else', 'true', 'false', 'null', 'async', 'await', 'push', 'pull', 'merge', 'rebase', 'branch', 'status', 'class', 'type', 'string', 'number', 'array', 'map', 'filter', 'console', 'log', 'fetch', 'npm', 'test', 'expect'], wpm: 15, tip: 'Vocabulario de programación. Los símbolos los practicas en el drill de capas.' }
+  ];
+
+  function ngram(alpha, fresh) {
+    var len = 2 + Math.floor(Math.random() * 3), s = '';
+    for (var n = 0; n < len; n++) {
+      var src = fresh && Math.random() < 0.5 ? fresh : alpha;
+      s += src.charAt(Math.floor(Math.random() * src.length));
+    }
+    return s;
+  }
+  function generateLine(lesson) {
+    var target = lesson.mode === 'words' ? 58 : 50;
+    var out = [], len = 0, tok;
+    var allowed = {};
+    lesson.letters.split('').forEach(function (ch) { allowed[ch] = 1; });
+    var pool = [], poolNew = [];
+    if (!lesson.mode) {
+      MIX_WORDS.forEach(function (w) {
+        if (w.split('').every(function (ch) { return allowed[ch]; }) && pool.indexOf(w) < 0) { pool.push(w); }
+      });
+      var nk = (lesson.newKeys || '').replace(/[;,./]/g, '');
+      poolNew = nk ? pool.filter(function (w) { return w.split('').some(function (ch) { return nk.indexOf(ch) >= 0; }); }) : [];
+    }
+    var guard = 0;
+    while (len < target && guard++ < 200) {
+      if (lesson.mode === 'words') {
+        tok = pick(lesson.words);
+      } else if (lesson.mode === 'numbers') {
+        var d = 1 + Math.floor(Math.random() * 4);
+        tok = '';
+        for (var q = 0; q < d; q++) { tok += String(Math.floor(Math.random() * 10)); }
+      } else if (lesson.mode === 'caps') {
+        tok = pick(MIX_WORDS.filter(function (w) { return w.length >= 3 && w.length <= 7; }));
+        tok = tok.charAt(0).toUpperCase() + tok.slice(1);
+      } else if (pool.length >= 6 && Math.random() < 0.65) {
+        tok = poolNew.length >= 3 && Math.random() < 0.6 ? pick(poolNew) : pick(pool);
+        if (lesson.punct && Math.random() < 0.25) { tok += pick([',', '.', ',', '.']); }
+        if (lesson.punct && Math.random() < 0.06) { tok += '/' + pick(pool); }
+      } else {
+        tok = ngram(lesson.ngram, lesson.newKeys ? lesson.newKeys.replace(/[,./]/g, '') : '');
+      }
+      if (out.length && tok === out[out.length - 1]) { continue; }
+      out.push(tok);
+      len += tok.length + 1;
+    }
+    return out.join(' ');
+  }
+
+  /* ---------- Progress storage ---------- */
+  var STORE_KEY = 'dilemma-dojo:v1';
+  var storageOK = true;
+  function freshProgress() { return { v: 1, lessons: {}, heat: {} }; }
+  function loadProgress() {
+    try {
+      var raw = window.localStorage.getItem(STORE_KEY);
+      if (!raw) { return freshProgress(); }
+      var p = JSON.parse(raw);
+      if (!p || typeof p !== 'object') { return freshProgress(); }
+      p.lessons = p.lessons && typeof p.lessons === 'object' ? p.lessons : {};
+      p.heat = p.heat && typeof p.heat === 'object' ? p.heat : {};
+      return p;
+    } catch (e) { storageOK = false; return freshProgress(); }
+  }
+  function saveProgress() {
+    try { window.localStorage.setItem(STORE_KEY, JSON.stringify(progress)); }
+    catch (e) { storageOK = false; }
+    updateStorageNote();
+  }
+  function updateStorageNote() {
+    $('storage-note').textContent = storageOK
+      ? 'Tu progreso se guarda en este navegador.'
+      : 'Este navegador no permite guardar datos: tu progreso dura hasta que cierres la página.';
+  }
+  var progress = loadProgress();
+
+  /* ---------- Typing engine ---------- */
+  var lessonIdx = 0, lessonBoard, run = null, wpmTimer = null;
+  function lessonRec(id) { return progress.lessons[id] || { best: 0, acc: 0, done: false }; }
+  function renderLessonList() {
+    var ul = $('lesson-list');
+    ul.innerHTML = '';
+    LESSONS.forEach(function (L, n) {
+      var rec = lessonRec(L.id);
+      var li = document.createElement('li');
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'lesson-btn';
+      b.id = 'lesson-btn-' + L.id;
+      if (n === lessonIdx) { b.setAttribute('aria-current', 'true'); }
+      b.innerHTML = '<span class="n">' + (n + 1) + '</span><span>' + esc(L.title) + '</span>' + (rec.done ? '<span class="ok" aria-label="completada">✓</span>' : '') + (rec.best ? '<span class="n">' + rec.best + ' ppm</span>' : '');
+      b.addEventListener('click', function () { selectLesson(n, true); });
+      li.appendChild(b);
+      ul.appendChild(li);
+    });
+  }
+  function lessonAllowedIds(L) {
+    var ids = { t1: 1 };
+    L.letters.split('').forEach(function (ch) {
+      var id = CHARPOS[ch.toLowerCase()];
+      if (id) { ids[id] = 1; }
+    });
+    if (L.mode === 'words' || L.mode === 'caps') { 'abcdefghijklmnopqrstuvwxyz'.split('').forEach(function (ch) { ids[CHARPOS[ch]] = 1; }); }
+    if (L.mode === 'caps') { ids.r2c4 = 1; ids.r2c7 = 1; }
+    return ids;
+  }
+  function selectLesson(n, focus) {
+    lessonIdx = n;
+    var L = LESSONS[n];
+    $('lesson-title').textContent = (n + 1) + '. ' + L.title;
+    $('lesson-tip').textContent = L.tip;
+    $('lesson-goal').textContent = 'Meta: ≥ 95 % de precisión y ≥ ' + L.wpm + ' PPM';
+    var rec = lessonRec(L.id);
+    $('stat-best').textContent = rec.best ? String(rec.best) : '—';
+    lessonBoard.setDim(lessonAllowedIds(L));
+    renderLessonList();
+    newRound();
+    if (focus) { $('typing-pad').focus(); }
+  }
+  function newRound() {
+    var L = LESSONS[lessonIdx];
+    run = { text: generateLine(L), pos: 0, states: [], keystrokes: 0, errors: 0, start: 0, done: false };
+    $('lesson-result').hidden = true;
+    $('hrm-tip').hidden = true;
+    var box = $('typing-text');
+    box.innerHTML = '';
+    run.spans = run.text.split('').map(function (ch) {
+      var s = document.createElement('span');
+      s.className = 'ch' + (ch === ' ' ? ' sp' : '');
+      s.textContent = ch;
+      box.appendChild(s);
+      return s;
+    });
+    renderTyping();
+    updateStats();
+  }
+  function renderTyping() {
+    run.spans.forEach(function (s, n) {
+      s.classList.toggle('ok', run.states[n] === 'ok');
+      s.classList.toggle('err', run.states[n] === 'err');
+      s.classList.toggle('cur', n === run.pos && !run.done);
+    });
+    if (run.done || run.pos >= run.text.length) {
+      lessonBoard.mark([], []);
+      $('next-hint').innerHTML = '';
+      return;
+    }
+    var d = describeChar(run.text.charAt(run.pos));
+    run.spans[run.pos].style.setProperty('--fc', 'var(--f-' + d.fc + ')');
+    lessonBoard.mark(d.press, d.hold);
+    $('next-hint').innerHTML = '<span class="dot fc-' + d.fc + '"></span><span>' + d.html + '</span>';
+  }
+  function computeStats() {
+    var ok = run.states.filter(function (s) { return s === 'ok'; }).length;
+    var mins = run.start ? (performance.now() - run.start) / 60000 : 0;
+    var wpm = mins > 0.02 ? Math.round((ok / 5) / mins) : 0;
+    var acc = run.keystrokes ? Math.round(((run.keystrokes - run.errors) / run.keystrokes) * 1000) / 10 : 100;
+    return { wpm: wpm, acc: acc };
+  }
+  function updateStats() {
+    var s = computeStats();
+    $('stat-wpm').textContent = String(s.wpm);
+    $('stat-acc').textContent = s.acc.toFixed(s.acc % 1 ? 1 : 0) + ' %';
+    $('stat-err').textContent = String(run.errors);
+    $('stat-prog').textContent = run.pos + '/' + run.text.length;
+  }
+  function showTip(txt) { var t = $('hrm-tip'); t.textContent = txt; t.hidden = false; }
+  function finishRound() {
+    run.done = true;
+    clearInterval(wpmTimer);
+    var s = computeStats(), L = LESSONS[lessonIdx], rec = lessonRec(L.id);
+    var pass = s.acc >= 95 && s.wpm >= L.wpm;
+    rec.best = Math.max(rec.best || 0, s.wpm);
+    rec.acc = Math.max(rec.acc || 0, s.acc);
+    rec.done = rec.done || pass;
+    progress.lessons[L.id] = rec;
+    saveProgress();
+    renderTyping();
+    updateStats();
+    $('stat-best').textContent = String(rec.best);
+    var res = $('lesson-result');
+    res.hidden = false;
+    res.classList.toggle('pass', pass);
+    $('result-verdict').textContent = pass ? 'Lección superada' : (s.acc < 95 ? 'Sube la precisión' : 'Precisión lograda, falta velocidad');
+    $('result-detail').textContent = s.wpm + ' PPM · ' + s.acc + ' % de precisión · ' + run.errors + ' errores. ' +
+      (pass ? 'Puedes seguir con la siguiente lección o repetir para afianzar.' : (s.acc < 95 ? 'Baja el ritmo hasta no fallar. La meta es 95 %.' : 'Repite la ronda: la meta son ' + L.wpm + ' PPM.'));
+    $('btn-next').hidden = lessonIdx >= LESSONS.length - 1;
+    renderLessonList();
+    renderHeat();
+  }
+  function onTypingKey(e) {
+    if (e.target !== $('typing-pad')) { return; }
+    var k = e.key;
+    if (MOD_KEYS[k]) { return; }
+    if (run.done) {
+      if (k === 'Enter') { e.preventDefault(); newRound(); }
+      return;
+    }
+    if (e.metaKey || e.ctrlKey || e.altKey) {
+      if (k.length === 1) {
+        e.preventDefault();
+        if (e.metaKey) { showTip('Se activó Cmd: mantuviste A o ; demasiado tiempo (más de 260 ms). Tócala y suéltala rápido.'); }
+        else if (e.ctrlKey) { showTip('Se activó Ctrl: mantuviste D o K más de 260 ms. Tócala y suéltala rápido.'); }
+        else { showTip('Se activó Opt: mantuviste S o L más de 260 ms. Tócala y suéltala rápido.'); }
+      }
+      return;
+    }
+    if (k === 'Backspace') {
+      e.preventDefault();
+      if (run.pos > 0) { run.pos--; run.states[run.pos] = undefined; renderTyping(); updateStats(); }
+      return;
+    }
+    if (k.length !== 1) { return; }
+    e.preventDefault();
+    if (!run.start) {
+      run.start = performance.now();
+      clearInterval(wpmTimer);
+      wpmTimer = setInterval(function () { if (run && !run.done) { updateStats(); } }, 1000);
+    }
+    var expected = run.text.charAt(run.pos);
+    run.keystrokes++;
+    if (k === expected) {
+      run.states[run.pos] = 'ok';
+    } else {
+      run.states[run.pos] = 'err';
+      run.errors++;
+      var id = CHARPOS[expected] || CHARPOS[expected.toLowerCase()];
+      if (id) { progress.heat[id] = (progress.heat[id] || 0) + 1; }
+      if (k !== k.toLowerCase() && k.toLowerCase() === expected) {
+        showTip('Salió una mayúscula: mantuviste F o J más de 200 ms y se activó Shift. Tócalas y suéltalas rápido.');
+      } else if (k === k.toLowerCase() && k.toUpperCase() === expected && expected !== expected.toLowerCase()) {
+        showTip('Faltó el Shift: mantén F o J (la de la mano contraria) un poco más antes de tocar la letra.');
+      }
+    }
+    run.pos++;
+    if (run.pos >= run.text.length) { finishRound(); return; }
+    renderTyping();
+    updateStats();
+    if (run.states[run.pos - 1] === 'err') { renderHeat(); }
+  }
+  function renderHeat() {
+    lessonBoard.setHeat(progress.heat);
+    var top = Object.keys(progress.heat).filter(function (id) { return progress.heat[id] > 0; })
+      .sort(function (a, b) { return progress.heat[b] - progress.heat[a]; }).slice(0, 5);
+    $('heat-list').textContent = top.length
+      ? 'Mapa de errores (rojo = más fallos). Teclas que más fallas: ' + top.map(function (id) { return baseLabel(id) + ' (' + progress.heat[id] + ')'; }).join(', ') + '.'
+      : 'Mapa de errores: aún no hay fallos registrados. Las teclas que falles se teñirán de rojo.';
+  }
+
+  function initLessons() {
+    lessonBoard = createBoard($('lesson-board'), { compact: true });
+    lessonBoard.setLayer('BASE', false);
+    setupPad('typing-pad', 'typing-start', onTypingKey);
+    $('btn-retry').addEventListener('click', function () { newRound(); $('typing-pad').focus(); });
+    $('btn-next').addEventListener('click', function () { if (lessonIdx < LESSONS.length - 1) { selectLesson(lessonIdx + 1, true); } });
+    $('btn-reset').addEventListener('click', function () { $('reset-confirm').hidden = false; $('btn-reset-no').focus(); });
+    $('btn-reset-no').addEventListener('click', function () { $('reset-confirm').hidden = true; $('btn-reset').focus(); });
+    $('btn-reset-yes').addEventListener('click', function () {
+      progress = freshProgress();
+      try { window.localStorage.removeItem(STORE_KEY); } catch (e) { storageOK = false; }
+      updateStorageNote();
+      $('reset-confirm').hidden = true;
+      renderHeat();
+      selectLesson(0, false);
+      $('btn-reset').focus();
+    });
+    updateStorageNote();
+    var firstOpen = 0;
+    for (var n = 0; n < LESSONS.length; n++) { if (!lessonRec(LESSONS[n].id).done) { firstOpen = n; break; } }
+    renderHeat();
+    selectLesson(firstOpen, false);
+  }
+
+  /* ---------- Pads (scoped key capture) ---------- */
+  function setupPad(padId, startId, handler) {
+    var pad = $(padId);
+    pad.addEventListener('focus', function () { pad.classList.add('is-active'); });
+    pad.addEventListener('blur', function () { pad.classList.remove('is-active'); });
+    pad.addEventListener('keydown', handler);
+    pad.addEventListener('mousedown', function (e) {
+      if (e.target.closest('button')) { return; }
+      e.preventDefault();
+      pad.focus();
+    });
+    $(startId).addEventListener('click', function () { pad.focus(); });
+  }
+
+  /* ---------- Section 4: layer drills ---------- */
+  var HOLD_NAME = { PROG: 'PROG (pulgar izquierdo)', NUMBERS: 'NUMBS (pulgar izquierdo, interior)', NAV: 'Borrar / Nav (pulgar derecho)' };
+  var NAV_KEYS = { ArrowLeft: 1, ArrowDown: 1, ArrowUp: 1, ArrowRight: 1, Home: 1, End: 1, PageUp: 1, PageDown: 1 };
+  var LD_ITEMS = [];
+  (function buildLayerDrills() {
+    var seen = {};
+    ['PROG', 'NUMBERS', 'NAV'].forEach(function (L) {
+      LAYERS[L].forEach(function (code, n) {
+        var info = keyInfo(code), ok = false;
+        if (L === 'PROG') { ok = info.kind === 'char' && info.emits.length === 1; }
+        if (L === 'NUMBERS') { ok = (info.kind === 'char' && /^[0-9]$/.test(info.emits)) || info.kind === 'fn'; }
+        if (L === 'NAV') { ok = !!NAV_KEYS[info.emits]; }
+        if (!ok || seen[L + info.emits]) { return; }
+        seen[L + info.emits] = 1;
+        LD_ITEMS.push({ layer: L, id: ALL_IDS[n], key: info.emits, label: info.main, name: info.name || info.desc });
+      });
+    });
+  })();
+  var ldBoard, ldCur = null, ldScore = { ok: 0, bad: 0, streak: 0 };
+  function nextLayerDrill() {
+    var f = $('drill-layer-filter').value;
+    var pool = LD_ITEMS.filter(function (it) { return f === 'ALL' || it.layer === f; });
+    var nxt;
+    do { nxt = pick(pool); } while (pool.length > 1 && ldCur && nxt.key === ldCur.key);
+    ldCur = nxt;
+    $('ld-glyph').textContent = nxt.label;
+    $('ld-name').textContent = nxt.name.replace(/\.$/, '');
+    var holdId = REACH[nxt.layer].hold[0];
+    $('ld-combo').innerHTML = 'Mantén <b>' + esc(HOLD_NAME[nxt.layer]) + '</b> y pulsa la tecla de <b>' + esc(baseLabel(nxt.id)) + '</b> (<span class="finger">' + esc(fingerName(nxt.id)) + '</span>).';
+    ldBoard.setLayer(nxt.layer, false);
+    ldBoard.mark([nxt.id], [holdId]);
+  }
+  function onLayerDrillKey(e) {
+    if (e.target !== $('ld-pad')) { return; }
+    var k = e.key;
+    if (MOD_KEYS[k] || e.metaKey) { return; }
+    if (k === 'Tab') { return; }
+    e.preventDefault();
+    if (!ldCur) { return; }
+    var fb = $('ld-feedback');
+    $('ld-log').textContent = 'Recibido: ' + (k === ' ' ? 'Espacio' : k);
+    if (k === ldCur.key) {
+      ldScore.ok++; ldScore.streak++;
+      fb.className = 'feedback good';
+      fb.textContent = 'Correcto: ' + ldCur.label;
+      nextLayerDrill();
+    } else {
+      ldScore.bad++; ldScore.streak = 0;
+      fb.className = 'feedback bad';
+      fb.textContent = 'Pulsaste «' + (k === ' ' ? 'Espacio' : k) + '». Revisa que mantienes la tecla de capa.';
+    }
+    $('ld-ok').textContent = ldScore.ok; $('ld-bad').textContent = ldScore.bad; $('ld-streak').textContent = ldScore.streak;
+  }
+  function initLayerDrills() {
+    ldBoard = createBoard($('ld-board'), { compact: true });
+    setupPad('ld-pad', 'ld-start', onLayerDrillKey);
+    $('drill-layer-filter').addEventListener('change', nextLayerDrill);
+    $('ld-skip').addEventListener('click', function () { nextLayerDrill(); $('ld-pad').focus(); });
+    nextLayerDrill();
+  }
+
+  /* ---------- Section 5: shortcuts ---------- */
+  var SHORTCUTS = [
+    { mod: 'meta', k: 'c', label: 'Cmd + C', name: 'Copiar', hold: 'r2c10', how: 'Mantén ; (meñique derecho = Cmd) y toca C con el medio izquierdo.', alt: 'También: mantén A (meñique izquierdo) y toca C, aunque con la misma mano es menos fiable.' },
+    { mod: 'meta', k: 'v', label: 'Cmd + V', name: 'Pegar', hold: 'r2c10', how: 'Mantén ; (meñique derecho = Cmd) y toca V con el índice izquierdo.', alt: 'También: mantén A y toca V.' },
+    { mod: 'meta', k: 'x', label: 'Cmd + X', name: 'Cortar', hold: 'r2c10', how: 'Mantén ; (meñique derecho = Cmd) y toca X con el anular izquierdo.', alt: 'También: mantén A y toca X.' },
+    { mod: 'meta', k: 'z', label: 'Cmd + Z', name: 'Deshacer', hold: 'r2c10', how: 'Mantén ; (meñique derecho = Cmd) y toca Z con el meñique izquierdo.', alt: 'Toca Z rápido: si la mantienes, activa la capa Puntero.' },
+    { mod: 'meta', k: 'a', label: 'Cmd + A', name: 'Seleccionar todo', hold: 'r2c10', how: 'Mantén ; (meñique derecho = Cmd) y toca A con el meñique izquierdo.', alt: 'A es también Cmd, así que tócala rápido.' },
+    { mod: 'meta', k: 'f', label: 'Cmd + F', name: 'Buscar', hold: 'r2c10', how: 'Mantén ; (meñique derecho = Cmd) y toca F con el índice izquierdo.', alt: 'F es también Shift: tócala rápido para que no se active.' },
+    { mod: 'meta', k: 's', label: 'Cmd + S', name: 'Guardar', hold: 'r2c10', how: 'Mantén ; (meñique derecho = Cmd) y toca S con el anular izquierdo.', alt: 'También: mantén A y toca S.' },
+    { mod: 'meta', k: 'b', label: 'Cmd + B', name: 'Negrita', hold: 'r2c10', how: 'Mantén ; (meñique derecho = Cmd) y toca B con el índice izquierdo.', alt: 'También: mantén A y toca B.' },
+    { mod: 'meta', k: 'k', label: 'Cmd + K', name: 'Insertar enlace o abrir la paleta de comandos', hold: 'r2c1', how: 'Mantén A (meñique izquierdo = Cmd) y toca K con el medio derecho.', alt: 'K está en la mano derecha, así que el Cmd va con la izquierda.' },
+    { mod: 'ctrl', k: 'a', label: 'Ctrl + A', name: 'Ir al inicio de la línea (terminal)', hold: 'r2c8', how: 'Mantén K (medio derecho = Ctrl) y toca A con el meñique izquierdo.', alt: 'También: mantén D (medio izquierdo = Ctrl) y toca A, con la misma mano.' }
+  ];
+  var SAFE = {};
+  SHORTCUTS.forEach(function (s) { SAFE[s.mod + '+' + s.k] = s; });
+  var scBoard, scCur = null, scScore = { ok: 0, bad: 0 }, scDone = {};
+  function renderShortcutList() {
+    var ul = $('sc-list');
+    ul.innerHTML = '';
+    SHORTCUTS.forEach(function (s) {
+      var li = document.createElement('li');
+      if (scDone[s.mod + '+' + s.k]) { li.className = 'done'; }
+      li.innerHTML = '<span><span class="k">' + esc(s.label) + '</span> · ' + esc(s.name) + '</span><small>' + esc(s.how) + '</small>';
+      ul.appendChild(li);
+    });
+  }
+  function nextShortcut() {
+    var nxt;
+    do { nxt = pick(SHORTCUTS); } while (scCur && nxt === scCur);
+    scCur = nxt;
+    $('sc-glyph').textContent = nxt.label;
+    $('sc-name').textContent = nxt.name;
+    $('sc-how').textContent = nxt.how;
+    $('sc-alt').textContent = nxt.alt;
+    scBoard.mark([CHARPOS[nxt.k]], [nxt.hold]);
+  }
+  function onShortcutKey(e) {
+    if (e.target !== $('sc-pad')) { return; }
+    var k = e.key;
+    if (MOD_KEYS[k] || k.length !== 1) { return; }
+    var low = k.toLowerCase(), fb = $('sc-feedback');
+    var isMeta = e.metaKey && !e.ctrlKey, isCtrl = e.ctrlKey && !e.metaKey;
+    if (!isMeta && !isCtrl) {
+      e.preventDefault();
+      $('sc-log').textContent = 'Recibido: ' + (k === ' ' ? 'Espacio' : k) + ' (sin modificador)';
+      fb.className = 'feedback bad';
+      fb.textContent = 'Salió la letra sola. Mantén la tecla del modificador un poco más antes de tocar la letra.';
+      return;
+    }
+    var combo = (isMeta ? 'meta' : 'ctrl') + '+' + low;
+    if (!SAFE[combo]) { return; }
+    e.preventDefault();
+    $('sc-log').textContent = 'Recibido: ' + SAFE[combo].label;
+    if (scCur && combo === scCur.mod + '+' + scCur.k) {
+      scScore.ok++;
+      scDone[combo] = 1;
+      fb.className = 'feedback good';
+      fb.textContent = 'Correcto: ' + scCur.label + ' (' + scCur.name + ')';
+      renderShortcutList();
+      nextShortcut();
+    } else {
+      scScore.bad++;
+      fb.className = 'feedback bad';
+      fb.textContent = 'Hiciste ' + SAFE[combo].label + '. Se pedía ' + scCur.label + '.';
+    }
+    $('sc-ok').textContent = scScore.ok; $('sc-bad').textContent = scScore.bad;
+  }
+  function initShortcuts() {
+    scBoard = createBoard($('sc-board'), { compact: true });
+    scBoard.setLayer('BASE', false);
+    setupPad('sc-pad', 'sc-start', onShortcutKey);
+    $('sc-skip').addEventListener('click', function () { nextShortcut(); $('sc-pad').focus(); });
+    renderShortcutList();
+    nextShortcut();
+  }
+
+  /* ---------- Section 6: Herdr ---------- */
+  var HD_POS = {};
+  LAYERS.HERDR.forEach(function (code, n) {
+    var info = keyInfo(code);
+    if (info.emits && info.kind !== 'mod') {
+      var key = info.emits === 'Tab' ? 'tab' : info.emits;
+      if (!(key in HD_POS)) { HD_POS[key] = ALL_IDS[n]; }
+    }
+  });
+  var HD_SHIFT = 't1';
+  var hdBoard, hdDrill = false, hdCur = null, hdPrefixAt = 0, hdTimer = null, hdScore = { ok: 0, bad: 0 };
+  function hdPositions(combo) {
+    var shift = combo.indexOf('shift+') === 0, base = shift ? combo.slice(6) : combo;
+    var id = HD_POS[base];
+    var hold = ['t7'];
+    if (shift) { hold.push(HD_SHIFT); }
+    return { press: id ? [id] : [], hold: hold };
+  }
+  function hdHowText(combo) {
+    var shift = combo.indexOf('shift+') === 0, base = shift ? combo.slice(6) : combo;
+    var id = HD_POS[base];
+    var keyTxt = base === 'tab' ? 'Tab' : (/^[a-z]$/.test(base) ? base.toUpperCase() : base);
+    return 'Mantén <b>HERDR</b> (pulgar derecho exterior)' + (shift ? ', mantén <b>Espacio</b> (Shift en esta capa)' : '') +
+      ' y pulsa <b>' + esc(keyTxt) + '</b>' + (id ? ' (<span class="finger">' + esc(fingerName(id)) + '</span>)' : '') +
+      '. Equivale a <kbd>Ctrl</kbd>+<kbd>Q</kbd> y luego <kbd>' + esc(comboLabel(combo)) + '</kbd>.';
+  }
+  function hdPool() {
+    var out = [];
+    HERDR_GROUPS.forEach(function (g) { g.items.forEach(function (it) { out.push(it[0] === '1..9' ? String(1 + Math.floor(Math.random() * 9)) : it[0]); }); });
+    return out;
+  }
+  function nextHerdr() {
+    var pool = hdPool(), nxt;
+    do { nxt = pick(pool); } while (hdCur && nxt === hdCur);
+    hdCur = nxt;
+    var a = herdrAction(nxt);
+    $('hd-glyph').textContent = a.name;
+    $('hd-name').textContent = a.group;
+    $('hd-how').innerHTML = hdHowText(nxt);
+    var p = hdPositions(nxt);
+    hdBoard.mark(p.press, p.hold);
+  }
+  function setHerdrMode(drill) {
+    hdDrill = drill;
+    var b = $('herdr-mode');
+    b.setAttribute('aria-pressed', drill ? 'true' : 'false');
+    b.textContent = drill ? 'Volver a modo libre' : 'Empezar reto';
+    $('herdr-mode-label').textContent = drill ? 'Reto: haz la acción que se pide.' : 'Modo libre: prueba cualquier combinación.';
+    $('hd-feedback').textContent = '';
+    if (drill) { nextHerdr(); }
+    else {
+      hdCur = null;
+      $('hd-glyph').textContent = 'Ctrl+Q → tecla';
+      $('hd-name').textContent = 'Pruébalo con cualquier acción de las tablas';
+      $('hd-how').innerHTML = 'Mantén <b>HERDR</b> (pulgar derecho exterior) y pulsa la tecla de la acción. Para las acciones con Shift, mantén también el pulgar de Espacio.';
+      hdBoard.mark([], ['t7']);
+    }
+  }
+  function setPrefix(on) {
+    var el = $('hd-prefix');
+    el.classList.remove('on');
+    if (on) { void el.offsetWidth; el.classList.add('on'); }
+    $('hd-prefix-txt').textContent = on ? 'activo (1,5 s)' : 'inactivo';
+    clearTimeout(hdTimer);
+    if (on) {
+      hdTimer = setTimeout(function () {
+        if (hdPrefixAt) { hdPrefixAt = 0; setPrefix(false); $('hd-log').textContent = 'El prefijo expiró. Pulsa la tecla en menos de 1,5 s.'; }
+      }, 1500);
+    }
+  }
+  function markHerdrRow(rowKey) {
+    var rows = document.querySelectorAll('#herdr-tables tr[data-combo]');
+    for (var n = 0; n < rows.length; n++) { rows[n].classList.toggle('hit', rows[n].getAttribute('data-combo') === rowKey); }
+  }
+  function onHerdrKey(e) {
+    if (e.target !== $('hd-pad')) { return; }
+    var k = e.key;
+    if (MOD_KEYS[k]) { return; }
+    var now = performance.now();
+    if (e.ctrlKey && !e.metaKey && k.toLowerCase() === 'q') {
+      e.preventDefault();
+      hdPrefixAt = now;
+      setPrefix(true);
+      $('hd-log').textContent = 'Ctrl+Q recibido. Esperando la tecla…';
+      return;
+    }
+    if (hdPrefixAt && now - hdPrefixAt <= 1500) {
+      e.preventDefault();
+      hdPrefixAt = 0;
+      setPrefix(false);
+      var combo = k === 'Tab' ? (e.shiftKey ? 'shift+tab' : 'tab') : (/^[a-z]$/i.test(k) ? (e.shiftKey ? 'shift+' : '') + k.toLowerCase() : k);
+      var a = herdrAction(combo);
+      $('hd-log').textContent = 'Ctrl+Q → ' + comboLabel(combo) + ': ' + (a ? a.name : 'sin acción por defecto');
+      markHerdrRow(a ? a.row : '');
+      var fb = $('hd-feedback');
+      if (hdDrill && hdCur) {
+        if (combo === hdCur) {
+          hdScore.ok++;
+          fb.className = 'feedback good';
+          fb.textContent = 'Correcto: ' + a.name;
+          nextHerdr();
+        } else {
+          hdScore.bad++;
+          fb.className = 'feedback bad';
+          fb.textContent = 'Eso fue «' + (a ? a.name : comboLabel(combo)) + '». Se pedía «' + herdrAction(hdCur).name + '».';
+        }
+        $('hd-ok').textContent = hdScore.ok; $('hd-bad').textContent = hdScore.bad;
+      } else {
+        var p = hdPositions(combo);
+        hdBoard.mark(p.press, p.hold);
+        fb.className = 'feedback good';
+        fb.textContent = a ? a.name : '';
+      }
+      return;
+    }
+    if (hdPrefixAt) { hdPrefixAt = 0; setPrefix(false); }
+    if (k === 'Tab' || e.metaKey) { return; }
+    if (k.length === 1) {
+      e.preventDefault();
+      $('hd-log').textContent = 'Recibido «' + (k === ' ' ? 'Espacio' : k) + '» sin prefijo. Mantén HERDR para que el teclado envíe Ctrl+Q antes.';
+    }
+  }
+  function initHerdr() {
+    var wrap = $('herdr-tables');
+    HERDR_GROUPS.forEach(function (g) {
+      var t = document.createElement('table');
+      var html = '<caption>' + esc(g.g) + '</caption><tbody>';
+      g.items.forEach(function (it) { html += '<tr data-combo="' + esc(it[0]) + '"><td><kbd>' + esc(comboLabel(it[0])) + '</kbd></td><td>' + esc(it[1]) + '</td></tr>'; });
+      t.innerHTML = html + '</tbody>';
+      wrap.appendChild(t);
+    });
+    hdBoard = createBoard($('hd-board'), { compact: true });
+    hdBoard.setLayer('HERDR', false);
+    setupPad('hd-pad', 'hd-start', onHerdrKey);
+    $('herdr-mode').addEventListener('click', function () { setHerdrMode(!hdDrill); $('hd-pad').focus(); });
+    setHerdrMode(false);
+  }
+
+  initMap();
+  initLessons();
+  initLayerDrills();
+  initShortcuts();
+  initHerdr();
+})();
+</script>
+</body>
+</html>

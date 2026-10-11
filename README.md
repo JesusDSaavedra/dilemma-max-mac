@@ -4,6 +4,9 @@ Personal firmware configuration for a [Bastard Keyboards Dilemma Max V3](https:/
 
 The full user guide (Spanish) is in [`docs/GUIA-CONFIGURACION.md`](docs/GUIA-CONFIGURACION.md).
 
+**Dilemma Dojo**, an interactive trainer (Spanish) for touch typing and for this layout, is published at
+<https://jesusdsaavedra.github.io/dilemma-max-mac/>. Its source is [`index.html`](index.html). It includes a layer map, typing lessons, layer and shortcut drills, and a Herdr simulator.
+
 ## What is here
 
 | Folder | Contents |
